@@ -27,7 +27,7 @@ Last updated: 2026-02-17
   - Select album
   - Persist album + tracks + lyrics + user save record
 
-## Milestone 5 (Next)
+## Milestone 5 (Completed)
 - Implement Album Review workspace:
   - Track list selection
   - Per-track notes and score
