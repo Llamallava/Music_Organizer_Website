@@ -21,19 +21,19 @@ Last updated: 2026-02-17
 - Show album grid (target ~6 columns desktop) from database.
 - Add working `Add Album` navigation.
 
-## Milestone 4 (Next)
+## Milestone 4 (Completed)
 - Implement Add Album page:
   - Search external metadata provider
   - Select album
   - Persist album + tracks + lyrics + user save record
 
-## Milestone 5
+## Milestone 5 (Next)
 - Implement Album Review workspace:
   - Track list selection
   - Per-track notes and score
   - Lyrics panel
   - Conclusion entry with final score
 
-## Milestone 6
+## Milestone 6 (In Progress)
 - Implement auth screens and flows.
 - Tighten RLS for production expectations.

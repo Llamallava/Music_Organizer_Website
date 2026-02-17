@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { listSavedAlbumsForCurrentUser, type SavedAlbumCard } from '../lib/db/reviewsData'
+import { supabase } from '../lib/supabaseClient'
 
 function ReviewsPage() {
   const navigate = useNavigate()
   const [albums, setAlbums] = useState<SavedAlbumCard[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    navigate('/auth', { replace: true })
+  }
 
   useEffect(() => {
     let isActive = true
@@ -54,6 +60,14 @@ function ReviewsPage() {
             className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
           >
             Add Album
+          </button>
+
+          <button
+            type="button"
+            onClick={() => void handleSignOut()}
+            className="rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-900"
+          >
+            Sign Out
           </button>
         </div>
 
