@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage'
 import AddAlbumPage from './pages/AddAlbumPage'
 import AlbumReviewPage from './pages/AlbumReviewPage'
 import AuthPage from './pages/AuthPage'
+import FriendsPage from './pages/FriendsPage'
 import MyStatsPage from './pages/MyStatsPage'
 import ReviewsPage from './pages/ReviewsPage'
 import SearchPage from './pages/SearchPage'
@@ -53,6 +54,14 @@ function App() {
           element={
             <ProtectedRoute>
               <SearchPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/friends"
+          element={
+            <ProtectedRoute>
+              <FriendsPage />
             </ProtectedRoute>
           }
         />

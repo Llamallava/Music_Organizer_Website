@@ -12,6 +12,7 @@ const LINEAR_BACK_ROUTES: LinearBackRoute[] = [
   { pattern: '/reviews/:userSavedAlbumId', previousPath: '/reviews' },
   { pattern: '/stats', previousPath: '/' },
   { pattern: '/search', previousPath: '/' },
+  { pattern: '/friends', previousPath: '/' },
 ]
 
 const resolvePreviousPath = (pathname: string) =>

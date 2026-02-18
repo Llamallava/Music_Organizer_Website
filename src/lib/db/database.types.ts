@@ -7,18 +7,21 @@ export type Database = {
         Row: {
           user_id: string
           username: string | null
+          friend_code: string
           created_at: string
           updated_at: string
         }
         Insert: {
           user_id: string
           username?: string | null
+          friend_code?: string
           created_at?: string
           updated_at?: string
         }
         Update: {
           user_id?: string
           username?: string | null
+          friend_code?: string
           created_at?: string
           updated_at?: string
         }
@@ -141,6 +144,24 @@ export type Database = {
             referencedColumns: ['id']
           },
         ]
+      }
+      friendships: {
+        Row: {
+          user_id: string
+          friend_user_id: string
+          created_at: string
+        }
+        Insert: {
+          user_id: string
+          friend_user_id: string
+          created_at?: string
+        }
+        Update: {
+          user_id?: string
+          friend_user_id?: string
+          created_at?: string
+        }
+        Relationships: []
       }
       review_sections: {
         Row: {

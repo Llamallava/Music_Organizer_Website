@@ -29,6 +29,14 @@ function HomePage() {
         >
           Search
         </button>
+
+        <button
+          type="button"
+          onClick={() => navigate('/friends')}
+          className="rounded-lg bg-slate-600 px-4 py-3 text-base font-semibold text-white"
+        >
+          Friends
+        </button>
       </div>
     </main>
   )
