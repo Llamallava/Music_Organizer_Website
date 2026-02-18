@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
+import LinearBackButton from '../components/LinearBackButton'
 import { listSearchSongsForCurrentUser, type SearchSongRecord } from '../lib/db/searchData'
 
 type ScoreMinOperator = 'gte' | 'gt'
@@ -367,13 +368,7 @@ function SearchPage() {
     <main className="min-h-screen px-6 py-8">
       <div className="mx-auto w-full max-w-7xl">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-900"
-          >
-            Back Home
-          </button>
+          <LinearBackButton />
 
           <button
             type="button"

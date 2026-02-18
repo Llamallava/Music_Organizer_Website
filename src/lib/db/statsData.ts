@@ -26,6 +26,8 @@ export type MyStatsData = {
   topAlbumsByTrackAverage: RankedAlbumStat[]
   topSongsByScore: RankedSongStat[]
   topInterludeSongs: RankedSongStat[]
+  topAlbumsByWordsWritten: RankedAlbumStat[]
+  topSongsByWordsWritten: RankedSongStat[]
 }
 
 type TrackScoreAccumulator = {
@@ -94,6 +96,15 @@ const sortSongsByValueDescending = (left: RankedSongStat, right: RankedSongStat)
   return left.trackNumber - right.trackNumber
 }
 
+const countWords = (text: string): number => {
+  const trimmed = text.trim()
+  if (!trimmed) {
+    return 0
+  }
+
+  return trimmed.split(/\s+/).length
+}
+
 export const getMyStatsForCurrentUser = async (): Promise<MyStatsData> => {
   const savedAlbums = await listSavedAlbumsForCurrentUser()
 
@@ -103,6 +114,8 @@ export const getMyStatsForCurrentUser = async (): Promise<MyStatsData> => {
       topAlbumsByTrackAverage: [],
       topSongsByScore: [],
       topInterludeSongs: [],
+      topAlbumsByWordsWritten: [],
+      topSongsByWordsWritten: [],
     }
   }
 
@@ -114,9 +127,8 @@ export const getMyStatsForCurrentUser = async (): Promise<MyStatsData> => {
     await Promise.all([
       supabase
         .from('review_sections')
-        .select('user_saved_album_id, section_type, track_number, is_interlude, score')
-        .in('user_saved_album_id', savedAlbumIds)
-        .not('score', 'is', null),
+        .select('user_saved_album_id, section_type, track_number, is_interlude, notes, score')
+        .in('user_saved_album_id', savedAlbumIds),
       supabase.from('album_tracks').select('album_id, track_number, title').in('album_id', albumIds),
     ])
 
@@ -126,6 +138,8 @@ export const getMyStatsForCurrentUser = async (): Promise<MyStatsData> => {
   const conclusionScoreBySavedAlbumId = new Map<string, number>()
   const trackAccumulatorBySavedAlbumId = new Map<string, TrackScoreAccumulator>()
   const trackTitleByAlbumAndNumber = new Map<string, string>()
+  const wordsBySavedAlbumId = new Map<string, number>()
+  const wordsBySavedAlbumTrackKey = new Map<string, { savedAlbumId: string; trackNumber: number; words: number }>()
   const topSongCandidates: RankedSongStat[] = []
   const topInterludeCandidates: RankedSongStat[] = []
 
@@ -134,6 +148,26 @@ export const getMyStatsForCurrentUser = async (): Promise<MyStatsData> => {
   }
 
   for (const section of reviewSections ?? []) {
+    const wordsWritten = countWords(section.notes)
+    if (wordsWritten > 0) {
+      const currentAlbumWords = wordsBySavedAlbumId.get(section.user_saved_album_id) ?? 0
+      wordsBySavedAlbumId.set(section.user_saved_album_id, currentAlbumWords + wordsWritten)
+
+      if (section.section_type === 'track' && section.track_number !== null) {
+        const trackKey = `${section.user_saved_album_id}:${section.track_number}`
+        const currentTrackWords = wordsBySavedAlbumTrackKey.get(trackKey)
+        if (currentTrackWords) {
+          currentTrackWords.words += wordsWritten
+        } else {
+          wordsBySavedAlbumTrackKey.set(trackKey, {
+            savedAlbumId: section.user_saved_album_id,
+            trackNumber: section.track_number,
+            words: wordsWritten,
+          })
+        }
+      }
+    }
+
     const score = section.score
     if (score === null) {
       continue
@@ -210,10 +244,37 @@ export const getMyStatsForCurrentUser = async (): Promise<MyStatsData> => {
 
   const topInterludeSongs = topInterludeCandidates.sort(sortSongsByValueDescending).slice(0, 10)
 
+  const topAlbumsByWordsWritten = Array.from(wordsBySavedAlbumId.entries())
+    .flatMap(([savedAlbumId, wordCount]) => {
+      const album = savedAlbumById.get(savedAlbumId)
+      if (!album) {
+        return []
+      }
+
+      return [toRankedAlbumStat(album, wordCount)]
+    })
+    .sort(sortByValueDescending)
+    .slice(0, 10)
+
+  const topSongsByWordsWritten = Array.from(wordsBySavedAlbumTrackKey.values())
+    .flatMap(({ savedAlbumId, trackNumber, words }) => {
+      const album = savedAlbumById.get(savedAlbumId)
+      if (!album) {
+        return []
+      }
+
+      const trackTitle = trackTitleByAlbumAndNumber.get(toTrackKey(album.albumId, trackNumber)) ?? `Track ${trackNumber}`
+      return [toRankedSongStat(album, trackNumber, trackTitle, words)]
+    })
+    .sort(sortSongsByValueDescending)
+    .slice(0, 10)
+
   return {
     topAlbumsByConclusionScore,
     topAlbumsByTrackAverage,
     topSongsByScore,
     topInterludeSongs,
+    topAlbumsByWordsWritten,
+    topSongsByWordsWritten,
   }
 }

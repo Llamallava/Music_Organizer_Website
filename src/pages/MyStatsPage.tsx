@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
+import LinearBackButton from '../components/LinearBackButton'
 import {
   getMyStatsForCurrentUser,
   type MyStatsData,
@@ -13,6 +14,7 @@ type TopTenAlbumModuleConfig = {
   moduleType: 'album'
   title: string
   valueLabel: string
+  valueType: 'score' | 'words'
   items: RankedAlbumStat[]
 }
 
@@ -21,16 +23,20 @@ type TopTenSongModuleConfig = {
   moduleType: 'song'
   title: string
   valueLabel: string
+  valueType: 'score' | 'words'
   items: RankedSongStat[]
 }
 
 type TopTenModuleConfig = TopTenAlbumModuleConfig | TopTenSongModuleConfig
 
 const formatScoreValue = (score: number) => score.toFixed(1).replace(/\.0$/, '')
+const formatValue = (value: number, valueType: 'score' | 'words') =>
+  valueType === 'words' ? Math.round(value).toLocaleString() : formatScoreValue(value)
 
 function TopTenAlbumsModule({
   title,
   valueLabel,
+  valueType,
   items,
 }: Omit<TopTenAlbumModuleConfig, 'id' | 'moduleType'>) {
   const firstAlbum = items[0] ?? null
@@ -40,7 +46,7 @@ function TopTenAlbumsModule({
     <article className="rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm">
       <h2 className="text-lg font-bold text-slate-900">{title}</h2>
 
-      {!firstAlbum && <p className="mt-4 text-sm text-slate-600">No scored albums yet.</p>}
+      {!firstAlbum && <p className="mt-4 text-sm text-slate-600">No data yet.</p>}
 
       {firstAlbum && (
         <>
@@ -56,7 +62,7 @@ function TopTenAlbumsModule({
                 <p className="truncate text-lg font-extrabold text-slate-900">{firstAlbum.title}</p>
                 <p className="truncate text-base font-semibold text-slate-700">{firstAlbum.artistName}</p>
                 <p className="mt-1 text-sm font-semibold text-slate-900">
-                  {valueLabel}: {formatScoreValue(firstAlbum.value)}
+                  {valueLabel}: {formatValue(firstAlbum.value, valueType)}
                 </p>
               </div>
             </div>
@@ -76,7 +82,7 @@ function TopTenAlbumsModule({
                 </div>
 
                 <p className="shrink-0 text-sm font-semibold text-slate-900">
-                  {formatScoreValue(album.value)}
+                  {formatValue(album.value, valueType)}
                 </p>
               </li>
             ))}
@@ -90,6 +96,7 @@ function TopTenAlbumsModule({
 function TopTenSongsModule({
   title,
   valueLabel,
+  valueType,
   items,
 }: Omit<TopTenSongModuleConfig, 'id' | 'moduleType'>) {
   const firstSong = items[0] ?? null
@@ -99,7 +106,7 @@ function TopTenSongsModule({
     <article className="rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm">
       <h2 className="text-lg font-bold text-slate-900">{title}</h2>
 
-      {!firstSong && <p className="mt-4 text-sm text-slate-600">No scored songs yet.</p>}
+      {!firstSong && <p className="mt-4 text-sm text-slate-600">No data yet.</p>}
 
       {firstSong && (
         <>
@@ -116,7 +123,7 @@ function TopTenSongsModule({
                 <p className="truncate text-base font-semibold text-slate-700">{firstSong.artistName}</p>
                 <p className="truncate text-sm text-slate-600">{firstSong.albumTitle}</p>
                 <p className="mt-1 text-sm font-semibold text-slate-900">
-                  {valueLabel}: {formatScoreValue(firstSong.value)}
+                  {valueLabel}: {formatValue(firstSong.value, valueType)}
                 </p>
               </div>
             </div>
@@ -136,7 +143,7 @@ function TopTenSongsModule({
                 </div>
 
                 <p className="shrink-0 text-sm font-semibold text-slate-900">
-                  {formatScoreValue(song.value)}
+                  {formatValue(song.value, valueType)}
                 </p>
               </li>
             ))}
@@ -195,6 +202,7 @@ function MyStatsPage() {
         moduleType: 'album',
         title: 'Top 10 Albums by Score',
         valueLabel: 'Score',
+        valueType: 'score',
         items: statsData?.topAlbumsByConclusionScore ?? [],
       },
       {
@@ -202,6 +210,7 @@ function MyStatsPage() {
         moduleType: 'album',
         title: 'Top 10 Albums by Average',
         valueLabel: 'Average',
+        valueType: 'score',
         items: statsData?.topAlbumsByTrackAverage ?? [],
       },
       {
@@ -209,6 +218,7 @@ function MyStatsPage() {
         moduleType: 'song',
         title: 'Top 10 Songs by Score',
         valueLabel: 'Score',
+        valueType: 'score',
         items: statsData?.topSongsByScore ?? [],
       },
       {
@@ -216,7 +226,24 @@ function MyStatsPage() {
         moduleType: 'song',
         title: 'Top 10 Interlude Songs',
         valueLabel: 'Score',
+        valueType: 'score',
         items: statsData?.topInterludeSongs ?? [],
+      },
+      {
+        id: 'top-10-albums-by-words',
+        moduleType: 'album',
+        title: 'Top 10 Albums by Words Written',
+        valueLabel: 'Words',
+        valueType: 'words',
+        items: statsData?.topAlbumsByWordsWritten ?? [],
+      },
+      {
+        id: 'top-10-songs-by-words',
+        moduleType: 'song',
+        title: 'Top 10 Songs by Words Written',
+        valueLabel: 'Words',
+        valueType: 'words',
+        items: statsData?.topSongsByWordsWritten ?? [],
       },
     ]
   }, [statsData])
@@ -225,13 +252,7 @@ function MyStatsPage() {
     <main className="min-h-screen px-6 py-8">
       <div className="mx-auto w-full max-w-7xl">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-900"
-          >
-            Back Home
-          </button>
+          <LinearBackButton />
 
           <button
             type="button"
@@ -264,6 +285,7 @@ function MyStatsPage() {
                   key={module.id}
                   title={module.title}
                   valueLabel={module.valueLabel}
+                  valueType={module.valueType}
                   items={module.items}
                 />
               ) : (
@@ -271,6 +293,7 @@ function MyStatsPage() {
                   key={module.id}
                   title={module.title}
                   valueLabel={module.valueLabel}
+                  valueType={module.valueType}
                   items={module.items}
                 />
               )

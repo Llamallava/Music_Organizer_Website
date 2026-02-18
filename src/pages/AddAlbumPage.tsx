@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
+import LinearBackButton from '../components/LinearBackButton'
 import { saveAlbumForCurrentUser } from '../lib/db/reviewsData'
 import {
   type AlbumSearchResult,
@@ -103,13 +104,7 @@ function AddAlbumPage() {
   return (
     <main className="min-h-screen px-6 py-8">
       <div className="mx-auto w-full max-w-7xl">
-        <button
-          type="button"
-          onClick={() => navigate('/reviews')}
-          className="rounded-lg bg-slate-200 px-3 py-2 text-sm font-semibold text-slate-900"
-        >
-          Back to Reviews
-        </button>
+        <LinearBackButton />
 
         <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6">
           <h1 className="text-2xl font-bold text-slate-900">Add Album</h1>

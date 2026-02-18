@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
+import LinearBackButton from '../components/LinearBackButton'
 import {
   getAlbumWorkspaceForCurrentUser,
   upsertConclusionSectionForCurrentUser,
@@ -86,7 +87,6 @@ const buildInitialDraftMap = (workspace: AlbumWorkspace): DraftMap => {
 }
 
 function AlbumReviewPage() {
-  const navigate = useNavigate()
   const { userSavedAlbumId } = useParams()
   const [workspace, setWorkspace] = useState<AlbumWorkspace | null>(null)
   const [activeSectionKey, setActiveSectionKey] = useState<string>(CONCLUSION_KEY)
@@ -263,8 +263,13 @@ function AlbumReviewPage() {
 
   if (isLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center px-6">
-        <p className="rounded-lg bg-white px-4 py-3 text-sm text-slate-700">Loading review workspace...</p>
+      <main className="min-h-screen px-6 py-8">
+        <div className="mx-auto w-full max-w-6xl">
+          <LinearBackButton />
+          <p className="mt-6 rounded-lg bg-white px-4 py-3 text-sm text-slate-700">
+            Loading review workspace...
+          </p>
+        </div>
       </main>
     )
   }
@@ -273,13 +278,8 @@ function AlbumReviewPage() {
     return (
       <main className="min-h-screen px-6 py-8">
         <div className="mx-auto w-full max-w-6xl">
-          <button
-            type="button"
-            onClick={() => navigate('/reviews')}
-            className="rounded-lg bg-slate-200 px-3 py-2 text-sm font-semibold text-slate-900"
-          >
-            Back to Reviews
-          </button>
+          <LinearBackButton />
+
           <div className="mt-6 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
             {errorMessage ?? 'Could not load this album review.'}
           </div>
@@ -291,13 +291,7 @@ function AlbumReviewPage() {
   return (
     <main className="min-h-screen px-6 py-8">
       <div className="mx-auto w-full max-w-[1500px]">
-        <button
-          type="button"
-          onClick={() => navigate('/reviews')}
-          className="rounded-lg bg-slate-200 px-3 py-2 text-sm font-semibold text-slate-900"
-        >
-          Back to Reviews
-        </button>
+        <LinearBackButton />
 
         <section className="mt-6 grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_320px]">
           <aside className="space-y-4">

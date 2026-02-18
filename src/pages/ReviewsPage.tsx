@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
+import LinearBackButton from '../components/LinearBackButton'
 import { listSavedAlbumsForCurrentUser, type SavedAlbumCard } from '../lib/db/reviewsData'
 import { supabase } from '../lib/supabaseClient'
 
@@ -55,13 +56,17 @@ function ReviewsPage() {
     <main className="min-h-screen px-6 py-8">
       <div className="mx-auto w-full max-w-7xl">
         <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => navigate('/reviews/add')}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
-          >
-            Add Album
-          </button>
+          <div className="flex items-center gap-3">
+            <LinearBackButton />
+
+            <button
+              type="button"
+              onClick={() => navigate('/reviews/add')}
+              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+            >
+              Add Album
+            </button>
+          </div>
 
           <button
             type="button"

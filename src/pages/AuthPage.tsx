@@ -1,6 +1,7 @@
 import type { FormEvent } from 'react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import LinearBackButton from '../components/LinearBackButton'
 import { useAuthSession } from '../hooks/useAuthSession'
 import { supabase } from '../lib/supabaseClient'
 
@@ -69,6 +70,8 @@ function AuthPage() {
   return (
     <main className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6">
+        <LinearBackButton className="mb-4" />
+
         <h1 className="text-2xl font-bold text-slate-900">
           {mode === 'sign-in' ? 'Sign In' : 'Create Account'}
         </h1>
