@@ -1,4 +1,4 @@
-import { matchPath, useLocation, useNavigate } from 'react-router-dom'
+import { generatePath, matchPath, useLocation, useNavigate } from 'react-router-dom'
 
 type LinearBackRoute = {
   pattern: string
@@ -13,11 +13,20 @@ const LINEAR_BACK_ROUTES: LinearBackRoute[] = [
   { pattern: '/stats', previousPath: '/' },
   { pattern: '/search', previousPath: '/' },
   { pattern: '/friends', previousPath: '/' },
+  { pattern: '/friends/:friendUserId', previousPath: '/friends' },
+  { pattern: '/friends/:friendUserId/stats', previousPath: '/friends/:friendUserId' },
 ]
 
-const resolvePreviousPath = (pathname: string) =>
-  LINEAR_BACK_ROUTES.find((route) => matchPath({ path: route.pattern, end: true }, pathname))
-    ?.previousPath ?? '/'
+const resolvePreviousPath = (pathname: string) => {
+  for (const route of LINEAR_BACK_ROUTES) {
+    const match = matchPath({ path: route.pattern, end: true }, pathname)
+    if (match) {
+      return generatePath(route.previousPath, match.params)
+    }
+  }
+
+  return '/'
+}
 
 type LinearBackButtonProps = {
   className?: string

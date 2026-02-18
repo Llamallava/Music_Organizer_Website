@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage'
 import AddAlbumPage from './pages/AddAlbumPage'
 import AlbumReviewPage from './pages/AlbumReviewPage'
 import AuthPage from './pages/AuthPage'
+import FriendDetailPage from './pages/FriendDetailPage'
 import FriendsPage from './pages/FriendsPage'
 import MyStatsPage from './pages/MyStatsPage'
 import ReviewsPage from './pages/ReviewsPage'
@@ -62,6 +63,22 @@ function App() {
           element={
             <ProtectedRoute>
               <FriendsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/friends/:friendUserId"
+          element={
+            <ProtectedRoute>
+              <FriendDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/friends/:friendUserId/stats"
+          element={
+            <ProtectedRoute>
+              <MyStatsPage />
             </ProtectedRoute>
           }
         />

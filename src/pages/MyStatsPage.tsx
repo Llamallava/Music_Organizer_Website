@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
 import LinearBackButton from '../components/LinearBackButton'
+import { getFriendsOverviewForCurrentUser } from '../lib/db/friendsData'
 import {
   type FavoriteWordStat,
+  getStatsForUser,
   getMyStatsForCurrentUser,
   type MyStatsData,
   type RankedAlbumStat,
@@ -42,6 +44,8 @@ type TopTenModuleConfig = TopTenAlbumModuleConfig | TopTenSongModuleConfig | Gra
 const formatScoreValue = (score: number) => score.toFixed(1).replace(/\.0$/, '')
 const formatValue = (value: number, valueType: 'score' | 'words') =>
   valueType === 'words' ? Math.round(value).toLocaleString() : formatScoreValue(value)
+const getDisplayName = (username: string | null | undefined) => username?.trim() || 'Unnamed User'
+const toPossessiveName = (name: string) => (name.endsWith('s') || name.endsWith('S') ? `${name}'` : `${name}'s`)
 
 function TopTenAlbumsModule({
   title,
@@ -209,7 +213,10 @@ function GrandTotalWordsModule({
 
 function MyStatsPage() {
   const navigate = useNavigate()
+  const { friendUserId } = useParams<{ friendUserId: string }>()
+  const isFriendView = Boolean(friendUserId)
   const [statsData, setStatsData] = useState<MyStatsData | null>(null)
+  const [friendName, setFriendName] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -221,12 +228,35 @@ function MyStatsPage() {
       setErrorMessage(null)
 
       try {
+        if (friendUserId) {
+          const [data, overview] = await Promise.all([
+            getStatsForUser(friendUserId),
+            getFriendsOverviewForCurrentUser(),
+          ])
+          if (!isActive) {
+            return
+          }
+
+          const friend = overview.friends.find((entry) => entry.userId === friendUserId)
+          if (!friend) {
+            setStatsData(null)
+            setFriendName(null)
+            setErrorMessage('This friend is not in your current list.')
+            return
+          }
+
+          setStatsData(data)
+          setFriendName(getDisplayName(friend.username))
+          return
+        }
+
         const data = await getMyStatsForCurrentUser()
         if (!isActive) {
           return
         }
 
         setStatsData(data)
+        setFriendName(null)
       } catch (error) {
         if (!isActive) {
           return
@@ -246,7 +276,7 @@ function MyStatsPage() {
     return () => {
       isActive = false
     }
-  }, [])
+  }, [friendUserId])
 
   const modules = useMemo<TopTenModuleConfig[]>(() => {
     return [
@@ -324,7 +354,9 @@ function MyStatsPage() {
           </button>
         </div>
 
-        <h1 className="mt-5 text-3xl font-black text-slate-900">My Stats</h1>
+        <h1 className={`mt-5 font-black text-slate-900 ${isFriendView ? 'text-5xl tracking-tight' : 'text-3xl'}`}>
+          {isFriendView ? `${toPossessiveName(friendName ?? 'Friend')} Stats` : 'My Stats'}
+        </h1>
         <p className="mt-2 text-sm text-slate-700">
           This page uses modular 2-column cards so additional stat modules can be added easily.
         </p>

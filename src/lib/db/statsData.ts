@@ -1,5 +1,5 @@
 import { supabase } from '../supabaseClient'
-import { listSavedAlbumsForCurrentUser, type SavedAlbumCard } from './reviewsData'
+import { listSavedAlbumsForCurrentUser, listSavedAlbumsForUser, type SavedAlbumCard } from './reviewsData'
 
 export type RankedAlbumStat = {
   userSavedAlbumId: string
@@ -112,9 +112,7 @@ const tokenizeWords = (text: string): string[] => {
   return tokens.filter((token) => /[a-z]/.test(token))
 }
 
-export const getMyStatsForCurrentUser = async (): Promise<MyStatsData> => {
-  const savedAlbums = await listSavedAlbumsForCurrentUser()
-
+const buildStatsFromSavedAlbums = async (savedAlbums: SavedAlbumCard[]): Promise<MyStatsData> => {
   if (savedAlbums.length === 0) {
     return {
       topAlbumsByConclusionScore: [],
@@ -310,4 +308,14 @@ export const getMyStatsForCurrentUser = async (): Promise<MyStatsData> => {
     grandTotalWordsWritten,
     favoriteWords,
   }
+}
+
+export const getMyStatsForCurrentUser = async (): Promise<MyStatsData> => {
+  const savedAlbums = await listSavedAlbumsForCurrentUser()
+  return buildStatsFromSavedAlbums(savedAlbums)
+}
+
+export const getStatsForUser = async (userId: string): Promise<MyStatsData> => {
+  const savedAlbums = await listSavedAlbumsForUser(userId)
+  return buildStatsFromSavedAlbums(savedAlbums)
 }
