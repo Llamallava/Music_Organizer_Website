@@ -5,8 +5,10 @@ import HomePage from './pages/HomePage'
 import AddAlbumPage from './pages/AddAlbumPage'
 import AlbumReviewPage from './pages/AlbumReviewPage'
 import AuthPage from './pages/AuthPage'
+import FriendAlbumReviewPage from './pages/FriendAlbumReviewPage'
 import FriendDetailPage from './pages/FriendDetailPage'
 import FriendsPage from './pages/FriendsPage'
+import FriendReviewsPage from './pages/FriendReviewsPage'
 import MyStatsPage from './pages/MyStatsPage'
 import ReviewsPage from './pages/ReviewsPage'
 import SearchPage from './pages/SearchPage'
@@ -71,6 +73,22 @@ function App() {
           element={
             <ProtectedRoute>
               <FriendDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/friends/:friendUserId/reviews"
+          element={
+            <ProtectedRoute>
+              <FriendReviewsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/friends/:friendUserId/reviews/:userSavedAlbumId"
+          element={
+            <ProtectedRoute>
+              <FriendAlbumReviewPage />
             </ProtectedRoute>
           }
         />

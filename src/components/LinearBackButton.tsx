@@ -14,6 +14,8 @@ const LINEAR_BACK_ROUTES: LinearBackRoute[] = [
   { pattern: '/search', previousPath: '/' },
   { pattern: '/friends', previousPath: '/' },
   { pattern: '/friends/:friendUserId', previousPath: '/friends' },
+  { pattern: '/friends/:friendUserId/reviews', previousPath: '/friends/:friendUserId' },
+  { pattern: '/friends/:friendUserId/reviews/:userSavedAlbumId', previousPath: '/friends/:friendUserId/reviews' },
   { pattern: '/friends/:friendUserId/stats', previousPath: '/friends/:friendUserId' },
 ]
 

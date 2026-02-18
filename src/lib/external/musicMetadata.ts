@@ -32,6 +32,9 @@ type MusicBrainzReleaseSearchResult = {
   id: string
   title?: string
   date?: string
+  'release-group'?: {
+    id?: string
+  }
   'artist-credit'?: MusicBrainzArtistCredit[]
   media?: MusicBrainzMediaSummary[]
 }
@@ -162,6 +165,40 @@ const scoreAlbumResult = (
   return score
 }
 
+type AlbumSearchCandidate = AlbumSearchResult & {
+  dedupeKey: string
+}
+
+const getAlbumDedupeKey = ({
+  releaseGroupId,
+  artistName,
+  title,
+}: {
+  releaseGroupId?: string
+  artistName: string
+  title: string
+}): string => {
+  const normalizedReleaseGroupId = releaseGroupId?.trim()
+  if (normalizedReleaseGroupId) {
+    return `release-group:${normalizedReleaseGroupId}`
+  }
+
+  return `artist-title:${normalize(artistName)}::${normalize(title)}`
+}
+
+const dedupeAlbumResults = (results: AlbumSearchCandidate[]): AlbumSearchCandidate[] => {
+  const seenKeys = new Set<string>()
+
+  return results.filter((result) => {
+    if (seenKeys.has(result.dedupeKey)) {
+      return false
+    }
+
+    seenKeys.add(result.dedupeKey)
+    return true
+  })
+}
+
 const mapWithConcurrency = async <T, R>(
   items: T[],
   limit: number,
@@ -231,16 +268,26 @@ export const searchAlbums = async (input: AlbumSearchInput): Promise<AlbumSearch
   const data = await fetchJson<MusicBrainzSearchResponse>(url)
   const releases = data.releases ?? []
 
-  const mappedResults = releases.map((release) => ({
-    hasCover: true,
-    sourceProvider: 'musicbrainz' as const,
-    sourceAlbumId: release.id,
-    title: release.title?.trim() || 'Unknown Album',
-    artistName: getArtistNameFromCredit(release['artist-credit']),
-    coverUrl: getCoverUrl(release.id),
-    releaseDate: toSqlDate(release.date),
-    totalTracks: getTrackCount(release.media),
-  }))
+  const mappedResults: AlbumSearchCandidate[] = releases.map((release) => {
+    const title = release.title?.trim() || 'Unknown Album'
+    const artistName = getArtistNameFromCredit(release['artist-credit'])
+
+    return {
+      hasCover: true,
+      sourceProvider: 'musicbrainz' as const,
+      sourceAlbumId: release.id,
+      title,
+      artistName,
+      coverUrl: getCoverUrl(release.id),
+      releaseDate: toSqlDate(release.date),
+      totalTracks: getTrackCount(release.media),
+      dedupeKey: getAlbumDedupeKey({
+        releaseGroupId: release['release-group']?.id,
+        artistName,
+        title,
+      }),
+    }
+  })
 
   const filteredResults = mappedResults.filter((result) => {
     return includesNormalized(result.artistName, artistName) && includesNormalized(result.title, albumTitle)
@@ -252,7 +299,8 @@ export const searchAlbums = async (input: AlbumSearchInput): Promise<AlbumSearch
     return scoreB - scoreA
   })
 
-  const limited = prioritized.slice(0, 25)
+  const deduped = dedupeAlbumResults(prioritized)
+  const limited = deduped.slice(0, 25)
   const withAvailability = await mapWithConcurrency(limited, 6, async (result) => ({
     ...result,
     hasCover: await checkCoverAvailability(result.sourceAlbumId),
@@ -262,7 +310,7 @@ export const searchAlbums = async (input: AlbumSearchInput): Promise<AlbumSearch
   const withCover = withAvailability.filter((result) => result.hasCover)
   const withoutCover = withAvailability.filter((result) => !result.hasCover)
 
-  return [...withCover, ...withoutCover]
+  return [...withCover, ...withoutCover].map(({ dedupeKey: _dedupeKey, ...result }) => result)
 }
 
 export const fetchAlbumTracksWithLyrics = async (

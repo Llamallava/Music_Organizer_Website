@@ -101,6 +101,7 @@ function FriendDetailPage() {
               <button
                 type="button"
                 className="rounded-md bg-slate-900 px-4 py-3 text-sm font-semibold text-white"
+                onClick={() => navigate(`/friends/${friend.userId}/reviews`)}
               >
                 Read {toPossessiveName(displayName)} Reviews
               </button>

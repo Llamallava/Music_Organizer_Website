@@ -1,0 +1,273 @@
+import { useEffect, useMemo, useState } from 'react'
+import { useParams } from 'react-router-dom'
+import AlbumCover from '../components/AlbumCover'
+import LinearBackButton from '../components/LinearBackButton'
+import { getFriendsOverviewForCurrentUser } from '../lib/db/friendsData'
+import { getAlbumWorkspaceForUser, type AlbumWorkspace, type ReviewSection } from '../lib/db/reviewsData'
+
+const CONCLUSION_KEY = 'conclusion'
+const toTrackKey = (trackNumber: number) => `track:${trackNumber}`
+const getDisplayName = (username: string | null | undefined) => username?.trim() || 'Unnamed User'
+const toPossessiveName = (name: string) => (name.endsWith('s') || name.endsWith('S') ? `${name}'` : `${name}'s`)
+
+const parseTrackNumberFromKey = (key: string): number | null => {
+  if (!key.startsWith('track:')) {
+    return null
+  }
+
+  const trackNumber = Number(key.replace('track:', ''))
+  if (!Number.isInteger(trackNumber) || trackNumber <= 0) {
+    return null
+  }
+
+  return trackNumber
+}
+
+function FriendAlbumReviewPage() {
+  const { friendUserId, userSavedAlbumId } = useParams<{ friendUserId: string; userSavedAlbumId: string }>()
+  const [workspace, setWorkspace] = useState<AlbumWorkspace | null>(null)
+  const [friendName, setFriendName] = useState<string | null>(null)
+  const [activeSectionKey, setActiveSectionKey] = useState<string>(CONCLUSION_KEY)
+  const [isLoading, setIsLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!friendUserId || !userSavedAlbumId) {
+      setErrorMessage('Missing review identifier.')
+      setIsLoading(false)
+      return
+    }
+
+    let isActive = true
+
+    const loadWorkspace = async () => {
+      setIsLoading(true)
+      setErrorMessage(null)
+
+      try {
+        const [overview, loadedWorkspace] = await Promise.all([
+          getFriendsOverviewForCurrentUser(),
+          getAlbumWorkspaceForUser(friendUserId, userSavedAlbumId),
+        ])
+
+        if (!isActive) {
+          return
+        }
+
+        const friend = overview.friends.find((entry) => entry.userId === friendUserId)
+        if (!friend) {
+          setWorkspace(null)
+          setFriendName(null)
+          setErrorMessage('This friend is not in your current list.')
+          return
+        }
+
+        if (!loadedWorkspace) {
+          setWorkspace(null)
+          setFriendName(getDisplayName(friend.username))
+          setErrorMessage('Album review not found.')
+          return
+        }
+
+        const firstTrack = loadedWorkspace.tracks[0]
+        setWorkspace(loadedWorkspace)
+        setFriendName(getDisplayName(friend.username))
+        setActiveSectionKey(firstTrack ? toTrackKey(firstTrack.trackNumber) : CONCLUSION_KEY)
+      } catch (error) {
+        if (!isActive) {
+          return
+        }
+
+        const message = error instanceof Error ? error.message : 'Failed to load friend review workspace.'
+        setErrorMessage(message)
+      } finally {
+        if (isActive) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    void loadWorkspace()
+
+    return () => {
+      isActive = false
+    }
+  }, [friendUserId, userSavedAlbumId])
+
+  const activeTrack = useMemo(() => {
+    if (!workspace) {
+      return null
+    }
+
+    const trackNumber = parseTrackNumberFromKey(activeSectionKey)
+    if (!trackNumber) {
+      return null
+    }
+
+    return workspace.tracks.find((track) => track.trackNumber === trackNumber) ?? null
+  }, [activeSectionKey, workspace])
+
+  const activeSection = useMemo<ReviewSection | null>(() => {
+    if (!workspace) {
+      return null
+    }
+
+    if (activeSectionKey === CONCLUSION_KEY) {
+      return workspace.sections.find((section) => section.sectionType === 'conclusion') ?? null
+    }
+
+    const trackNumber = parseTrackNumberFromKey(activeSectionKey)
+    if (!trackNumber) {
+      return null
+    }
+
+    return (
+      workspace.sections.find(
+        (section) => section.sectionType === 'track' && section.trackNumber === trackNumber,
+      ) ?? null
+    )
+  }, [activeSectionKey, workspace])
+
+  if (isLoading) {
+    return (
+      <main className="min-h-screen px-6 py-8">
+        <div className="mx-auto w-full max-w-6xl">
+          <LinearBackButton />
+          <p className="mt-6 rounded-lg bg-white px-4 py-3 text-sm text-slate-700">
+            Loading review workspace...
+          </p>
+        </div>
+      </main>
+    )
+  }
+
+  if (!workspace) {
+    return (
+      <main className="min-h-screen px-6 py-8">
+        <div className="mx-auto w-full max-w-6xl">
+          <LinearBackButton />
+
+          <h1 className="mt-5 text-5xl font-black tracking-tight text-slate-900">
+            {toPossessiveName(friendName ?? 'Friend')} Reviews
+          </h1>
+
+          <div className="mt-6 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+            {errorMessage ?? 'Could not load this album review.'}
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  const displayName = friendName ?? 'Friend'
+  const scoreText = activeSection?.score === null || activeSection?.score === undefined
+    ? 'Unscored'
+    : `${activeSection.score}/10`
+  const notesText = activeSection?.notes ?? ''
+
+  return (
+    <main className="min-h-screen px-6 py-8">
+      <div className="mx-auto w-full max-w-[1500px]">
+        <LinearBackButton />
+
+        <h1 className="mt-5 text-5xl font-black tracking-tight text-slate-900">
+          {toPossessiveName(displayName)} Reviews
+        </h1>
+        <p className="mt-1 text-sm text-slate-600">Read-only view.</p>
+
+        <section className="mt-6 grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_320px]">
+          <aside className="space-y-4">
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <div className="aspect-square w-full overflow-hidden rounded-lg bg-slate-200">
+                <AlbumCover src={workspace.album.coverUrl} alt={`${workspace.album.title} cover`} loading="eager" />
+              </div>
+              <h2 className="mt-3 text-base font-bold text-slate-900">{workspace.album.title}</h2>
+              <p className="text-sm text-slate-700">{workspace.album.artistName}</p>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-white p-3">
+              <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Tracklist</p>
+              <div className="max-h-[60vh] space-y-1 overflow-auto pr-1">
+                {workspace.tracks.map((track) => {
+                  const key = toTrackKey(track.trackNumber)
+                  const isActive = key === activeSectionKey
+
+                  return (
+                    <button
+                      key={track.id}
+                      type="button"
+                      onClick={() => setActiveSectionKey(key)}
+                      className={`w-full rounded-lg px-3 py-2 text-left text-sm ${
+                        isActive ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
+                      }`}
+                    >
+                      <span className="mr-2 font-semibold">{track.trackNumber}.</span>
+                      {track.title}
+                    </button>
+                  )
+                })}
+
+                <button
+                  type="button"
+                  onClick={() => setActiveSectionKey(CONCLUSION_KEY)}
+                  className={`w-full rounded-lg px-3 py-2 text-left text-sm font-semibold ${
+                    activeSectionKey === CONCLUSION_KEY
+                      ? 'bg-slate-900 text-white'
+                      : 'bg-amber-100 text-amber-900 hover:bg-amber-200'
+                  }`}
+                >
+                  Conclusion
+                </button>
+              </div>
+            </div>
+          </aside>
+
+          <section className="rounded-xl border border-slate-200 bg-white p-4">
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Review Section</p>
+                <h2 className="text-lg font-bold text-slate-900">
+                  {activeTrack ? `${activeTrack.trackNumber}. ${activeTrack.title}` : 'Conclusion'}
+                </h2>
+              </div>
+
+              <p className="rounded-md bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-800">
+                Score: {scoreText}
+              </p>
+            </div>
+
+            {activeTrack && activeSection?.isInterlude && (
+              <p className="mb-3 inline-flex rounded-md bg-amber-100 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-amber-900">
+                Interlude
+              </p>
+            )}
+
+            <textarea
+              value={notesText}
+              readOnly
+              placeholder="No notes written for this section."
+              className="h-[62vh] w-full resize-none rounded-lg border border-slate-300 bg-slate-50 p-3 text-sm leading-relaxed text-slate-900"
+            />
+          </section>
+
+          <aside className="rounded-xl border border-slate-200 bg-white p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Lyrics</p>
+            {activeTrack ? (
+              activeTrack.lyrics.trim() ? (
+                <pre className="mt-2 max-h-[72vh] overflow-auto whitespace-pre-wrap text-sm leading-relaxed text-slate-800">
+                  {activeTrack.lyrics}
+                </pre>
+              ) : (
+                <p className="mt-2 text-sm text-slate-600">No lyrics stored for this track.</p>
+              )
+            ) : (
+              <p className="mt-2 text-sm text-slate-600">Conclusion has no lyrics.</p>
+            )}
+          </aside>
+        </section>
+      </div>
+    </main>
+  )
+}
+
+export default FriendAlbumReviewPage

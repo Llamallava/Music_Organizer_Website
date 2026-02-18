@@ -138,11 +138,10 @@ export const listSavedAlbumsForUser = async (userId: string): Promise<SavedAlbum
   return listSavedAlbumsByUserId(userId)
 }
 
-export const getAlbumWorkspaceForCurrentUser = async (
+const getAlbumWorkspaceByUserId = async (
+  userId: string,
   userSavedAlbumId: string,
 ): Promise<AlbumWorkspace | null> => {
-  const userId = await requireAuthenticatedUserId()
-
   const { data: savedAlbumRow, error: savedAlbumError } = await supabase
     .from('user_saved_albums')
     .select('id, user_id, album_id')
@@ -212,6 +211,21 @@ export const getAlbumWorkspaceForCurrentUser = async (
       score: section.score,
     })),
   }
+}
+
+export const getAlbumWorkspaceForCurrentUser = async (
+  userSavedAlbumId: string,
+): Promise<AlbumWorkspace | null> => {
+  const userId = await requireAuthenticatedUserId()
+  return getAlbumWorkspaceByUserId(userId, userSavedAlbumId)
+}
+
+export const getAlbumWorkspaceForUser = async (
+  userId: string,
+  userSavedAlbumId: string,
+): Promise<AlbumWorkspace | null> => {
+  await requireAuthenticatedUserId()
+  return getAlbumWorkspaceByUserId(userId, userSavedAlbumId)
 }
 
 export const saveAlbumForCurrentUser = async (input: SaveAlbumInput): Promise<string> => {
