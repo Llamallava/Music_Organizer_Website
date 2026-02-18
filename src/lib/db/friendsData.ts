@@ -172,8 +172,11 @@ export const getFriendsOverviewForCurrentUser = async (): Promise<FriendsOvervie
   }
 }
 
-export const addFriendByCodeForCurrentUser = async (rawFriendCode: string): Promise<void> => {
-  const userId = await requireAuthenticatedUserId()
+const resolveFriendTargetByCodeForCurrentUser = async (rawFriendCode: string): Promise<{
+  currentUserId: string
+  targetProfile: FriendProfile
+}> => {
+  const currentUserId = await requireAuthenticatedUserId()
   const friendCode = normalizeFriendCode(rawFriendCode)
 
   if (!FRIEND_CODE_PATTERN.test(friendCode)) {
@@ -182,22 +185,42 @@ export const addFriendByCodeForCurrentUser = async (rawFriendCode: string): Prom
 
   const { data: targetProfile, error: targetProfileError } = await supabase
     .from('profiles')
-    .select('user_id')
+    .select('user_id, username, friend_code')
     .eq('friend_code', friendCode)
     .maybeSingle()
 
   throwIfError(targetProfileError, 'Failed to find user by friend code')
 
-  if (!targetProfile) {
+  if (!targetProfile || !targetProfile.friend_code) {
     throw new Error('No user found for that friend code.')
   }
 
-  if (targetProfile.user_id === userId) {
+  if (targetProfile.user_id === currentUserId) {
     throw new Error('You cannot add yourself as a friend.')
   }
 
+  return {
+    currentUserId,
+    targetProfile: {
+      userId: targetProfile.user_id,
+      username: targetProfile.username,
+      friendCode: targetProfile.friend_code,
+    },
+  }
+}
+
+export const lookupFriendByCodeForCurrentUser = async (rawFriendCode: string): Promise<FriendProfile> => {
+  const { targetProfile } = await resolveFriendTargetByCodeForCurrentUser(rawFriendCode)
+  return targetProfile
+}
+
+export const addFriendByCodeForCurrentUser = async (rawFriendCode: string): Promise<void> => {
+  const { currentUserId, targetProfile } = await resolveFriendTargetByCodeForCurrentUser(rawFriendCode)
+
   const [firstUserId, secondUserId] =
-    userId < targetProfile.user_id ? [userId, targetProfile.user_id] : [targetProfile.user_id, userId]
+    currentUserId < targetProfile.userId
+      ? [currentUserId, targetProfile.userId]
+      : [targetProfile.userId, currentUserId]
 
   const { error: upsertError } = await supabase.from('friendships').upsert(
     {
@@ -211,4 +234,27 @@ export const addFriendByCodeForCurrentUser = async (rawFriendCode: string): Prom
   )
 
   throwIfError(upsertError, 'Failed to add friend')
+}
+
+export const removeFriendForCurrentUser = async (friendUserId: string): Promise<void> => {
+  const currentUserId = await requireAuthenticatedUserId()
+
+  if (!friendUserId) {
+    throw new Error('Missing friend identifier.')
+  }
+
+  if (friendUserId === currentUserId) {
+    throw new Error('You cannot remove yourself.')
+  }
+
+  const [firstUserId, secondUserId] =
+    currentUserId < friendUserId ? [currentUserId, friendUserId] : [friendUserId, currentUserId]
+
+  const { error: deleteError } = await supabase
+    .from('friendships')
+    .delete()
+    .eq('user_id', firstUserId)
+    .eq('friend_user_id', secondUserId)
+
+  throwIfError(deleteError, 'Failed to remove friend')
 }
