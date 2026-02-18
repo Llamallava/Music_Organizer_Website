@@ -246,6 +246,7 @@ const NOISE_LINE_PATTERNS: RegExp[] = [
   /^\s*return\s+to\s+.*\s+lyrics\s*$/i,
   /^\s*\d+\s+contributors?.*$/i,
   /^\s*\d+(\.\d+)?[kmb]?\s+views?.*$/i,
+  /^\s*\[[^\]]+\]\s*$/i,
 ]
 
 const LEADING_NOISE_PATTERNS: RegExp[] = [

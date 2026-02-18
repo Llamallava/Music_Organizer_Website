@@ -6,6 +6,7 @@ import AlbumReviewPage from './pages/AlbumReviewPage'
 import AuthPage from './pages/AuthPage'
 import MyStatsPage from './pages/MyStatsPage'
 import ReviewsPage from './pages/ReviewsPage'
+import SearchPage from './pages/SearchPage'
 
 function App() {
   return (
@@ -41,6 +42,14 @@ function App() {
         element={
           <ProtectedRoute>
             <MyStatsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/search"
+        element={
+          <ProtectedRoute>
+            <SearchPage />
           </ProtectedRoute>
         }
       />
