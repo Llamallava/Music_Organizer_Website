@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
 import LinearBackButton from '../components/LinearBackButton'
 import {
+  type FavoriteWordStat,
   getMyStatsForCurrentUser,
   type MyStatsData,
   type RankedAlbumStat,
@@ -27,7 +28,16 @@ type TopTenSongModuleConfig = {
   items: RankedSongStat[]
 }
 
-type TopTenModuleConfig = TopTenAlbumModuleConfig | TopTenSongModuleConfig
+type GrandTotalWordsModuleConfig = {
+  id: string
+  moduleType: 'grand-total-words'
+  title: string
+  valueLabel: string
+  totalWords: number
+  favoriteWords: FavoriteWordStat[]
+}
+
+type TopTenModuleConfig = TopTenAlbumModuleConfig | TopTenSongModuleConfig | GrandTotalWordsModuleConfig
 
 const formatScoreValue = (score: number) => score.toFixed(1).replace(/\.0$/, '')
 const formatValue = (value: number, valueType: 'score' | 'words') =>
@@ -154,6 +164,49 @@ function TopTenSongsModule({
   )
 }
 
+function GrandTotalWordsModule({
+  title,
+  valueLabel,
+  totalWords,
+  favoriteWords,
+}: Omit<GrandTotalWordsModuleConfig, 'id' | 'moduleType'>) {
+  return (
+    <article className="col-span-2 rounded-xl border border-slate-200 bg-white/90 p-5 shadow-sm">
+      <div className="grid gap-5 md:grid-cols-2">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900">{title}</h2>
+          <p className="mt-1 text-sm text-slate-600">Combined across all reviews on this account.</p>
+          <p className="mt-4 text-4xl font-black tracking-tight text-slate-900">
+            {formatValue(totalWords, 'words')}
+          </p>
+          <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-slate-500">{valueLabel}</p>
+        </div>
+
+        <div>
+          <p className="text-sm font-semibold text-slate-900">Your favorite words:</p>
+          {favoriteWords.length > 0 ? (
+            <ul className="mt-3 space-y-2">
+              {favoriteWords.map((item, index) => (
+                <li
+                  key={item.word}
+                  className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2 text-sm"
+                >
+                  <span className="font-semibold text-slate-900">
+                    {index + 1}. {item.word}
+                  </span>
+                  <span className="text-slate-600">{item.count.toLocaleString()}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-2 text-sm text-slate-600">No words yet.</p>
+          )}
+        </div>
+      </div>
+    </article>
+  )
+}
+
 function MyStatsPage() {
   const navigate = useNavigate()
   const [statsData, setStatsData] = useState<MyStatsData | null>(null)
@@ -245,6 +298,14 @@ function MyStatsPage() {
         valueType: 'words',
         items: statsData?.topSongsByWordsWritten ?? [],
       },
+      {
+        id: 'grand-total-words-written',
+        moduleType: 'grand-total-words',
+        title: 'Grand Total of Words Written',
+        valueLabel: 'Total Words Written',
+        totalWords: statsData?.grandTotalWordsWritten ?? 0,
+        favoriteWords: statsData?.favoriteWords ?? [],
+      },
     ]
   }, [statsData])
 
@@ -288,13 +349,21 @@ function MyStatsPage() {
                   valueType={module.valueType}
                   items={module.items}
                 />
-              ) : (
+              ) : module.moduleType === 'song' ? (
                 <TopTenSongsModule
                   key={module.id}
                   title={module.title}
                   valueLabel={module.valueLabel}
                   valueType={module.valueType}
                   items={module.items}
+                />
+              ) : (
+                <GrandTotalWordsModule
+                  key={module.id}
+                  title={module.title}
+                  valueLabel={module.valueLabel}
+                  totalWords={module.totalWords}
+                  favoriteWords={module.favoriteWords}
                 />
               )
             ))}

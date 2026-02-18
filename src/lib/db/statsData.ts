@@ -21,6 +21,11 @@ export type RankedSongStat = {
   value: number
 }
 
+export type FavoriteWordStat = {
+  word: string
+  count: number
+}
+
 export type MyStatsData = {
   topAlbumsByConclusionScore: RankedAlbumStat[]
   topAlbumsByTrackAverage: RankedAlbumStat[]
@@ -28,6 +33,8 @@ export type MyStatsData = {
   topInterludeSongs: RankedSongStat[]
   topAlbumsByWordsWritten: RankedAlbumStat[]
   topSongsByWordsWritten: RankedSongStat[]
+  grandTotalWordsWritten: number
+  favoriteWords: FavoriteWordStat[]
 }
 
 type TrackScoreAccumulator = {
@@ -97,12 +104,12 @@ const sortSongsByValueDescending = (left: RankedSongStat, right: RankedSongStat)
 }
 
 const countWords = (text: string): number => {
-  const trimmed = text.trim()
-  if (!trimmed) {
-    return 0
-  }
+  return tokenizeWords(text).length
+}
 
-  return trimmed.split(/\s+/).length
+const tokenizeWords = (text: string): string[] => {
+  const tokens = text.toLowerCase().match(/[a-z']+/g) ?? []
+  return tokens.filter((token) => /[a-z]/.test(token))
 }
 
 export const getMyStatsForCurrentUser = async (): Promise<MyStatsData> => {
@@ -116,6 +123,8 @@ export const getMyStatsForCurrentUser = async (): Promise<MyStatsData> => {
       topInterludeSongs: [],
       topAlbumsByWordsWritten: [],
       topSongsByWordsWritten: [],
+      grandTotalWordsWritten: 0,
+      favoriteWords: [],
     }
   }
 
@@ -140,6 +149,7 @@ export const getMyStatsForCurrentUser = async (): Promise<MyStatsData> => {
   const trackTitleByAlbumAndNumber = new Map<string, string>()
   const wordsBySavedAlbumId = new Map<string, number>()
   const wordsBySavedAlbumTrackKey = new Map<string, { savedAlbumId: string; trackNumber: number; words: number }>()
+  const wordFrequency = new Map<string, number>()
   const topSongCandidates: RankedSongStat[] = []
   const topInterludeCandidates: RankedSongStat[] = []
 
@@ -152,6 +162,11 @@ export const getMyStatsForCurrentUser = async (): Promise<MyStatsData> => {
     if (wordsWritten > 0) {
       const currentAlbumWords = wordsBySavedAlbumId.get(section.user_saved_album_id) ?? 0
       wordsBySavedAlbumId.set(section.user_saved_album_id, currentAlbumWords + wordsWritten)
+
+      for (const token of tokenizeWords(section.notes)) {
+        const currentFrequency = wordFrequency.get(token) ?? 0
+        wordFrequency.set(token, currentFrequency + 1)
+      }
 
       if (section.section_type === 'track' && section.track_number !== null) {
         const trackKey = `${section.user_saved_album_id}:${section.track_number}`
@@ -269,6 +284,22 @@ export const getMyStatsForCurrentUser = async (): Promise<MyStatsData> => {
     .sort(sortSongsByValueDescending)
     .slice(0, 10)
 
+  const grandTotalWordsWritten = Array.from(wordsBySavedAlbumId.values()).reduce(
+    (total, words) => total + words,
+    0,
+  )
+
+  const favoriteWords = Array.from(wordFrequency.entries())
+    .map(([word, count]) => ({ word, count }))
+    .sort((left, right) => {
+      if (right.count !== left.count) {
+        return right.count - left.count
+      }
+
+      return left.word.localeCompare(right.word)
+    })
+    .slice(0, 3)
+
   return {
     topAlbumsByConclusionScore,
     topAlbumsByTrackAverage,
@@ -276,5 +307,7 @@ export const getMyStatsForCurrentUser = async (): Promise<MyStatsData> => {
     topInterludeSongs,
     topAlbumsByWordsWritten,
     topSongsByWordsWritten,
+    grandTotalWordsWritten,
+    favoriteWords,
   }
 }

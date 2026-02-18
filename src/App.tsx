@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+import AccountMenu from './components/AccountMenu'
 import ProtectedRoute from './components/ProtectedRoute'
 import HomePage from './pages/HomePage'
 import AddAlbumPage from './pages/AddAlbumPage'
@@ -10,51 +11,54 @@ import SearchPage from './pages/SearchPage'
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/auth" element={<AuthPage />} />
-      <Route
-        path="/reviews"
-        element={
-          <ProtectedRoute>
-            <ReviewsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/reviews/add"
-        element={
-          <ProtectedRoute>
-            <AddAlbumPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/reviews/:userSavedAlbumId"
-        element={
-          <ProtectedRoute>
-            <AlbumReviewPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/stats"
-        element={
-          <ProtectedRoute>
-            <MyStatsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/search"
-        element={
-          <ProtectedRoute>
-            <SearchPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <AccountMenu />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/auth" element={<AuthPage />} />
+        <Route
+          path="/reviews"
+          element={
+            <ProtectedRoute>
+              <ReviewsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reviews/add"
+          element={
+            <ProtectedRoute>
+              <AddAlbumPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reviews/:userSavedAlbumId"
+          element={
+            <ProtectedRoute>
+              <AlbumReviewPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/stats"
+          element={
+            <ProtectedRoute>
+              <MyStatsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/search"
+          element={
+            <ProtectedRoute>
+              <SearchPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   )
 }
 

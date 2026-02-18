@@ -3,18 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
 import LinearBackButton from '../components/LinearBackButton'
 import { listSavedAlbumsForCurrentUser, type SavedAlbumCard } from '../lib/db/reviewsData'
-import { supabase } from '../lib/supabaseClient'
 
 function ReviewsPage() {
   const navigate = useNavigate()
   const [albums, setAlbums] = useState<SavedAlbumCard[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    navigate('/auth', { replace: true })
-  }
 
   useEffect(() => {
     let isActive = true
@@ -55,25 +49,14 @@ function ReviewsPage() {
   return (
     <main className="min-h-screen px-6 py-8">
       <div className="mx-auto w-full max-w-7xl">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <LinearBackButton />
-
-            <button
-              type="button"
-              onClick={() => navigate('/reviews/add')}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
-            >
-              Add Album
-            </button>
-          </div>
-
+        <div className="flex items-center gap-3">
+          <LinearBackButton />
           <button
             type="button"
-            onClick={() => void handleSignOut()}
-            className="rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-900"
+            onClick={() => navigate('/reviews/add')}
+            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
           >
-            Sign Out
+            Add Album
           </button>
         </div>
 
