@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import AlbumCover from '../components/AlbumCover'
 import {
   getAlbumWorkspaceForCurrentUser,
   upsertConclusionSectionForCurrentUser,
@@ -10,6 +11,7 @@ import {
 type SectionDraft = {
   notes: string
   scoreInput: string
+  isInterlude: boolean
 }
 
 type DraftMap = Record<string, SectionDraft>
@@ -21,6 +23,7 @@ const toTrackKey = (trackNumber: number) => `track:${trackNumber}`
 const defaultDraft = (): SectionDraft => ({
   notes: '',
   scoreInput: '',
+  isInterlude: false,
 })
 
 const parseTrackNumberFromKey = (key: string): number | null => {
@@ -58,6 +61,7 @@ const buildInitialDraftMap = (workspace: AlbumWorkspace): DraftMap => {
       map[toTrackKey(section.trackNumber)] = {
         notes: section.notes,
         scoreInput: section.score === null ? '' : String(section.score),
+        isInterlude: section.isInterlude,
       }
       continue
     }
@@ -66,6 +70,7 @@ const buildInitialDraftMap = (workspace: AlbumWorkspace): DraftMap => {
       map[CONCLUSION_KEY] = {
         notes: section.notes,
         scoreInput: section.score === null ? '' : String(section.score),
+        isInterlude: false,
       }
     }
   }
@@ -151,7 +156,9 @@ function AlbumReviewPage() {
   const activeDraft = draftBySection[activeSectionKey] ?? defaultDraft()
   const activeSavedDraft = savedBySection[activeSectionKey] ?? defaultDraft()
   const isDirty =
-    activeDraft.notes !== activeSavedDraft.notes || activeDraft.scoreInput !== activeSavedDraft.scoreInput
+    activeDraft.notes !== activeSavedDraft.notes ||
+    activeDraft.scoreInput !== activeSavedDraft.scoreInput ||
+    activeDraft.isInterlude !== activeSavedDraft.isInterlude
 
   const activeTrack = useMemo(() => {
     if (!workspace) {
@@ -186,6 +193,16 @@ function AlbumReviewPage() {
     }))
   }
 
+  const handleInterludeChange = (value: boolean) => {
+    setDraftBySection((previous) => ({
+      ...previous,
+      [activeSectionKey]: {
+        ...(previous[activeSectionKey] ?? defaultDraft()),
+        isInterlude: value,
+      },
+    }))
+  }
+
   const handleSaveCurrentSection = async () => {
     if (!workspace) {
       return
@@ -213,6 +230,7 @@ function AlbumReviewPage() {
         await upsertTrackReviewSectionForCurrentUser({
           userSavedAlbumId: workspace.userSavedAlbumId,
           trackNumber,
+          isInterlude: activeDraft.isInterlude,
           notes: activeDraft.notes,
           score,
         })
@@ -221,6 +239,7 @@ function AlbumReviewPage() {
       const normalizedDraft: SectionDraft = {
         notes: activeDraft.notes,
         scoreInput: score === null ? '' : String(score),
+        isInterlude: activeTrack ? activeDraft.isInterlude : false,
       }
 
       setDraftBySection((previous) => ({
@@ -284,17 +303,7 @@ function AlbumReviewPage() {
           <aside className="space-y-4">
             <div className="rounded-xl border border-slate-200 bg-white p-4">
               <div className="aspect-square w-full overflow-hidden rounded-lg bg-slate-200">
-                {workspace.album.coverUrl ? (
-                  <img
-                    src={workspace.album.coverUrl}
-                    alt={`${workspace.album.title} cover`}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-500">
-                    No Cover
-                  </div>
-                )}
+                <AlbumCover src={workspace.album.coverUrl} alt={`${workspace.album.title} cover`} loading="eager" />
               </div>
               <h1 className="mt-3 text-base font-bold text-slate-900">{workspace.album.title}</h1>
               <p className="text-sm text-slate-700">{workspace.album.artistName}</p>
@@ -367,6 +376,18 @@ function AlbumReviewPage() {
                 />
               </label>
             </div>
+
+            {activeTrack && (
+              <label className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={activeDraft.isInterlude}
+                  onChange={(event) => handleInterludeChange(event.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300"
+                />
+                Mark as interlude
+              </label>
+            )}
 
             <textarea
               value={activeDraft.notes}

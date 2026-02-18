@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import AlbumCover from '../components/AlbumCover'
 import { listSavedAlbumsForCurrentUser, type SavedAlbumCard } from '../lib/db/reviewsData'
 import { supabase } from '../lib/supabaseClient'
 
@@ -98,18 +99,7 @@ function ReviewsPage() {
                 className="text-left"
               >
                 <div className="aspect-square w-full overflow-hidden rounded-lg bg-slate-200">
-                  {album.coverUrl ? (
-                    <img
-                      src={album.coverUrl}
-                      alt={`${album.title} cover`}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-500">
-                      No Cover
-                    </div>
-                  )}
+                  <AlbumCover src={album.coverUrl} alt={`${album.title} cover`} loading="lazy" />
                 </div>
 
                 <p className="mt-2 truncate text-sm font-semibold text-slate-900">{album.title}</p>

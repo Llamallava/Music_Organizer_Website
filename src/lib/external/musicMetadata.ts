@@ -1,57 +1,69 @@
 import type { SaveAlbumTrackInput } from '../db/reviewsData'
+import { getLyricsAsync } from './geniusLyrics'
 
 export type AlbumSearchResult = {
-  sourceProvider: 'itunes'
+  sourceProvider: 'musicbrainz'
   sourceAlbumId: string
   title: string
   artistName: string
   coverUrl: string | null
+  hasCover: boolean
   releaseDate: string | null
   totalTracks: number
 }
 
-type ITunesAlbumResult = {
-  wrapperType: string
-  collectionType?: string
-  collectionId: number
-  collectionName: string
+export type AlbumSearchInput = {
   artistName: string
-  artworkUrl100?: string
-  releaseDate?: string
-  trackCount?: number
+  albumTitle: string
 }
 
-type ITunesTrackResult = {
-  wrapperType: string
-  kind?: string
-  trackNumber?: number
-  trackName?: string
-  trackTimeMillis?: number
-}
-
-const toHighResArtwork = (url: string | undefined): string | null => {
-  if (!url) {
-    return null
+type MusicBrainzArtistCredit = {
+  name?: string
+  artist?: {
+    name?: string
   }
-
-  return url.replace(/\/[0-9]+x[0-9]+bb\./, '/600x600bb.')
 }
 
-const toSqlDate = (isoDate: string | undefined): string | null => {
-  if (!isoDate) {
-    return null
-  }
-
-  const date = new Date(isoDate)
-  if (Number.isNaN(date.getTime())) {
-    return null
-  }
-
-  return date.toISOString().slice(0, 10)
+type MusicBrainzMediaSummary = {
+  'track-count'?: number
 }
+
+type MusicBrainzReleaseSearchResult = {
+  id: string
+  title?: string
+  date?: string
+  'artist-credit'?: MusicBrainzArtistCredit[]
+  media?: MusicBrainzMediaSummary[]
+}
+
+type MusicBrainzSearchResponse = {
+  releases?: MusicBrainzReleaseSearchResult[]
+}
+
+type MusicBrainzTrack = {
+  title?: string
+  length?: number
+}
+
+type MusicBrainzReleaseLookupMedia = {
+  position?: number
+  tracks?: MusicBrainzTrack[]
+}
+
+type MusicBrainzReleaseLookupResponse = {
+  media?: MusicBrainzReleaseLookupMedia[]
+}
+
+const MUSICBRAINZ_BASE = 'https://musicbrainz.org/ws/2'
+const COVER_ART_BASE = 'https://coverartarchive.org'
+const coverAvailabilityCache = new Map<string, boolean>()
 
 const fetchJson = async <T>(url: string): Promise<T> => {
-  const response = await fetch(url)
+  const response = await fetch(url, {
+    headers: {
+      Accept: 'application/json',
+    },
+  })
 
   if (!response.ok) {
     throw new Error(`Request failed (${response.status}) for ${url}`)
@@ -60,44 +72,94 @@ const fetchJson = async <T>(url: string): Promise<T> => {
   return (await response.json()) as T
 }
 
-export const searchAlbums = async (query: string): Promise<AlbumSearchResult[]> => {
-  const trimmed = query.trim()
-  if (!trimmed) {
-    return []
+const normalize = (value: string): string => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+
+const includesNormalized = (haystack: string, needle: string): boolean => {
+  const normalizedNeedle = normalize(needle)
+  if (!normalizedNeedle) {
+    return true
   }
 
-  const url = `https://itunes.apple.com/search?term=${encodeURIComponent(trimmed)}&entity=album&limit=25`
-  const data = await fetchJson<{ results?: ITunesAlbumResult[] }>(url)
-  const results = data.results ?? []
-
-  return results
-    .filter((result) => result.wrapperType === 'collection' && result.collectionType === 'Album')
-    .map((result) => ({
-      sourceProvider: 'itunes' as const,
-      sourceAlbumId: String(result.collectionId),
-      title: result.collectionName,
-      artistName: result.artistName,
-      coverUrl: toHighResArtwork(result.artworkUrl100),
-      releaseDate: toSqlDate(result.releaseDate),
-      totalTracks: result.trackCount ?? 0,
-    }))
+  return normalize(haystack).includes(normalizedNeedle)
 }
 
-const fetchTrackLyrics = async (artistName: string, trackName: string): Promise<string> => {
-  const url = `https://api.lyrics.ovh/v1/${encodeURIComponent(artistName)}/${encodeURIComponent(trackName)}`
-
-  try {
-    const response = await fetch(url)
-    if (!response.ok) {
-      return ''
-    }
-
-    const data = (await response.json()) as { lyrics?: string }
-    const lyrics = data.lyrics?.trim() ?? ''
-    return lyrics
-  } catch {
-    return ''
+const toSqlDate = (partialDate: string | undefined): string | null => {
+  if (!partialDate) {
+    return null
   }
+
+  const normalized = partialDate.trim()
+  if (!normalized) {
+    return null
+  }
+
+  if (/^\d{4}$/.test(normalized)) {
+    return `${normalized}-01-01`
+  }
+
+  if (/^\d{4}-\d{2}$/.test(normalized)) {
+    return `${normalized}-01`
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    return normalized
+  }
+
+  return null
+}
+
+const escapeLuceneValue = (value: string): string => value.replace(/["\\]/g, '\\$&')
+
+const getArtistNameFromCredit = (credit: MusicBrainzArtistCredit[] | undefined): string => {
+  if (!credit || credit.length === 0) {
+    return 'Unknown Artist'
+  }
+
+  const joined = credit
+    .map((entry) => entry.name ?? entry.artist?.name ?? '')
+    .join('')
+    .trim()
+
+  return joined || 'Unknown Artist'
+}
+
+const getTrackCount = (media: MusicBrainzMediaSummary[] | undefined): number => {
+  if (!media || media.length === 0) {
+    return 0
+  }
+
+  return media.reduce((total, medium) => total + (medium['track-count'] ?? 0), 0)
+}
+
+const scoreAlbumResult = (
+  result: AlbumSearchResult,
+  artistNameFilter: string,
+  albumTitleFilter: string,
+): number => {
+  let score = 0
+
+  const normalizedArtist = normalize(result.artistName)
+  const normalizedTitle = normalize(result.title)
+  const normalizedArtistFilter = normalize(artistNameFilter)
+  const normalizedTitleFilter = normalize(albumTitleFilter)
+
+  if (normalizedArtistFilter) {
+    if (normalizedArtist === normalizedArtistFilter) {
+      score += 4
+    } else if (normalizedArtist.includes(normalizedArtistFilter)) {
+      score += 2
+    }
+  }
+
+  if (normalizedTitleFilter) {
+    if (normalizedTitle === normalizedTitleFilter) {
+      score += 5
+    } else if (normalizedTitle.includes(normalizedTitleFilter)) {
+      score += 3
+    }
+  }
+
+  return score
 }
 
 const mapWithConcurrency = async <T, R>(
@@ -121,29 +183,119 @@ const mapWithConcurrency = async <T, R>(
   return results
 }
 
+const getCoverUrl = (releaseId: string): string => `${COVER_ART_BASE}/release/${releaseId}/front-500`
+
+const checkCoverAvailability = async (releaseId: string): Promise<boolean> => {
+  const cached = coverAvailabilityCache.get(releaseId)
+  if (cached !== undefined) {
+    return cached
+  }
+
+  const coverUrl = getCoverUrl(releaseId)
+
+  try {
+    const response = await fetch(coverUrl, {
+      method: 'HEAD',
+      redirect: 'manual',
+    })
+
+    const hasCover = response.status === 200 || (response.status >= 300 && response.status < 400)
+    coverAvailabilityCache.set(releaseId, hasCover)
+    return hasCover
+  } catch {
+    // If availability check fails, keep result eligible and let runtime image fallback decide.
+    coverAvailabilityCache.set(releaseId, true)
+    return true
+  }
+}
+
+export const searchAlbums = async (input: AlbumSearchInput): Promise<AlbumSearchResult[]> => {
+  const artistName = input.artistName.trim()
+  const albumTitle = input.albumTitle.trim()
+
+  if (!artistName && !albumTitle) {
+    return []
+  }
+
+  const queryParts: string[] = []
+  if (albumTitle) {
+    const escapedTitle = escapeLuceneValue(albumTitle)
+    queryParts.push(`(release:"${escapedTitle}" OR recording:"${escapedTitle}")`)
+  }
+  if (artistName) {
+    queryParts.push(`artist:"${escapeLuceneValue(artistName)}"`)
+  }
+
+  const query = queryParts.join(' AND ')
+  const url = `${MUSICBRAINZ_BASE}/release?query=${encodeURIComponent(query)}&fmt=json&limit=60`
+  const data = await fetchJson<MusicBrainzSearchResponse>(url)
+  const releases = data.releases ?? []
+
+  const mappedResults = releases.map((release) => ({
+    hasCover: true,
+    sourceProvider: 'musicbrainz' as const,
+    sourceAlbumId: release.id,
+    title: release.title?.trim() || 'Unknown Album',
+    artistName: getArtistNameFromCredit(release['artist-credit']),
+    coverUrl: getCoverUrl(release.id),
+    releaseDate: toSqlDate(release.date),
+    totalTracks: getTrackCount(release.media),
+  }))
+
+  const filteredResults = mappedResults.filter((result) => {
+    return includesNormalized(result.artistName, artistName) && includesNormalized(result.title, albumTitle)
+  })
+
+  const prioritized = (filteredResults.length > 0 ? filteredResults : mappedResults).sort((a, b) => {
+    const scoreA = scoreAlbumResult(a, artistName, albumTitle)
+    const scoreB = scoreAlbumResult(b, artistName, albumTitle)
+    return scoreB - scoreA
+  })
+
+  const limited = prioritized.slice(0, 25)
+  const withAvailability = await mapWithConcurrency(limited, 6, async (result) => ({
+    ...result,
+    hasCover: await checkCoverAvailability(result.sourceAlbumId),
+    coverUrl: getCoverUrl(result.sourceAlbumId),
+  }))
+
+  const withCover = withAvailability.filter((result) => result.hasCover)
+  const withoutCover = withAvailability.filter((result) => !result.hasCover)
+
+  return [...withCover, ...withoutCover]
+}
+
 export const fetchAlbumTracksWithLyrics = async (
   sourceAlbumId: string,
   artistName: string,
 ): Promise<SaveAlbumTrackInput[]> => {
-  const url = `https://itunes.apple.com/lookup?id=${encodeURIComponent(sourceAlbumId)}&entity=song`
-  const data = await fetchJson<{ results?: ITunesTrackResult[] }>(url)
-  const results = data.results ?? []
+  const url = `${MUSICBRAINZ_BASE}/release/${encodeURIComponent(sourceAlbumId)}?fmt=json&inc=recordings`
+  const data = await fetchJson<MusicBrainzReleaseLookupResponse>(url)
+  const media = data.media ?? []
 
-  const tracks = results
-    .filter((result) => result.wrapperType === 'track' && result.kind === 'song')
-    .map((result) => ({
-      trackNumber: result.trackNumber ?? 0,
-      title: result.trackName ?? 'Unknown Track',
-      durationSeconds:
-        result.trackTimeMillis && result.trackTimeMillis > 0
-          ? Math.round(result.trackTimeMillis / 1000)
-          : null,
-    }))
-    .filter((track) => track.trackNumber > 0)
-    .sort((a, b) => a.trackNumber - b.trackNumber)
+  const orderedMedia = [...media].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+  const flattenedTracks: Array<{ trackNumber: number; title: string; durationSeconds: number | null }> = []
+  let runningTrackNumber = 1
 
-  return mapWithConcurrency(tracks, 4, async (track) => {
-    const lyrics = await fetchTrackLyrics(artistName, track.title)
+  for (const medium of orderedMedia) {
+    const tracks = medium.tracks ?? []
+
+    for (const track of tracks) {
+      const title = track.title?.trim() || 'Unknown Track'
+      const durationSeconds = track.length && track.length > 0 ? Math.round(track.length / 1000) : null
+
+      flattenedTracks.push({
+        trackNumber: runningTrackNumber,
+        title,
+        durationSeconds,
+      })
+
+      runningTrackNumber += 1
+    }
+  }
+
+  const tracksWithLyrics = await mapWithConcurrency(flattenedTracks, 4, async (track) => {
+    const lyrics = await getLyricsAsync(track.title, artistName)
     return {
       trackNumber: track.trackNumber,
       title: track.title,
@@ -152,4 +304,20 @@ export const fetchAlbumTracksWithLyrics = async (
       metadata: {},
     }
   })
+
+  if (import.meta.env.DEV) {
+    const missingLyricsTracks = tracksWithLyrics.filter((track) => !track.lyrics.trim())
+    if (missingLyricsTracks.length > 0) {
+      const sampleTitles = missingLyricsTracks
+        .slice(0, 5)
+        .map((track) => `"${track.title}"`)
+        .join(', ')
+
+      console.warn(
+        `Lyrics missing for ${missingLyricsTracks.length}/${tracksWithLyrics.length} tracks (${sampleTitles}).`,
+      )
+    }
+  }
+
+  return tracksWithLyrics
 }

@@ -16,9 +16,10 @@ function HomePage() {
 
         <button
           type="button"
+          onClick={() => navigate('/stats')}
           className="rounded-lg bg-slate-600 px-4 py-3 text-base font-semibold text-white"
         >
-          Button 2
+          My Stats
         </button>
 
         <button

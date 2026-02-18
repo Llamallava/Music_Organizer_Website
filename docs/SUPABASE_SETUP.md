@@ -46,3 +46,14 @@ What it does:
 If this fails with `relation "profiles" does not exist`, run the migration first.
 If this fails with `email not confirmed`, disable email confirmation in Supabase Auth settings for now.
 If this fails with `email rate limit exceeded`, either wait for the Supabase rate window to reset or create/confirm a test user manually and set `SUPABASE_TEST_EMAIL`.
+
+## Fresh Start DB Clear Script
+Use `supabase/scripts/clear_database.sql` to wipe all app data and auth users.
+
+How to run:
+1. Open Supabase Dashboard -> `SQL Editor`.
+2. Paste the contents of `supabase/scripts/clear_database.sql`.
+3. Run it as the project `postgres` role.
+
+Maintenance rule:
+- Whenever schema changes add/remove public tables, update the `TRUNCATE` table list in `supabase/scripts/clear_database.sql`.

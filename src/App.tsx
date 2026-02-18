@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage'
 import AddAlbumPage from './pages/AddAlbumPage'
 import AlbumReviewPage from './pages/AlbumReviewPage'
 import AuthPage from './pages/AuthPage'
+import MyStatsPage from './pages/MyStatsPage'
 import ReviewsPage from './pages/ReviewsPage'
 
 function App() {
@@ -32,6 +33,14 @@ function App() {
         element={
           <ProtectedRoute>
             <AlbumReviewPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stats"
+        element={
+          <ProtectedRoute>
+            <MyStatsPage />
           </ProtectedRoute>
         }
       />

@@ -1,0 +1,285 @@
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import AlbumCover from '../components/AlbumCover'
+import {
+  getMyStatsForCurrentUser,
+  type MyStatsData,
+  type RankedAlbumStat,
+  type RankedSongStat,
+} from '../lib/db/statsData'
+
+type TopTenAlbumModuleConfig = {
+  id: string
+  moduleType: 'album'
+  title: string
+  valueLabel: string
+  items: RankedAlbumStat[]
+}
+
+type TopTenSongModuleConfig = {
+  id: string
+  moduleType: 'song'
+  title: string
+  valueLabel: string
+  items: RankedSongStat[]
+}
+
+type TopTenModuleConfig = TopTenAlbumModuleConfig | TopTenSongModuleConfig
+
+const formatScoreValue = (score: number) => score.toFixed(1).replace(/\.0$/, '')
+
+function TopTenAlbumsModule({
+  title,
+  valueLabel,
+  items,
+}: Omit<TopTenAlbumModuleConfig, 'id' | 'moduleType'>) {
+  const firstAlbum = items[0] ?? null
+  const remainingAlbums = items.slice(1)
+
+  return (
+    <article className="rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm">
+      <h2 className="text-lg font-bold text-slate-900">{title}</h2>
+
+      {!firstAlbum && <p className="mt-4 text-sm text-slate-600">No scored albums yet.</p>}
+
+      {firstAlbum && (
+        <>
+          <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">#1</p>
+
+            <div className="mt-3 flex gap-3">
+              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-slate-200">
+                <AlbumCover src={firstAlbum.coverUrl} alt={`${firstAlbum.title} cover`} loading="lazy" />
+              </div>
+
+              <div className="min-w-0">
+                <p className="truncate text-lg font-extrabold text-slate-900">{firstAlbum.title}</p>
+                <p className="truncate text-base font-semibold text-slate-700">{firstAlbum.artistName}</p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">
+                  {valueLabel}: {formatScoreValue(firstAlbum.value)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <ol className="mt-4 space-y-2">
+            {remainingAlbums.map((album, index) => (
+              <li
+                key={album.userSavedAlbumId}
+                className="flex items-center justify-between gap-3 rounded-md bg-slate-50 px-3 py-2"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-900">
+                    {index + 2}. {album.title}
+                  </p>
+                  <p className="truncate text-xs text-slate-600">{album.artistName}</p>
+                </div>
+
+                <p className="shrink-0 text-sm font-semibold text-slate-900">
+                  {formatScoreValue(album.value)}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
+    </article>
+  )
+}
+
+function TopTenSongsModule({
+  title,
+  valueLabel,
+  items,
+}: Omit<TopTenSongModuleConfig, 'id' | 'moduleType'>) {
+  const firstSong = items[0] ?? null
+  const remainingSongs = items.slice(1)
+
+  return (
+    <article className="rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm">
+      <h2 className="text-lg font-bold text-slate-900">{title}</h2>
+
+      {!firstSong && <p className="mt-4 text-sm text-slate-600">No scored songs yet.</p>}
+
+      {firstSong && (
+        <>
+          <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">#1</p>
+
+            <div className="mt-3 flex gap-3">
+              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-slate-200">
+                <AlbumCover src={firstSong.coverUrl} alt={`${firstSong.albumTitle} cover`} loading="lazy" />
+              </div>
+
+              <div className="min-w-0">
+                <p className="truncate text-lg font-extrabold text-slate-900">{firstSong.trackTitle}</p>
+                <p className="truncate text-base font-semibold text-slate-700">{firstSong.artistName}</p>
+                <p className="truncate text-sm text-slate-600">{firstSong.albumTitle}</p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">
+                  {valueLabel}: {formatScoreValue(firstSong.value)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <ol className="mt-4 space-y-2">
+            {remainingSongs.map((song, index) => (
+              <li
+                key={`${song.userSavedAlbumId}:${song.trackNumber}`}
+                className="flex items-center justify-between gap-3 rounded-md bg-slate-50 px-3 py-2"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-900">
+                    {index + 2}. {song.trackTitle}
+                  </p>
+                  <p className="truncate text-xs text-slate-600">{song.artistName} - {song.albumTitle}</p>
+                </div>
+
+                <p className="shrink-0 text-sm font-semibold text-slate-900">
+                  {formatScoreValue(song.value)}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
+    </article>
+  )
+}
+
+function MyStatsPage() {
+  const navigate = useNavigate()
+  const [statsData, setStatsData] = useState<MyStatsData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    let isActive = true
+
+    const loadStats = async () => {
+      setIsLoading(true)
+      setErrorMessage(null)
+
+      try {
+        const data = await getMyStatsForCurrentUser()
+        if (!isActive) {
+          return
+        }
+
+        setStatsData(data)
+      } catch (error) {
+        if (!isActive) {
+          return
+        }
+
+        const message = error instanceof Error ? error.message : 'Failed to load stats.'
+        setErrorMessage(message)
+      } finally {
+        if (isActive) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    void loadStats()
+
+    return () => {
+      isActive = false
+    }
+  }, [])
+
+  const modules = useMemo<TopTenModuleConfig[]>(() => {
+    return [
+      {
+        id: 'top-10-by-score',
+        moduleType: 'album',
+        title: 'Top 10 Albums by Score',
+        valueLabel: 'Score',
+        items: statsData?.topAlbumsByConclusionScore ?? [],
+      },
+      {
+        id: 'top-10-by-average',
+        moduleType: 'album',
+        title: 'Top 10 Albums by Average',
+        valueLabel: 'Average',
+        items: statsData?.topAlbumsByTrackAverage ?? [],
+      },
+      {
+        id: 'top-10-songs-by-score',
+        moduleType: 'song',
+        title: 'Top 10 Songs by Score',
+        valueLabel: 'Score',
+        items: statsData?.topSongsByScore ?? [],
+      },
+      {
+        id: 'top-10-interlude-songs',
+        moduleType: 'song',
+        title: 'Top 10 Interlude Songs',
+        valueLabel: 'Score',
+        items: statsData?.topInterludeSongs ?? [],
+      },
+    ]
+  }, [statsData])
+
+  return (
+    <main className="min-h-screen px-6 py-8">
+      <div className="mx-auto w-full max-w-7xl">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-900"
+          >
+            Back Home
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate('/reviews')}
+            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+          >
+            Go to Reviews
+          </button>
+        </div>
+
+        <h1 className="mt-5 text-3xl font-black text-slate-900">My Stats</h1>
+        <p className="mt-2 text-sm text-slate-700">
+          This page uses modular 2-column cards so additional stat modules can be added easily.
+        </p>
+
+        {isLoading && <p className="mt-6 rounded-lg bg-white p-4 text-sm text-slate-700">Loading stats...</p>}
+
+        {!isLoading && errorMessage && (
+          <div className="mt-6 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+            <p>Could not load stats.</p>
+            <p className="mt-1">{errorMessage}</p>
+          </div>
+        )}
+
+        {!isLoading && !errorMessage && (
+          <section className="mt-6 grid grid-cols-2 gap-4">
+            {modules.map((module) => (
+              module.moduleType === 'album' ? (
+                <TopTenAlbumsModule
+                  key={module.id}
+                  title={module.title}
+                  valueLabel={module.valueLabel}
+                  items={module.items}
+                />
+              ) : (
+                <TopTenSongsModule
+                  key={module.id}
+                  title={module.title}
+                  valueLabel={module.valueLabel}
+                  items={module.items}
+                />
+              )
+            ))}
+          </section>
+        )}
+      </div>
+    </main>
+  )
+}
+
+export default MyStatsPage

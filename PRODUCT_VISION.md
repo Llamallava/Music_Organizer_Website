@@ -42,8 +42,8 @@ Last updated: 2026-02-17
 - One review set per album per user (users can return and edit over time).
 
 ## External Data Sources (Current Direction)
-- Album covers candidate: https://covers.musichoarders.xyz/
-- Tracklist/song metadata source: undecided.
+- Metadata source (active): MusicBrainz API (`release` search + `release` lookup).
+- Album cover source (active): Cover Art Archive (`coverartarchive.org`) by MusicBrainz release id.
 - Lyrics source: undecided.
 
 ## Pending Decisions

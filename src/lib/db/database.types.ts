@@ -148,6 +148,7 @@ export type Database = {
           user_saved_album_id: string
           section_type: 'track' | 'conclusion'
           track_number: number | null
+          is_interlude: boolean
           notes: string
           score: number | null
           created_at: string
@@ -158,6 +159,7 @@ export type Database = {
           user_saved_album_id: string
           section_type: 'track' | 'conclusion'
           track_number?: number | null
+          is_interlude?: boolean
           notes?: string
           score?: number | null
           created_at?: string
@@ -168,6 +170,7 @@ export type Database = {
           user_saved_album_id?: string
           section_type?: 'track' | 'conclusion'
           track_number?: number | null
+          is_interlude?: boolean
           notes?: string
           score?: number | null
           created_at?: string

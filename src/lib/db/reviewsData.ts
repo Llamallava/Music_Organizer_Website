@@ -28,6 +28,7 @@ export type ReviewSection = {
   userSavedAlbumId: string
   sectionType: ReviewSectionType
   trackNumber: number | null
+  isInterlude: boolean
   notes: string
   score: number | null
 }
@@ -168,7 +169,7 @@ export const getAlbumWorkspaceForCurrentUser = async (
         .order('track_number', { ascending: true }),
       supabase
         .from('review_sections')
-        .select('id, user_saved_album_id, section_type, track_number, notes, score')
+        .select('id, user_saved_album_id, section_type, track_number, is_interlude, notes, score')
         .eq('user_saved_album_id', userSavedAlbumId),
     ])
 
@@ -198,6 +199,7 @@ export const getAlbumWorkspaceForCurrentUser = async (
       userSavedAlbumId: section.user_saved_album_id,
       sectionType: section.section_type,
       trackNumber: section.track_number,
+      isInterlude: section.is_interlude,
       notes: section.notes,
       score: section.score,
     })),
@@ -301,6 +303,7 @@ const findConclusionSection = async (userSavedAlbumId: string) => {
 export const upsertTrackReviewSectionForCurrentUser = async (params: {
   userSavedAlbumId: string
   trackNumber: number
+  isInterlude: boolean
   notes: string
   score: number | null
 }): Promise<void> => {
@@ -315,7 +318,7 @@ export const upsertTrackReviewSectionForCurrentUser = async (params: {
   if (existing) {
     const { error } = await supabase
       .from('review_sections')
-      .update({ notes: params.notes, score: params.score })
+      .update({ is_interlude: params.isInterlude, notes: params.notes, score: params.score })
       .eq('id', existing.id)
 
     throwIfError(error, 'Failed to update track section')
@@ -326,6 +329,7 @@ export const upsertTrackReviewSectionForCurrentUser = async (params: {
     user_saved_album_id: params.userSavedAlbumId,
     section_type: 'track',
     track_number: params.trackNumber,
+    is_interlude: params.isInterlude,
     notes: params.notes,
     score: params.score,
   })

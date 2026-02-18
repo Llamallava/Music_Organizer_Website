@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import AlbumCover from '../components/AlbumCover'
 import { saveAlbumForCurrentUser } from '../lib/db/reviewsData'
 import {
   type AlbumSearchResult,
@@ -10,9 +11,12 @@ import {
 
 function AddAlbumPage() {
   const navigate = useNavigate()
+  const RESULTS_STEP = 5
 
-  const [query, setQuery] = useState('')
+  const [artistNameQuery, setArtistNameQuery] = useState('')
+  const [albumTitleQuery, setAlbumTitleQuery] = useState('')
   const [results, setResults] = useState<AlbumSearchResult[]>([])
+  const [visibleResultsCount, setVisibleResultsCount] = useState(RESULTS_STEP)
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null)
   const [isSearching, setIsSearching] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -30,9 +34,19 @@ function AddAlbumPage() {
     setErrorMessage(null)
     setInfoMessage(null)
     setSelectedAlbumId(null)
+    setVisibleResultsCount(RESULTS_STEP)
+
+    if (!artistNameQuery.trim() && !albumTitleQuery.trim()) {
+      setErrorMessage('Enter an artist name, album title, or both.')
+      setIsSearching(false)
+      return
+    }
 
     try {
-      const albums = await searchAlbums(query)
+      const albums = await searchAlbums({
+        artistName: artistNameQuery,
+        albumTitle: albumTitleQuery,
+      })
       setResults(albums)
 
       if (albums.length === 0) {
@@ -99,23 +113,36 @@ function AddAlbumPage() {
 
         <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6">
           <h1 className="text-2xl font-bold text-slate-900">Add Album</h1>
-          <p className="mt-2 text-sm text-slate-700">Search an album, choose one result, and save it.</p>
+          <p className="mt-2 text-sm text-slate-700">
+            Search by artist name and album title, choose one result, and save it.
+          </p>
 
-          <form onSubmit={handleSearch} className="mt-4 flex flex-col gap-3 sm:flex-row">
-            <input
-              type="text"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search album title or artist"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
-            />
-            <button
-              type="submit"
-              disabled={isSearching || isSaving}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-            >
-              {isSearching ? 'Searching...' : 'Search'}
-            </button>
+          <form onSubmit={handleSearch} className="mt-4 flex flex-col gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <input
+                type="text"
+                value={artistNameQuery}
+                onChange={(event) => setArtistNameQuery(event.target.value)}
+                placeholder="Artist Name"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
+              />
+              <input
+                type="text"
+                value={albumTitleQuery}
+                onChange={(event) => setAlbumTitleQuery(event.target.value)}
+                placeholder="Album or Song Title"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
+              />
+            </div>
+            <div>
+              <button
+                type="submit"
+                disabled={isSearching || isSaving}
+                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {isSearching ? 'Searching...' : 'Search'}
+              </button>
+            </div>
           </form>
 
           {errorMessage && (
@@ -131,11 +158,16 @@ function AddAlbumPage() {
           )}
 
           {results.length > 0 && (
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {results.map((album) => {
-                const isSelected = album.sourceAlbumId === selectedAlbumId
+            <div className="mt-6">
+              <div className="mb-3 text-xs text-slate-600">
+                Showing {Math.min(visibleResultsCount, results.length)} of {results.length} results
+              </div>
 
-                return (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {results.slice(0, visibleResultsCount).map((album) => {
+                  const isSelected = album.sourceAlbumId === selectedAlbumId
+
+                  return (
                   <button
                     key={album.sourceAlbumId}
                     type="button"
@@ -147,18 +179,7 @@ function AddAlbumPage() {
                     }`}
                   >
                     <div className="aspect-square w-full overflow-hidden rounded-md bg-slate-200">
-                      {album.coverUrl ? (
-                        <img
-                          src={album.coverUrl}
-                          alt={`${album.title} cover`}
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-500">
-                          No Cover
-                        </div>
-                      )}
+                      <AlbumCover src={album.coverUrl} alt={`${album.title} cover`} loading="lazy" />
                     </div>
 
                     <p className="mt-2 truncate text-sm font-semibold text-slate-900">{album.title}</p>
@@ -169,6 +190,19 @@ function AddAlbumPage() {
                   </button>
                 )
               })}
+              </div>
+
+              {visibleResultsCount < results.length && (
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setVisibleResultsCount((previous) => previous + RESULTS_STEP)}
+                    className="rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-900"
+                  >
+                    Show More Results
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
