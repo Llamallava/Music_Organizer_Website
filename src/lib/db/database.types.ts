@@ -209,7 +209,20 @@ export type Database = {
       }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      update_my_username: {
+        Args: {
+          next_username: string
+        }
+        Returns: {
+          user_id: string
+          username: string | null
+          friend_code: string
+          created_at: string
+          updated_at: string
+        }
+      }
+    }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
   }

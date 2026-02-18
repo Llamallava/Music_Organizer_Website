@@ -11,6 +11,7 @@ function AuthPage() {
   const navigate = useNavigate()
   const { user, isLoading } = useAuthSession()
   const [mode, setMode] = useState<AuthMode>('sign-in')
+  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -42,9 +43,19 @@ function AuthPage() {
 
         navigate('/reviews', { replace: true })
       } else {
+        const trimmedUsername = username.trim()
+        if (trimmedUsername.length < 3 || trimmedUsername.length > 32) {
+          throw new Error('Username must be between 3 and 32 characters.')
+        }
+
         const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
+          options: {
+            data: {
+              username: trimmedUsername,
+            },
+          },
         })
 
         if (error) {
@@ -58,6 +69,7 @@ function AuthPage() {
 
         setInfoMessage('Account created. Please sign in now.')
         setMode('sign-in')
+        setUsername('')
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Authentication failed.'
@@ -78,6 +90,22 @@ function AuthPage() {
         <p className="mt-2 text-sm text-slate-700">Use your email and password to continue.</p>
 
         <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-3">
+          {mode === 'sign-up' && (
+            <label className="text-sm font-semibold text-slate-800">
+              Username
+              <input
+                type="text"
+                autoComplete="username"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                required
+                minLength={3}
+                maxLength={32}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              />
+            </label>
+          )}
+
           <label className="text-sm font-semibold text-slate-800">
             Email
             <input
@@ -134,6 +162,9 @@ function AuthPage() {
             setMode((previous) => (previous === 'sign-in' ? 'sign-up' : 'sign-in'))
             setErrorMessage(null)
             setInfoMessage(null)
+            if (mode === 'sign-up') {
+              setUsername('')
+            }
           }}
           className="mt-4 text-sm font-semibold text-slate-700 underline"
         >

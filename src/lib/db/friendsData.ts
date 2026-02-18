@@ -12,8 +12,11 @@ export type FriendsOverview = {
 }
 
 const FRIEND_CODE_PATTERN = /^[A-Z0-9]{10}$/
+const FRIEND_CODE_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+const FRIEND_CODE_LENGTH = 10
+const MAX_FRIEND_CODE_ASSIGNMENT_ATTEMPTS = 5
 
-const throwIfError = (error: { message: string } | null, context: string) => {
+const throwIfError = (error: { message: string; code?: string } | null, context: string) => {
   if (error) {
     throw new Error(`${context}: ${error.message}`)
   }
@@ -33,12 +36,88 @@ const requireAuthenticatedUserId = async () => {
 
 const normalizeFriendCode = (rawCode: string) => rawCode.trim().toUpperCase()
 
+const generateFriendCodeCandidate = () => {
+  const cryptoApi = globalThis.crypto
+  if (cryptoApi?.getRandomValues) {
+    const randomValues = new Uint8Array(FRIEND_CODE_LENGTH)
+    cryptoApi.getRandomValues(randomValues)
+    return Array.from(randomValues, (value) => FRIEND_CODE_ALPHABET[value % FRIEND_CODE_ALPHABET.length]).join('')
+  }
+
+  return Array.from(
+    { length: FRIEND_CODE_LENGTH },
+    () => FRIEND_CODE_ALPHABET[Math.floor(Math.random() * FRIEND_CODE_ALPHABET.length)],
+  ).join('')
+}
+
+const loadCurrentUserFriendCode = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('friend_code')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  throwIfError(error, 'Failed to load current profile')
+  return data?.friend_code ?? null
+}
+
+const ensureCurrentUserFriendCode = async (userId: string): Promise<string> => {
+  const existingFriendCode = await loadCurrentUserFriendCode(userId)
+  if (existingFriendCode) {
+    return existingFriendCode
+  }
+
+  const { error: insertError } = await supabase.from('profiles').upsert(
+    {
+      user_id: userId,
+    },
+    {
+      onConflict: 'user_id',
+      ignoreDuplicates: true,
+    },
+  )
+
+  throwIfError(insertError, 'Failed to create missing profile')
+
+  const friendCodeAfterInsert = await loadCurrentUserFriendCode(userId)
+  if (friendCodeAfterInsert) {
+    return friendCodeAfterInsert
+  }
+
+  for (let attempt = 0; attempt < MAX_FRIEND_CODE_ASSIGNMENT_ATTEMPTS; attempt += 1) {
+    const candidateFriendCode = generateFriendCodeCandidate()
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({
+        friend_code: candidateFriendCode,
+      })
+      .eq('user_id', userId)
+      .is('friend_code', null)
+
+    if (updateError?.code === '23505') {
+      continue
+    }
+
+    throwIfError(updateError, 'Failed to assign friend code')
+
+    const assignedFriendCode = await loadCurrentUserFriendCode(userId)
+    if (assignedFriendCode) {
+      return assignedFriendCode
+    }
+  }
+
+  throw new Error('Unable to assign a friend code right now. Please try again.')
+}
+
 export const getFriendsOverviewForCurrentUser = async (): Promise<FriendsOverview> => {
   const userId = await requireAuthenticatedUserId()
 
-  const [{ data: profileRow, error: profileError }, { data: friendshipRows, error: friendshipsError }] =
+  const [
+    myFriendCode,
+    { data: friendshipRows, error: friendshipsError },
+  ] =
     await Promise.all([
-      supabase.from('profiles').select('friend_code').eq('user_id', userId).maybeSingle(),
+      ensureCurrentUserFriendCode(userId),
       supabase
         .from('friendships')
         .select('user_id, friend_user_id, created_at')
@@ -46,13 +125,7 @@ export const getFriendsOverviewForCurrentUser = async (): Promise<FriendsOvervie
         .order('created_at', { ascending: true }),
     ])
 
-  throwIfError(profileError, 'Failed to load current profile')
   throwIfError(friendshipsError, 'Failed to load friends')
-
-  const myFriendCode = profileRow?.friend_code
-  if (!myFriendCode) {
-    throw new Error('Your profile is missing a friend code.')
-  }
 
   const friendUserIds = (friendshipRows ?? []).map((row) =>
     row.user_id === userId ? row.friend_user_id : row.user_id,
