@@ -145,6 +145,72 @@ export type Database = {
           },
         ]
       }
+      playlists: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      playlist_songs: {
+        Row: {
+          id: string
+          playlist_id: string
+          user_saved_album_id: string
+          track_number: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          playlist_id: string
+          user_saved_album_id: string
+          track_number: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          playlist_id?: string
+          user_saved_album_id?: string
+          track_number?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'playlist_songs_playlist_id_fkey'
+            columns: ['playlist_id']
+            isOneToOne: false
+            referencedRelation: 'playlists'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'playlist_songs_user_saved_album_id_fkey'
+            columns: ['user_saved_album_id']
+            isOneToOne: false
+            referencedRelation: 'user_saved_albums'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       to_listen_songs: {
         Row: {
           id: string

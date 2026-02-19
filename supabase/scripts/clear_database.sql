@@ -8,6 +8,12 @@
 begin;
 
 truncate table
+  public.playlist_songs,
+  public.playlists,
+  public.notification_events,
+  public.song_recommendations,
+  public.to_listen_songs,
+  public.friendships,
   public.review_sections,
   public.user_saved_albums,
   public.album_tracks,

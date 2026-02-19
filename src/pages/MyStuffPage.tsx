@@ -40,6 +40,14 @@ function MyStuffPage() {
         >
           To-Listen
         </button>
+
+        <button
+          type="button"
+          onClick={() => navigate('/playlists')}
+          className="rounded-lg bg-slate-600 px-4 py-3 text-base font-semibold text-white"
+        >
+          Playlists
+        </button>
       </div>
     </main>
   )

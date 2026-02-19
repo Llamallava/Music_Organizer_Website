@@ -15,6 +15,7 @@ import MyStuffPage from './pages/MyStuffPage'
 import ReviewsPage from './pages/ReviewsPage'
 import SearchPage from './pages/SearchPage'
 import ToListenPage from './pages/ToListenPage'
+import PlaylistsPage from './pages/PlaylistsPage'
 
 function App() {
   return (
@@ -44,6 +45,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ToListenPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/playlists"
+          element={
+            <ProtectedRoute>
+              <PlaylistsPage />
             </ProtectedRoute>
           }
         />

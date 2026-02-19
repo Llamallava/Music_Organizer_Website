@@ -9,6 +9,11 @@ import {
   upsertTrackReviewSectionForCurrentUser,
   type AlbumWorkspace,
 } from '../lib/db/reviewsData'
+import {
+  addSongToPlaylistForCurrentUser,
+  listPlaylistOptionsForCurrentUser,
+  type PlaylistOption,
+} from '../lib/db/playlistsData'
 import { sendRecommendationForCurrentUser, type RecommendationType } from '../lib/db/toListenData'
 
 type SectionDraft = {
@@ -18,6 +23,11 @@ type SectionDraft = {
 }
 
 type DraftMap = Record<string, SectionDraft>
+type PlaylistSelection = {
+  trackNumber: number
+  itemTitle: string
+  artistName: string
+}
 
 const CONCLUSION_KEY = 'conclusion'
 
@@ -100,6 +110,12 @@ function AlbumReviewPage() {
   const [isRecommendationModalOpen, setIsRecommendationModalOpen] = useState(false)
   const [isRecommendationSubmitting, setIsRecommendationSubmitting] = useState(false)
   const [recommendationErrorMessage, setRecommendationErrorMessage] = useState<string | null>(null)
+  const [playlists, setPlaylists] = useState<PlaylistOption[]>([])
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState('')
+  const [playlistSelection, setPlaylistSelection] = useState<PlaylistSelection | null>(null)
+  const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false)
+  const [isPlaylistSubmitting, setIsPlaylistSubmitting] = useState(false)
+  const [playlistErrorMessage, setPlaylistErrorMessage] = useState<string | null>(null)
   const [activeSectionKey, setActiveSectionKey] = useState<string>(CONCLUSION_KEY)
   const [draftBySection, setDraftBySection] = useState<DraftMap>({})
   const [savedBySection, setSavedBySection] = useState<DraftMap>({})
@@ -123,9 +139,10 @@ function AlbumReviewPage() {
       setInfoMessage(null)
 
       try {
-        const [loadedWorkspace, friendsOverview] = await Promise.all([
+        const [loadedWorkspace, friendsOverview, playlistOptions] = await Promise.all([
           getAlbumWorkspaceForCurrentUser(userSavedAlbumId),
           getFriendsOverviewForCurrentUser(),
+          listPlaylistOptionsForCurrentUser(),
         ])
 
         if (!isActive) {
@@ -136,6 +153,8 @@ function AlbumReviewPage() {
         setSelectedRecommendationFriendUserId(
           (previous) => previous || friendsOverview.friends[0]?.userId || '',
         )
+        setPlaylists(playlistOptions)
+        setSelectedPlaylistId((previous) => previous || playlistOptions[0]?.id || '')
 
         if (!loadedWorkspace) {
           setWorkspace(null)
@@ -228,10 +247,18 @@ function AlbumReviewPage() {
     artistName: string
   }) => {
     setRecommendationErrorMessage(null)
+    setIsPlaylistModalOpen(false)
     setRecommendationType(params.recommendationType)
     setRecommendationItemTitle(params.itemTitle)
     setRecommendationArtistName(params.artistName)
     setIsRecommendationModalOpen(true)
+  }
+
+  const openPlaylistModal = (selection: PlaylistSelection) => {
+    setPlaylistErrorMessage(null)
+    setIsRecommendationModalOpen(false)
+    setPlaylistSelection(selection)
+    setIsPlaylistModalOpen(true)
   }
 
   const handleSendRecommendation = async () => {
@@ -258,6 +285,32 @@ function AlbumReviewPage() {
       setRecommendationErrorMessage(message)
     } finally {
       setIsRecommendationSubmitting(false)
+    }
+  }
+
+  const handleAddSongToPlaylist = async () => {
+    if (!workspace || !playlistSelection) {
+      return
+    }
+
+    setPlaylistErrorMessage(null)
+    setInfoMessage(null)
+    setIsPlaylistSubmitting(true)
+
+    try {
+      await addSongToPlaylistForCurrentUser({
+        playlistId: selectedPlaylistId,
+        userSavedAlbumId: workspace.userSavedAlbumId,
+        trackNumber: playlistSelection.trackNumber,
+      })
+
+      setIsPlaylistModalOpen(false)
+      setInfoMessage(`Added "${playlistSelection.itemTitle}" to playlist.`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to add song to playlist.'
+      setPlaylistErrorMessage(message)
+    } finally {
+      setIsPlaylistSubmitting(false)
     }
   }
 
@@ -463,19 +516,35 @@ function AlbumReviewPage() {
 
             <div className="mt-3 flex items-center gap-3">
               {activeTrack && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    openRecommendationModal({
-                      recommendationType: 'song',
-                      itemTitle: activeTrack.title,
-                      artistName: workspace.album.artistName,
-                    })
-                  }
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800"
-                >
-                  Recommend this song to a friend?
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openRecommendationModal({
+                        recommendationType: 'song',
+                        itemTitle: activeTrack.title,
+                        artistName: workspace.album.artistName,
+                      })
+                    }
+                    className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800"
+                  >
+                    Recommend this song to a friend?
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openPlaylistModal({
+                        trackNumber: activeTrack.trackNumber,
+                        itemTitle: activeTrack.title,
+                        artistName: workspace.album.artistName,
+                      })
+                    }
+                    className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800"
+                  >
+                    Add this song to a playlist
+                  </button>
+                </>
               )}
 
               <button
@@ -594,6 +663,83 @@ function AlbumReviewPage() {
                 className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
               >
                 {isRecommendationSubmitting ? 'Sending...' : 'Send Recommendation'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isPlaylistModalOpen && workspace && playlistSelection && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4"
+          onClick={() => {
+            if (!isPlaylistSubmitting) {
+              setIsPlaylistModalOpen(false)
+            }
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-to-playlist-title"
+            className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-5 shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="add-to-playlist-title" className="text-lg font-bold text-slate-900">
+              Add this song to a playlist?
+            </h2>
+
+            <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+              <p className="text-sm font-semibold text-slate-900">{playlistSelection.itemTitle}</p>
+              <p className="mt-1 text-sm text-slate-700">{playlistSelection.artistName}</p>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Song</p>
+            </div>
+
+            <label className="mt-4 block text-sm font-semibold text-slate-800">
+              Playlist
+              <select
+                value={selectedPlaylistId}
+                onChange={(event) => setSelectedPlaylistId(event.target.value)}
+                disabled={playlists.length === 0 || isPlaylistSubmitting}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              >
+                {playlists.length === 0 && <option value="">No playlists available</option>}
+                {playlists.map((playlist) => (
+                  <option key={playlist.id} value={playlist.id}>
+                    {playlist.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {playlists.length === 0 && (
+              <p className="mt-3 text-sm text-slate-700">
+                Create a playlist first from My Stuff {'>'} Playlists.
+              </p>
+            )}
+
+            {playlistErrorMessage && (
+              <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+                {playlistErrorMessage}
+              </div>
+            )}
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsPlaylistModalOpen(false)}
+                disabled={isPlaylistSubmitting}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleAddSongToPlaylist()}
+                disabled={isPlaylistSubmitting || playlists.length === 0}
+                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {isPlaylistSubmitting ? 'Adding...' : 'Add to Playlist'}
               </button>
             </div>
           </div>
