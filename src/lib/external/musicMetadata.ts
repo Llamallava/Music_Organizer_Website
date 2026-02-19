@@ -17,6 +17,21 @@ export type AlbumSearchInput = {
   albumTitle: string
 }
 
+export type SongSearchInput = {
+  artistName: string
+  songTitle: string
+}
+
+export type SongSearchResult = {
+  sourceProvider: 'musicbrainz'
+  sourceSongId: string
+  songName: string
+  artistName: string
+  albumTitle: string | null
+  coverUrl: string | null
+  releaseDate: string | null
+}
+
 type MusicBrainzArtistCredit = {
   name?: string
   artist?: {
@@ -41,6 +56,23 @@ type MusicBrainzReleaseSearchResult = {
 
 type MusicBrainzSearchResponse = {
   releases?: MusicBrainzReleaseSearchResult[]
+}
+
+type MusicBrainzRecordingRelease = {
+  id?: string
+  title?: string
+  date?: string
+}
+
+type MusicBrainzRecordingSearchResult = {
+  id: string
+  title?: string
+  'artist-credit'?: MusicBrainzArtistCredit[]
+  releases?: MusicBrainzRecordingRelease[]
+}
+
+type MusicBrainzRecordingSearchResponse = {
+  recordings?: MusicBrainzRecordingSearchResult[]
 }
 
 type MusicBrainzTrack = {
@@ -158,6 +190,37 @@ const scoreAlbumResult = (
     if (normalizedTitle === normalizedTitleFilter) {
       score += 5
     } else if (normalizedTitle.includes(normalizedTitleFilter)) {
+      score += 3
+    }
+  }
+
+  return score
+}
+
+const scoreSongResult = (
+  result: SongSearchResult,
+  artistNameFilter: string,
+  songTitleFilter: string,
+): number => {
+  let score = 0
+
+  const normalizedArtist = normalize(result.artistName)
+  const normalizedSong = normalize(result.songName)
+  const normalizedArtistFilter = normalize(artistNameFilter)
+  const normalizedSongFilter = normalize(songTitleFilter)
+
+  if (normalizedArtistFilter) {
+    if (normalizedArtist === normalizedArtistFilter) {
+      score += 4
+    } else if (normalizedArtist.includes(normalizedArtistFilter)) {
+      score += 2
+    }
+  }
+
+  if (normalizedSongFilter) {
+    if (normalizedSong === normalizedSongFilter) {
+      score += 5
+    } else if (normalizedSong.includes(normalizedSongFilter)) {
       score += 3
     }
   }
@@ -311,6 +374,71 @@ export const searchAlbums = async (input: AlbumSearchInput): Promise<AlbumSearch
   const withoutCover = withAvailability.filter((result) => !result.hasCover)
 
   return [...withCover, ...withoutCover].map(({ dedupeKey: _dedupeKey, ...result }) => result)
+}
+
+export const searchSongs = async (input: SongSearchInput): Promise<SongSearchResult[]> => {
+  const artistName = input.artistName.trim()
+  const songTitle = input.songTitle.trim()
+
+  if (!artistName && !songTitle) {
+    return []
+  }
+
+  const queryParts: string[] = []
+  if (songTitle) {
+    queryParts.push(`recording:"${escapeLuceneValue(songTitle)}"`)
+  }
+  if (artistName) {
+    queryParts.push(`artist:"${escapeLuceneValue(artistName)}"`)
+  }
+
+  const query = queryParts.join(' AND ')
+  const url = `${MUSICBRAINZ_BASE}/recording?query=${encodeURIComponent(query)}&fmt=json&limit=60`
+  const data = await fetchJson<MusicBrainzRecordingSearchResponse>(url)
+  const recordings = data.recordings ?? []
+
+  const mappedResults: SongSearchResult[] = recordings.map((recording) => {
+    const release = recording.releases?.[0]
+    const releaseId = release?.id?.trim()
+
+    return {
+      sourceProvider: 'musicbrainz',
+      sourceSongId: recording.id,
+      songName: recording.title?.trim() || 'Unknown Song',
+      artistName: getArtistNameFromCredit(recording['artist-credit']),
+      albumTitle: release?.title?.trim() || null,
+      coverUrl: releaseId ? getCoverUrl(releaseId) : null,
+      releaseDate: toSqlDate(release?.date),
+    }
+  })
+
+  const filteredResults = mappedResults.filter((result) => {
+    return (
+      includesNormalized(result.artistName, artistName) &&
+      includesNormalized(result.songName, songTitle)
+    )
+  })
+
+  const prioritized = (filteredResults.length > 0 ? filteredResults : mappedResults).sort((a, b) => {
+    const scoreA = scoreSongResult(a, artistName, songTitle)
+    const scoreB = scoreSongResult(b, artistName, songTitle)
+    return scoreB - scoreA
+  })
+
+  const seen = new Set<string>()
+  const deduped: SongSearchResult[] = []
+
+  for (const result of prioritized) {
+    const key = `${result.sourceSongId}`
+    if (seen.has(key)) {
+      continue
+    }
+
+    seen.add(key)
+    deduped.push(result)
+  }
+
+  return deduped.slice(0, 40)
 }
 
 export const fetchAlbumTracksWithLyrics = async (

@@ -13,18 +13,37 @@ export type PlaylistOption = {
 
 export type PlaylistSong = {
   id: string
-  userSavedAlbumId: string
-  trackNumber: number
   trackTitle: string
-  albumTitle: string
   artistName: string
+  albumTitle: string | null
   coverUrl: string | null
+  trackNumber: number | null
+  sourceProvider: string | null
+  sourceSongId: string | null
   createdAt: string
 }
 
 export type PlaylistWithSongs = Playlist & {
   songs: PlaylistSong[]
 }
+
+type AddLocalSongToPlaylistParams = {
+  playlistId: string
+  userSavedAlbumId: string
+  trackNumber: number
+}
+
+type AddExternalSongToPlaylistParams = {
+  playlistId: string
+  sourceProvider: 'musicbrainz'
+  sourceSongId: string
+  songName: string
+  artistName: string
+  albumTitle?: string | null
+  coverUrl?: string | null
+}
+
+export type AddSongToPlaylistParams = AddLocalSongToPlaylistParams | AddExternalSongToPlaylistParams
 
 const throwIfError = (error: { message: string } | null, context: string) => {
   if (error) {
@@ -45,6 +64,21 @@ const requireAuthenticatedUserId = async () => {
 }
 
 const normalizePlaylistName = (name: string) => name.trim()
+
+const ensurePlaylistOwnedByUser = async (playlistId: string, userId: string) => {
+  const { data: playlistRow, error: playlistError } = await supabase
+    .from('playlists')
+    .select('id')
+    .eq('id', playlistId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  throwIfError(playlistError, 'Failed to validate playlist')
+
+  if (!playlistRow) {
+    throw new Error('Playlist not found.')
+  }
+}
 
 export const listPlaylistOptionsForCurrentUser = async (): Promise<PlaylistOption[]> => {
   const userId = await requireAuthenticatedUserId()
@@ -88,7 +122,9 @@ export const listPlaylistsWithSongsForCurrentUser = async (): Promise<PlaylistWi
   const playlistIds = playlists.map((playlist) => playlist.id)
   const { data: playlistSongRows, error: playlistSongsError } = await supabase
     .from('playlist_songs')
-    .select('id, playlist_id, user_saved_album_id, track_number, created_at')
+    .select(
+      'id, playlist_id, user_saved_album_id, track_number, source_provider, source_song_id, song_name, artist_name, album_title, cover_url, created_at',
+    )
     .in('playlist_id', playlistIds)
     .order('created_at', { ascending: false })
 
@@ -99,19 +135,31 @@ export const listPlaylistsWithSongsForCurrentUser = async (): Promise<PlaylistWi
     return playlists
   }
 
-  const userSavedAlbumIds = Array.from(new Set(songRows.map((row) => row.user_saved_album_id)))
-  const { data: savedAlbumRows, error: savedAlbumsError } = await supabase
-    .from('user_saved_albums')
-    .select('id, album_id')
-    .in('id', userSavedAlbumIds)
-    .eq('user_id', userId)
+  const localRows = songRows.filter(
+    (row) => row.user_saved_album_id !== null && row.track_number !== null,
+  )
+  const userSavedAlbumIds = Array.from(
+    new Set(localRows.map((row) => row.user_saved_album_id).filter((value): value is string => Boolean(value))),
+  )
 
-  throwIfError(savedAlbumsError, 'Failed to load saved albums for playlists')
+  const savedAlbumById = new Map<string, { album_id: string }>()
+  if (userSavedAlbumIds.length > 0) {
+    const { data: savedAlbumRows, error: savedAlbumsError } = await supabase
+      .from('user_saved_albums')
+      .select('id, album_id')
+      .in('id', userSavedAlbumIds)
+      .eq('user_id', userId)
 
-  const savedAlbumById = new Map((savedAlbumRows ?? []).map((row) => [row.id, row]))
-  const albumIds = Array.from(new Set((savedAlbumRows ?? []).map((row) => row.album_id)))
+    throwIfError(savedAlbumsError, 'Failed to load saved albums for playlists')
 
+    for (const row of savedAlbumRows ?? []) {
+      savedAlbumById.set(row.id, { album_id: row.album_id })
+    }
+  }
+
+  const albumIds = Array.from(new Set(Array.from(savedAlbumById.values()).map((row) => row.album_id)))
   const albumById = new Map<string, { title: string; artistName: string; coverUrl: string | null }>()
+
   if (albumIds.length > 0) {
     const { data: albumRows, error: albumsError } = await supabase
       .from('albums')
@@ -146,31 +194,44 @@ export const listPlaylistsWithSongsForCurrentUser = async (): Promise<PlaylistWi
   const songsByPlaylistId = new Map<string, PlaylistSong[]>()
 
   for (const row of songRows) {
-    const savedAlbum = savedAlbumById.get(row.user_saved_album_id)
-    if (!savedAlbum) {
-      continue
-    }
-
-    const album = albumById.get(savedAlbum.album_id)
-    if (!album) {
-      continue
-    }
-
-    const trackTitle =
-      trackTitleByAlbumAndNumber.get(`${savedAlbum.album_id}:${row.track_number}`) ??
-      `Track ${row.track_number}`
-
     const existing = songsByPlaylistId.get(row.playlist_id) ?? []
-    existing.push({
-      id: row.id,
-      userSavedAlbumId: row.user_saved_album_id,
-      trackNumber: row.track_number,
-      trackTitle,
-      albumTitle: album.title,
-      artistName: album.artistName,
-      coverUrl: album.coverUrl,
-      createdAt: row.created_at,
-    })
+
+    if (row.user_saved_album_id !== null && row.track_number !== null) {
+      const savedAlbum = savedAlbumById.get(row.user_saved_album_id)
+      const album = savedAlbum ? albumById.get(savedAlbum.album_id) : null
+
+      const trackTitle =
+        (savedAlbum
+          ? trackTitleByAlbumAndNumber.get(`${savedAlbum.album_id}:${row.track_number}`)
+          : null) ??
+        row.song_name ??
+        `Track ${row.track_number}`
+
+      existing.push({
+        id: row.id,
+        trackTitle,
+        artistName: album?.artistName ?? row.artist_name ?? 'Unknown Artist',
+        albumTitle: album?.title ?? row.album_title ?? null,
+        coverUrl: album?.coverUrl ?? row.cover_url,
+        trackNumber: row.track_number,
+        sourceProvider: row.source_provider,
+        sourceSongId: row.source_song_id,
+        createdAt: row.created_at,
+      })
+    } else {
+      existing.push({
+        id: row.id,
+        trackTitle: row.song_name ?? 'Unknown Song',
+        artistName: row.artist_name ?? 'Unknown Artist',
+        albumTitle: row.album_title,
+        coverUrl: row.cover_url,
+        trackNumber: null,
+        sourceProvider: row.source_provider,
+        sourceSongId: row.source_song_id,
+        createdAt: row.created_at,
+      })
+    }
+
     songsByPlaylistId.set(row.playlist_id, existing)
   }
 
@@ -230,70 +291,97 @@ export const deletePlaylistForCurrentUser = async (playlistId: string): Promise<
   throwIfError(error, 'Failed to delete playlist')
 }
 
-export const addSongToPlaylistForCurrentUser = async (params: {
-  playlistId: string
-  userSavedAlbumId: string
-  trackNumber: number
-}): Promise<void> => {
+export const addSongToPlaylistForCurrentUser = async (params: AddSongToPlaylistParams): Promise<void> => {
   const userId = await requireAuthenticatedUserId()
   const playlistId = params.playlistId.trim()
-  const userSavedAlbumId = params.userSavedAlbumId.trim()
 
   if (!playlistId) {
     throw new Error('Please choose a playlist first.')
   }
 
-  if (!userSavedAlbumId) {
-    throw new Error('Missing saved album identifier.')
+  await ensurePlaylistOwnedByUser(playlistId, userId)
+
+  if ('userSavedAlbumId' in params) {
+    const userSavedAlbumId = params.userSavedAlbumId.trim()
+    if (!userSavedAlbumId) {
+      throw new Error('Missing saved album identifier.')
+    }
+
+    if (!Number.isInteger(params.trackNumber) || params.trackNumber <= 0) {
+      throw new Error('Track number must be a positive integer.')
+    }
+
+    const { data: savedAlbumRow, error: savedAlbumError } = await supabase
+      .from('user_saved_albums')
+      .select('album_id')
+      .eq('id', userSavedAlbumId)
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    throwIfError(savedAlbumError, 'Failed to validate saved album')
+
+    if (!savedAlbumRow) {
+      throw new Error('Saved album not found.')
+    }
+
+    const { data: trackRow, error: trackError } = await supabase
+      .from('album_tracks')
+      .select('id')
+      .eq('album_id', savedAlbumRow.album_id)
+      .eq('track_number', params.trackNumber)
+      .maybeSingle()
+
+    throwIfError(trackError, 'Failed to validate track')
+
+    if (!trackRow) {
+      throw new Error('Track not found for this album.')
+    }
+
+    const { error } = await supabase.from('playlist_songs').insert({
+      playlist_id: playlistId,
+      user_saved_album_id: userSavedAlbumId,
+      track_number: params.trackNumber,
+    })
+
+    if (error?.code === '23505') {
+      throw new Error('That song is already in this playlist.')
+    }
+
+    throwIfError(error, 'Failed to add song to playlist')
+    return
   }
 
-  if (!Number.isInteger(params.trackNumber) || params.trackNumber <= 0) {
-    throw new Error('Track number must be a positive integer.')
+  const sourceSongId = params.sourceSongId.trim()
+  const songName = params.songName.trim()
+  const artistName = params.artistName.trim()
+  const sourceProvider = params.sourceProvider.trim()
+
+  if (!sourceSongId) {
+    throw new Error('Missing source song identifier.')
   }
 
-  const { data: playlistRow, error: playlistError } = await supabase
-    .from('playlists')
-    .select('id')
-    .eq('id', playlistId)
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  throwIfError(playlistError, 'Failed to validate playlist')
-
-  if (!playlistRow) {
-    throw new Error('Playlist not found.')
+  if (!songName) {
+    throw new Error('Song name is required.')
   }
 
-  const { data: savedAlbumRow, error: savedAlbumError } = await supabase
-    .from('user_saved_albums')
-    .select('album_id')
-    .eq('id', userSavedAlbumId)
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  throwIfError(savedAlbumError, 'Failed to validate saved album')
-
-  if (!savedAlbumRow) {
-    throw new Error('Saved album not found.')
+  if (!artistName) {
+    throw new Error('Artist name is required.')
   }
 
-  const { data: trackRow, error: trackError } = await supabase
-    .from('album_tracks')
-    .select('id')
-    .eq('album_id', savedAlbumRow.album_id)
-    .eq('track_number', params.trackNumber)
-    .maybeSingle()
-
-  throwIfError(trackError, 'Failed to validate track')
-
-  if (!trackRow) {
-    throw new Error('Track not found for this album.')
+  if (!sourceProvider) {
+    throw new Error('Source provider is required.')
   }
 
   const { error } = await supabase.from('playlist_songs').insert({
     playlist_id: playlistId,
-    user_saved_album_id: userSavedAlbumId,
-    track_number: params.trackNumber,
+    user_saved_album_id: null,
+    track_number: null,
+    source_provider: sourceProvider,
+    source_song_id: sourceSongId,
+    song_name: songName,
+    artist_name: artistName,
+    album_title: params.albumTitle?.trim() || null,
+    cover_url: params.coverUrl?.trim() || null,
   })
 
   if (error?.code === '23505') {

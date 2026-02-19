@@ -3,19 +3,27 @@ import { useEffect, useState } from 'react'
 import AlbumCover from '../components/AlbumCover'
 import LinearBackButton from '../components/LinearBackButton'
 import {
+  addSongToPlaylistForCurrentUser,
   createPlaylistForCurrentUser,
   deletePlaylistForCurrentUser,
   listPlaylistsWithSongsForCurrentUser,
   type PlaylistWithSongs,
 } from '../lib/db/playlistsData'
+import { searchSongs, type SongSearchResult } from '../lib/external/musicMetadata'
 
 function PlaylistsPage() {
   const [playlists, setPlaylists] = useState<PlaylistWithSongs[]>([])
   const [expandedByPlaylistId, setExpandedByPlaylistId] = useState<Record<string, boolean>>({})
   const [newPlaylistName, setNewPlaylistName] = useState('')
+  const [selectedAddPlaylistId, setSelectedAddPlaylistId] = useState('')
+  const [musicBrainzArtistQuery, setMusicBrainzArtistQuery] = useState('')
+  const [musicBrainzSongQuery, setMusicBrainzSongQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<SongSearchResult[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
+  const [isSearchingSongs, setIsSearchingSongs] = useState(false)
   const [deletingPlaylistId, setDeletingPlaylistId] = useState<string | null>(null)
+  const [addingSongKey, setAddingSongKey] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [infoMessage, setInfoMessage] = useState<string | null>(null)
 
@@ -28,11 +36,13 @@ function PlaylistsPage() {
 
       try {
         const records = await listPlaylistsWithSongsForCurrentUser()
+
         if (!isActive) {
           return
         }
 
         setPlaylists(records)
+        setSelectedAddPlaylistId((previous) => previous || records[0]?.id || '')
       } catch (error) {
         if (!isActive) {
           return
@@ -71,6 +81,7 @@ function PlaylistsPage() {
       const createdPlaylist = await createPlaylistForCurrentUser(newPlaylistName)
 
       setPlaylists((previous) => [{ ...createdPlaylist, songs: [] }, ...previous])
+      setSelectedAddPlaylistId((previous) => previous || createdPlaylist.id)
       setExpandedByPlaylistId((previous) => ({
         ...previous,
         [createdPlaylist.id]: true,
@@ -92,7 +103,19 @@ function PlaylistsPage() {
 
     try {
       await deletePlaylistForCurrentUser(playlistId)
-      setPlaylists((previous) => previous.filter((playlist) => playlist.id !== playlistId))
+      setPlaylists((previous) => {
+        const remaining = previous.filter((playlist) => playlist.id !== playlistId)
+        setSelectedAddPlaylistId((selectedPlaylistId) => {
+          if (selectedPlaylistId !== playlistId) {
+            return selectedPlaylistId
+          }
+
+          return remaining[0]?.id || ''
+        })
+
+        return remaining
+      })
+
       setExpandedByPlaylistId((previous) => {
         const next = { ...previous }
         delete next[playlistId]
@@ -107,6 +130,72 @@ function PlaylistsPage() {
     }
   }
 
+  const handleSearchSongs = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setErrorMessage(null)
+    setInfoMessage(null)
+    setIsSearchingSongs(true)
+
+    if (!musicBrainzArtistQuery.trim() && !musicBrainzSongQuery.trim()) {
+      setErrorMessage('Enter a song title, artist name, or both.')
+      setIsSearchingSongs(false)
+      return
+    }
+
+    try {
+      const results = await searchSongs({
+        artistName: musicBrainzArtistQuery,
+        songTitle: musicBrainzSongQuery,
+      })
+
+      setSearchResults(results)
+      if (results.length === 0) {
+        setInfoMessage('No MusicBrainz song results found for that search.')
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to search songs.'
+      setErrorMessage(message)
+    } finally {
+      setIsSearchingSongs(false)
+    }
+  }
+
+  const handleAddSongToPlaylist = async (song: SongSearchResult) => {
+    const songKey = song.sourceSongId
+
+    setErrorMessage(null)
+    setInfoMessage(null)
+    setAddingSongKey(songKey)
+
+    try {
+      await addSongToPlaylistForCurrentUser({
+        playlistId: selectedAddPlaylistId,
+        sourceProvider: song.sourceProvider,
+        sourceSongId: song.sourceSongId,
+        songName: song.songName,
+        artistName: song.artistName,
+        albumTitle: song.albumTitle,
+        coverUrl: song.coverUrl,
+      })
+
+      const refreshedPlaylists = await listPlaylistsWithSongsForCurrentUser()
+      setPlaylists(refreshedPlaylists)
+      setSelectedAddPlaylistId((previous) => {
+        if (previous && refreshedPlaylists.some((playlist) => playlist.id === previous)) {
+          return previous
+        }
+
+        return refreshedPlaylists[0]?.id || ''
+      })
+      setInfoMessage(`Added "${song.songName}" to playlist.`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to add song to playlist.'
+      setErrorMessage(message)
+    } finally {
+      setAddingSongKey(null)
+    }
+  }
+
   return (
     <main className="min-h-screen px-6 py-8">
       <div className="mx-auto w-full max-w-3xl">
@@ -114,7 +203,7 @@ function PlaylistsPage() {
 
         <h1 className="mt-5 text-3xl font-black text-slate-900">Playlists</h1>
         <p className="mt-2 text-sm text-slate-700">
-          Create playlists, remove playlists, and expand any playlist to view its songs.
+          Create playlists, remove playlists, search MusicBrainz songs, and add songs to playlists.
         </p>
 
         <form
@@ -141,6 +230,105 @@ function PlaylistsPage() {
             {isCreating ? 'Creating...' : 'Create Playlist'}
           </button>
         </form>
+
+        <section className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h2 className="text-lg font-bold text-slate-900">Add Songs From MusicBrainz</h2>
+          <p className="mt-1 text-sm text-slate-700">
+            Search individual songs and add them directly to a playlist.
+          </p>
+
+          <form onSubmit={handleSearchSongs} className="mt-4 space-y-3">
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="text-sm font-semibold text-slate-800">
+                Song title
+                <input
+                  type="text"
+                  value={musicBrainzSongQuery}
+                  onChange={(event) => setMusicBrainzSongQuery(event.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                />
+              </label>
+
+              <label className="text-sm font-semibold text-slate-800">
+                Artist name
+                <input
+                  type="text"
+                  value={musicBrainzArtistQuery}
+                  onChange={(event) => setMusicBrainzArtistQuery(event.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                />
+              </label>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+              <label className="text-sm font-semibold text-slate-800">
+                Target Playlist
+                <select
+                  value={selectedAddPlaylistId}
+                  onChange={(event) => setSelectedAddPlaylistId(event.target.value)}
+                  disabled={playlists.length === 0}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                >
+                  {playlists.length === 0 && <option value="">No playlists available</option>}
+                  {playlists.map((playlist) => (
+                    <option key={playlist.id} value={playlist.id}>
+                      {playlist.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <button
+                type="submit"
+                disabled={isSearchingSongs}
+                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {isSearchingSongs ? 'Searching...' : 'Search Songs'}
+              </button>
+            </div>
+          </form>
+
+          {playlists.length === 0 && (
+            <p className="mt-3 text-sm text-slate-700">Create a playlist before adding songs.</p>
+          )}
+
+          {!isSearchingSongs && searchResults.length > 0 && (
+            <>
+              <p className="mt-4 text-sm text-slate-700">
+                Results: <span className="font-semibold text-slate-900">{searchResults.length}</span>
+              </p>
+              <div className="mt-3 max-h-[420px] space-y-2 overflow-auto pr-1">
+                {searchResults.map((song) => (
+                  <article
+                    key={song.sourceSongId}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-slate-200">
+                        <AlbumCover src={song.coverUrl} alt={`${song.songName} cover`} loading="lazy" />
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-900">{song.songName}</p>
+                        <p className="truncate text-xs text-slate-700">{song.artistName}</p>
+                        <p className="truncate text-xs text-slate-500">{song.albumTitle ?? 'Single / Unknown Album'}</p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => void handleAddSongToPlaylist(song)}
+                      disabled={addingSongKey !== null || playlists.length === 0 || !selectedAddPlaylistId}
+                      className="shrink-0 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                    >
+                      {addingSongKey === song.sourceSongId ? 'Adding...' : 'Add to Playlist'}
+                    </button>
+                  </article>
+                ))}
+              </div>
+            </>
+          )}
+        </section>
 
         {errorMessage && (
           <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
@@ -209,15 +397,17 @@ function PlaylistsPage() {
                           className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                         >
                           <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-slate-200">
-                            <AlbumCover src={song.coverUrl} alt={`${song.albumTitle} cover`} loading="lazy" />
+                            <AlbumCover
+                              src={song.coverUrl}
+                              alt={`${song.albumTitle ?? song.trackTitle} cover`}
+                              loading="lazy"
+                            />
                           </div>
 
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-slate-900">
-                              {song.trackNumber}. {song.trackTitle}
-                            </p>
+                            <p className="truncate text-sm font-semibold text-slate-900">{song.trackTitle}</p>
                             <p className="truncate text-xs text-slate-700">
-                              {song.artistName} • {song.albumTitle}
+                              {song.artistName} - {song.albumTitle ?? 'Single / Unknown Album'}
                             </p>
                           </div>
                         </article>

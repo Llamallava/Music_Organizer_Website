@@ -173,24 +173,42 @@ export type Database = {
         Row: {
           id: string
           playlist_id: string
-          user_saved_album_id: string
-          track_number: number
+          user_saved_album_id: string | null
+          track_number: number | null
+          source_provider: string | null
+          source_song_id: string | null
+          song_name: string | null
+          artist_name: string | null
+          album_title: string | null
+          cover_url: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           playlist_id: string
-          user_saved_album_id: string
-          track_number: number
+          user_saved_album_id?: string | null
+          track_number?: number | null
+          source_provider?: string | null
+          source_song_id?: string | null
+          song_name?: string | null
+          artist_name?: string | null
+          album_title?: string | null
+          cover_url?: string | null
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           playlist_id?: string
-          user_saved_album_id?: string
-          track_number?: number
+          user_saved_album_id?: string | null
+          track_number?: number | null
+          source_provider?: string | null
+          source_song_id?: string | null
+          song_name?: string | null
+          artist_name?: string | null
+          album_title?: string | null
+          cover_url?: string | null
           created_at?: string
           updated_at?: string
         }
