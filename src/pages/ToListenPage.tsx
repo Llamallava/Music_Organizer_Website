@@ -368,6 +368,9 @@ function ToListenPage() {
                       </p>
                       <p className="truncate text-sm text-slate-700">{recommendation.artistName}</p>
                       <p className="truncate text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {recommendation.recommendationType === 'album' ? 'Album' : 'Song'}
+                      </p>
+                      <p className="truncate text-xs font-semibold uppercase tracking-wide text-slate-500">
                         From {getFriendDisplayName(recommendation.senderUsername, recommendation.senderFriendCode)}
                       </p>
                     </div>

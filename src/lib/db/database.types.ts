@@ -177,6 +177,7 @@ export type Database = {
           id: string
           sender_user_id: string
           receiver_user_id: string
+          recommendation_type: 'song' | 'album'
           song_name: string
           artist_name: string
           created_at: string
@@ -186,6 +187,7 @@ export type Database = {
           id?: string
           sender_user_id: string
           receiver_user_id: string
+          recommendation_type?: 'song' | 'album'
           song_name: string
           artist_name: string
           created_at?: string
@@ -195,6 +197,7 @@ export type Database = {
           id?: string
           sender_user_id?: string
           receiver_user_id?: string
+          recommendation_type?: 'song' | 'album'
           song_name?: string
           artist_name?: string
           created_at?: string

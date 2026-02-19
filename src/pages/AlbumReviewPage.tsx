@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
 import LinearBackButton from '../components/LinearBackButton'
+import { getFriendsOverviewForCurrentUser, type FriendProfile } from '../lib/db/friendsData'
 import {
   getAlbumWorkspaceForCurrentUser,
   upsertConclusionSectionForCurrentUser,
   upsertTrackReviewSectionForCurrentUser,
   type AlbumWorkspace,
 } from '../lib/db/reviewsData'
+import { sendRecommendationForCurrentUser, type RecommendationType } from '../lib/db/toListenData'
 
 type SectionDraft = {
   notes: string
@@ -20,6 +22,7 @@ type DraftMap = Record<string, SectionDraft>
 const CONCLUSION_KEY = 'conclusion'
 
 const toTrackKey = (trackNumber: number) => `track:${trackNumber}`
+const getFriendDisplayName = (friend: FriendProfile) => friend.username?.trim() || friend.friendCode
 
 const defaultDraft = (): SectionDraft => ({
   notes: '',
@@ -89,6 +92,14 @@ const buildInitialDraftMap = (workspace: AlbumWorkspace): DraftMap => {
 function AlbumReviewPage() {
   const { userSavedAlbumId } = useParams()
   const [workspace, setWorkspace] = useState<AlbumWorkspace | null>(null)
+  const [friends, setFriends] = useState<FriendProfile[]>([])
+  const [selectedRecommendationFriendUserId, setSelectedRecommendationFriendUserId] = useState('')
+  const [recommendationType, setRecommendationType] = useState<RecommendationType>('song')
+  const [recommendationItemTitle, setRecommendationItemTitle] = useState('')
+  const [recommendationArtistName, setRecommendationArtistName] = useState('')
+  const [isRecommendationModalOpen, setIsRecommendationModalOpen] = useState(false)
+  const [isRecommendationSubmitting, setIsRecommendationSubmitting] = useState(false)
+  const [recommendationErrorMessage, setRecommendationErrorMessage] = useState<string | null>(null)
   const [activeSectionKey, setActiveSectionKey] = useState<string>(CONCLUSION_KEY)
   const [draftBySection, setDraftBySection] = useState<DraftMap>({})
   const [savedBySection, setSavedBySection] = useState<DraftMap>({})
@@ -112,11 +123,19 @@ function AlbumReviewPage() {
       setInfoMessage(null)
 
       try {
-        const loadedWorkspace = await getAlbumWorkspaceForCurrentUser(userSavedAlbumId)
+        const [loadedWorkspace, friendsOverview] = await Promise.all([
+          getAlbumWorkspaceForCurrentUser(userSavedAlbumId),
+          getFriendsOverviewForCurrentUser(),
+        ])
 
         if (!isActive) {
           return
         }
+
+        setFriends(friendsOverview.friends)
+        setSelectedRecommendationFriendUserId(
+          (previous) => previous || friendsOverview.friends[0]?.userId || '',
+        )
 
         if (!loadedWorkspace) {
           setWorkspace(null)
@@ -201,6 +220,45 @@ function AlbumReviewPage() {
         isInterlude: value,
       },
     }))
+  }
+
+  const openRecommendationModal = (params: {
+    recommendationType: RecommendationType
+    itemTitle: string
+    artistName: string
+  }) => {
+    setRecommendationErrorMessage(null)
+    setRecommendationType(params.recommendationType)
+    setRecommendationItemTitle(params.itemTitle)
+    setRecommendationArtistName(params.artistName)
+    setIsRecommendationModalOpen(true)
+  }
+
+  const handleSendRecommendation = async () => {
+    if (!workspace || !recommendationItemTitle || !recommendationArtistName) {
+      return
+    }
+
+    setRecommendationErrorMessage(null)
+    setInfoMessage(null)
+    setIsRecommendationSubmitting(true)
+
+    try {
+      await sendRecommendationForCurrentUser({
+        friendUserId: selectedRecommendationFriendUserId,
+        recommendationType,
+        songName: recommendationItemTitle,
+        artistName: recommendationArtistName,
+      })
+
+      setIsRecommendationModalOpen(false)
+      setInfoMessage('Recommendation sent.')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to send recommendation.'
+      setRecommendationErrorMessage(message)
+    } finally {
+      setIsRecommendationSubmitting(false)
+    }
   }
 
   const handleSaveCurrentSection = async () => {
@@ -301,6 +359,19 @@ function AlbumReviewPage() {
               </div>
               <h1 className="mt-3 text-base font-bold text-slate-900">{workspace.album.title}</h1>
               <p className="text-sm text-slate-700">{workspace.album.artistName}</p>
+              <button
+                type="button"
+                onClick={() =>
+                  openRecommendationModal({
+                    recommendationType: 'album',
+                    itemTitle: workspace.album.title,
+                    artistName: workspace.album.artistName,
+                  })
+                }
+                className="mt-3 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800"
+              >
+                Recommend this album to a friend?
+              </button>
             </div>
 
             <div className="rounded-xl border border-slate-200 bg-white p-3">
@@ -391,6 +462,22 @@ function AlbumReviewPage() {
             />
 
             <div className="mt-3 flex items-center gap-3">
+              {activeTrack && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    openRecommendationModal({
+                      recommendationType: 'song',
+                      itemTitle: activeTrack.title,
+                      artistName: workspace.album.artistName,
+                    })
+                  }
+                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800"
+                >
+                  Recommend this song to a friend?
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => void handleSaveCurrentSection()}
@@ -433,6 +520,85 @@ function AlbumReviewPage() {
           </aside>
         </section>
       </div>
+
+      {isRecommendationModalOpen && workspace && recommendationItemTitle && recommendationArtistName && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4"
+          onClick={() => {
+            if (!isRecommendationSubmitting) {
+              setIsRecommendationModalOpen(false)
+            }
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="recommend-track-title"
+            className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-5 shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="recommend-track-title" className="text-lg font-bold text-slate-900">
+              {recommendationType === 'album'
+                ? 'Recommend this album to a friend?'
+                : 'Recommend this song to a friend?'}
+            </h2>
+
+            <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+              <p className="text-sm font-semibold text-slate-900">{recommendationItemTitle}</p>
+              <p className="mt-1 text-sm text-slate-700">{recommendationArtistName}</p>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {recommendationType === 'album' ? 'Album' : 'Song'}
+              </p>
+            </div>
+
+            <label className="mt-4 block text-sm font-semibold text-slate-800">
+              Send To
+              <select
+                value={selectedRecommendationFriendUserId}
+                onChange={(event) => setSelectedRecommendationFriendUserId(event.target.value)}
+                disabled={friends.length === 0 || isRecommendationSubmitting}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              >
+                {friends.length === 0 && <option value="">No friends available</option>}
+                {friends.map((friend) => (
+                  <option key={friend.userId} value={friend.userId}>
+                    {getFriendDisplayName(friend)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {friends.length === 0 && (
+              <p className="mt-3 text-sm text-slate-700">Add a friend first to send recommendations.</p>
+            )}
+
+            {recommendationErrorMessage && (
+              <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+                {recommendationErrorMessage}
+              </div>
+            )}
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsRecommendationModalOpen(false)}
+                disabled={isRecommendationSubmitting}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSendRecommendation()}
+                disabled={isRecommendationSubmitting || friends.length === 0}
+                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {isRecommendationSubmitting ? 'Sending...' : 'Send Recommendation'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

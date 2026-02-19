@@ -7,11 +7,14 @@ export type ToListenSong = {
   createdAt: string
 }
 
+export type RecommendationType = 'song' | 'album'
+
 export type ReceivedRecommendation = {
   id: string
   senderUserId: string
   senderUsername: string | null
   senderFriendCode: string | null
+  recommendationType: RecommendationType
   songName: string
   artistName: string
   createdAt: string
@@ -110,7 +113,7 @@ export const listReceivedRecommendationsForCurrentUser = async (): Promise<Recei
 
   const { data, error } = await supabase
     .from('song_recommendations')
-    .select('id, sender_user_id, song_name, artist_name, created_at')
+    .select('id, sender_user_id, recommendation_type, song_name, artist_name, created_at')
     .eq('receiver_user_id', userId)
     .order('created_at', { ascending: false })
 
@@ -143,6 +146,7 @@ export const listReceivedRecommendationsForCurrentUser = async (): Promise<Recei
       senderUserId: row.sender_user_id,
       senderUsername: senderProfile?.username ?? null,
       senderFriendCode: senderProfile?.friendCode ?? null,
+      recommendationType: row.recommendation_type,
       songName: row.song_name,
       artistName: row.artist_name,
       createdAt: row.created_at,
@@ -152,11 +156,13 @@ export const listReceivedRecommendationsForCurrentUser = async (): Promise<Recei
 
 export const sendRecommendationForCurrentUser = async (params: {
   friendUserId: string
+  recommendationType?: RecommendationType
   songName: string
   artistName: string
 }): Promise<void> => {
   const userId = await requireAuthenticatedUserId()
   const friendUserId = params.friendUserId.trim()
+  const recommendationType = params.recommendationType ?? 'song'
   const songName = params.songName.trim()
   const artistName = params.artistName.trim()
 
@@ -179,6 +185,7 @@ export const sendRecommendationForCurrentUser = async (params: {
   const { error } = await supabase.from('song_recommendations').insert({
     sender_user_id: userId,
     receiver_user_id: friendUserId,
+    recommendation_type: recommendationType,
     song_name: songName,
     artist_name: artistName,
   })
