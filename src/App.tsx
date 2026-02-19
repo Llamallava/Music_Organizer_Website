@@ -9,9 +9,12 @@ import FriendAlbumReviewPage from './pages/FriendAlbumReviewPage'
 import FriendDetailPage from './pages/FriendDetailPage'
 import FriendsPage from './pages/FriendsPage'
 import FriendReviewsPage from './pages/FriendReviewsPage'
+import ExplorePage from './pages/ExplorePage'
 import MyStatsPage from './pages/MyStatsPage'
+import MyStuffPage from './pages/MyStuffPage'
 import ReviewsPage from './pages/ReviewsPage'
 import SearchPage from './pages/SearchPage'
+import ToListenPage from './pages/ToListenPage'
 
 function App() {
   return (
@@ -20,6 +23,30 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/auth" element={<AuthPage />} />
+        <Route
+          path="/explore"
+          element={
+            <ProtectedRoute>
+              <ExplorePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-stuff"
+          element={
+            <ProtectedRoute>
+              <MyStuffPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/to-listen"
+          element={
+            <ProtectedRoute>
+              <ToListenPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/reviews"
           element={

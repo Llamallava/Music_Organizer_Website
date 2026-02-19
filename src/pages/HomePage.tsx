@@ -8,34 +8,18 @@ function HomePage() {
       <div className="flex w-full max-w-sm flex-col gap-4">
         <button
           type="button"
-          onClick={() => navigate('/reviews')}
+          onClick={() => navigate('/explore')}
           className="rounded-lg bg-slate-900 px-4 py-3 text-base font-semibold text-white"
         >
-          Reviews
+          Explore
         </button>
 
         <button
           type="button"
-          onClick={() => navigate('/stats')}
+          onClick={() => navigate('/my-stuff')}
           className="rounded-lg bg-slate-600 px-4 py-3 text-base font-semibold text-white"
         >
-          My Stats
-        </button>
-
-        <button
-          type="button"
-          onClick={() => navigate('/search')}
-          className="rounded-lg bg-slate-600 px-4 py-3 text-base font-semibold text-white"
-        >
-          Search
-        </button>
-
-        <button
-          type="button"
-          onClick={() => navigate('/friends')}
-          className="rounded-lg bg-slate-600 px-4 py-3 text-base font-semibold text-white"
-        >
-          Friends
+          My Stuff
         </button>
       </div>
     </main>

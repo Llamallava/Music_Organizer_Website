@@ -145,6 +145,90 @@ export type Database = {
           },
         ]
       }
+      to_listen_songs: {
+        Row: {
+          id: string
+          user_id: string
+          song_name: string
+          artist_name: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          song_name: string
+          artist_name: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          song_name?: string
+          artist_name?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      song_recommendations: {
+        Row: {
+          id: string
+          sender_user_id: string
+          receiver_user_id: string
+          song_name: string
+          artist_name: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          sender_user_id: string
+          receiver_user_id: string
+          song_name: string
+          artist_name: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          sender_user_id?: string
+          receiver_user_id?: string
+          song_name?: string
+          artist_name?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notification_events: {
+        Row: {
+          id: string
+          user_id: string
+          event_type: 'recommendation_received' | 'recommendation_listened'
+          payload: Json
+          created_at: string
+          read_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          event_type: 'recommendation_received' | 'recommendation_listened'
+          payload?: Json
+          created_at?: string
+          read_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          event_type?: 'recommendation_received' | 'recommendation_listened'
+          payload?: Json
+          created_at?: string
+          read_at?: string | null
+        }
+        Relationships: []
+      }
       friendships: {
         Row: {
           user_id: string
