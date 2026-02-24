@@ -229,6 +229,35 @@ export type Database = {
           },
         ]
       }
+      playlist_shares: {
+        Row: {
+          playlist_id: string
+          owner_user_id: string
+          shared_with_user_id: string
+          created_at: string
+        }
+        Insert: {
+          playlist_id: string
+          owner_user_id: string
+          shared_with_user_id: string
+          created_at?: string
+        }
+        Update: {
+          playlist_id?: string
+          owner_user_id?: string
+          shared_with_user_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'playlist_shares_playlist_id_fkey'
+            columns: ['playlist_id']
+            isOneToOne: false
+            referencedRelation: 'playlists'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       to_listen_songs: {
         Row: {
           id: string

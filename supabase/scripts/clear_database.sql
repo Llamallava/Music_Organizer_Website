@@ -9,6 +9,7 @@ begin;
 
 truncate table
   public.playlist_songs,
+  public.playlist_shares,
   public.playlists,
   public.notification_events,
   public.song_recommendations,

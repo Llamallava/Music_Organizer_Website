@@ -27,6 +27,24 @@ export type PlaylistWithSongs = Playlist & {
   songs: PlaylistSong[]
 }
 
+export type PlaylistShareRecipient = {
+  friendUserId: string
+  friendUsername: string | null
+  friendCode: string | null
+  sharedAt: string
+}
+
+export type PlaylistWithShares = PlaylistWithSongs & {
+  sharedWith: PlaylistShareRecipient[]
+}
+
+export type SharedPlaylistWithSongs = PlaylistWithSongs & {
+  ownerUserId: string
+  ownerUsername: string | null
+  ownerFriendCode: string | null
+  sharedAt: string
+}
+
 type AddLocalSongToPlaylistParams = {
   playlistId: string
   userSavedAlbumId: string
@@ -45,7 +63,18 @@ type AddExternalSongToPlaylistParams = {
 
 export type AddSongToPlaylistParams = AddLocalSongToPlaylistParams | AddExternalSongToPlaylistParams
 
-const throwIfError = (error: { message: string } | null, context: string) => {
+type SharePlaylistParams = {
+  playlistId: string
+  friendUserId: string
+}
+
+type PlaylistRow = {
+  id: string
+  name: string
+  created_at: string
+}
+
+const throwIfError = (error: { message: string; code?: string } | null, context: string) => {
   if (error) {
     throw new Error(`${context}: ${error.message}`)
   }
@@ -80,35 +109,8 @@ const ensurePlaylistOwnedByUser = async (playlistId: string, userId: string) => 
   }
 }
 
-export const listPlaylistOptionsForCurrentUser = async (): Promise<PlaylistOption[]> => {
-  const userId = await requireAuthenticatedUserId()
-
-  const { data, error } = await supabase
-    .from('playlists')
-    .select('id, name')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-
-  throwIfError(error, 'Failed to list playlists')
-
-  return (data ?? []).map((row) => ({
-    id: row.id,
-    name: row.name,
-  }))
-}
-
-export const listPlaylistsWithSongsForCurrentUser = async (): Promise<PlaylistWithSongs[]> => {
-  const userId = await requireAuthenticatedUserId()
-
-  const { data: playlistRows, error: playlistsError } = await supabase
-    .from('playlists')
-    .select('id, name, created_at')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-
-  throwIfError(playlistsError, 'Failed to list playlists')
-
-  const playlists = (playlistRows ?? []).map((row) => ({
+const hydratePlaylistsWithSongs = async (playlistRows: PlaylistRow[]): Promise<PlaylistWithSongs[]> => {
+  const playlists = playlistRows.map((row) => ({
     id: row.id,
     name: row.name,
     createdAt: row.created_at,
@@ -135,11 +137,12 @@ export const listPlaylistsWithSongsForCurrentUser = async (): Promise<PlaylistWi
     return playlists
   }
 
-  const localRows = songRows.filter(
-    (row) => row.user_saved_album_id !== null && row.track_number !== null,
-  )
   const userSavedAlbumIds = Array.from(
-    new Set(localRows.map((row) => row.user_saved_album_id).filter((value): value is string => Boolean(value))),
+    new Set(
+      songRows
+        .map((row) => row.user_saved_album_id)
+        .filter((value): value is string => Boolean(value)),
+    ),
   )
 
   const savedAlbumById = new Map<string, { album_id: string }>()
@@ -148,7 +151,6 @@ export const listPlaylistsWithSongsForCurrentUser = async (): Promise<PlaylistWi
       .from('user_saved_albums')
       .select('id, album_id')
       .in('id', userSavedAlbumIds)
-      .eq('user_id', userId)
 
     throwIfError(savedAlbumsError, 'Failed to load saved albums for playlists')
 
@@ -201,9 +203,7 @@ export const listPlaylistsWithSongsForCurrentUser = async (): Promise<PlaylistWi
       const album = savedAlbum ? albumById.get(savedAlbum.album_id) : null
 
       const trackTitle =
-        (savedAlbum
-          ? trackTitleByAlbumAndNumber.get(`${savedAlbum.album_id}:${row.track_number}`)
-          : null) ??
+        (savedAlbum ? trackTitleByAlbumAndNumber.get(`${savedAlbum.album_id}:${row.track_number}`) : null) ??
         row.song_name ??
         `Track ${row.track_number}`
 
@@ -239,6 +239,171 @@ export const listPlaylistsWithSongsForCurrentUser = async (): Promise<PlaylistWi
     ...playlist,
     songs: songsByPlaylistId.get(playlist.id) ?? [],
   }))
+}
+
+export const listPlaylistOptionsForCurrentUser = async (): Promise<PlaylistOption[]> => {
+  const userId = await requireAuthenticatedUserId()
+
+  const { data, error } = await supabase
+    .from('playlists')
+    .select('id, name')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+
+  throwIfError(error, 'Failed to list playlists')
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    name: row.name,
+  }))
+}
+
+export const listPlaylistsWithSongsForCurrentUser = async (): Promise<PlaylistWithShares[]> => {
+  const userId = await requireAuthenticatedUserId()
+
+  const { data: playlistRows, error: playlistsError } = await supabase
+    .from('playlists')
+    .select('id, name, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+
+  throwIfError(playlistsError, 'Failed to list playlists')
+
+  const playlistsWithSongs = await hydratePlaylistsWithSongs(playlistRows ?? [])
+  if (playlistsWithSongs.length === 0) {
+    return []
+  }
+
+  const playlistIds = playlistsWithSongs.map((playlist) => playlist.id)
+  const { data: shareRows, error: sharesError } = await supabase
+    .from('playlist_shares')
+    .select('playlist_id, shared_with_user_id, created_at')
+    .eq('owner_user_id', userId)
+    .in('playlist_id', playlistIds)
+    .order('created_at', { ascending: true })
+
+  throwIfError(sharesError, 'Failed to load playlist shares')
+
+  const sharedUserIds = Array.from(
+    new Set((shareRows ?? []).map((row) => row.shared_with_user_id)),
+  )
+
+  const profileByUserId = new Map<string, { username: string | null; friendCode: string | null }>()
+  if (sharedUserIds.length > 0) {
+    const { data: profileRows, error: profilesError } = await supabase
+      .from('profiles')
+      .select('user_id, username, friend_code')
+      .in('user_id', sharedUserIds)
+
+    throwIfError(profilesError, 'Failed to load shared friend profiles')
+
+    for (const row of profileRows ?? []) {
+      profileByUserId.set(row.user_id, {
+        username: row.username,
+        friendCode: row.friend_code,
+      })
+    }
+  }
+
+  const sharedWithByPlaylistId = new Map<string, PlaylistShareRecipient[]>()
+  for (const row of shareRows ?? []) {
+    const existing = sharedWithByPlaylistId.get(row.playlist_id) ?? []
+    const profile = profileByUserId.get(row.shared_with_user_id)
+
+    existing.push({
+      friendUserId: row.shared_with_user_id,
+      friendUsername: profile?.username ?? null,
+      friendCode: profile?.friendCode ?? null,
+      sharedAt: row.created_at,
+    })
+
+    sharedWithByPlaylistId.set(row.playlist_id, existing)
+  }
+
+  for (const recipients of sharedWithByPlaylistId.values()) {
+    recipients.sort((left, right) => {
+      const leftName = left.friendUsername?.trim() || left.friendCode || left.friendUserId
+      const rightName = right.friendUsername?.trim() || right.friendCode || right.friendUserId
+      return leftName.localeCompare(rightName)
+    })
+  }
+
+  return playlistsWithSongs.map((playlist) => ({
+    ...playlist,
+    sharedWith: sharedWithByPlaylistId.get(playlist.id) ?? [],
+  }))
+}
+
+export const listSharedPlaylistsWithSongsForCurrentUser = async (): Promise<SharedPlaylistWithSongs[]> => {
+  const userId = await requireAuthenticatedUserId()
+
+  const { data: shareRows, error: sharesError } = await supabase
+    .from('playlist_shares')
+    .select('playlist_id, owner_user_id, created_at')
+    .eq('shared_with_user_id', userId)
+    .order('created_at', { ascending: false })
+
+  throwIfError(sharesError, 'Failed to load shared playlists')
+
+  if (!shareRows || shareRows.length === 0) {
+    return []
+  }
+
+  const shareByPlaylistId = new Map(shareRows.map((row) => [row.playlist_id, row]))
+  const playlistIds = Array.from(shareByPlaylistId.keys())
+
+  const { data: playlistRows, error: playlistsError } = await supabase
+    .from('playlists')
+    .select('id, name, created_at')
+    .in('id', playlistIds)
+    .order('created_at', { ascending: false })
+
+  throwIfError(playlistsError, 'Failed to load shared playlist records')
+
+  const playlistsWithSongs = await hydratePlaylistsWithSongs(playlistRows ?? [])
+  if (playlistsWithSongs.length === 0) {
+    return []
+  }
+
+  const ownerUserIds = Array.from(new Set(shareRows.map((row) => row.owner_user_id)))
+  const ownerProfileByUserId = new Map<string, { username: string | null; friendCode: string | null }>()
+
+  if (ownerUserIds.length > 0) {
+    const { data: ownerProfileRows, error: ownerProfilesError } = await supabase
+      .from('profiles')
+      .select('user_id, username, friend_code')
+      .in('user_id', ownerUserIds)
+
+    throwIfError(ownerProfilesError, 'Failed to load shared playlist owners')
+
+    for (const row of ownerProfileRows ?? []) {
+      ownerProfileByUserId.set(row.user_id, {
+        username: row.username,
+        friendCode: row.friend_code,
+      })
+    }
+  }
+
+  const sharedPlaylists = playlistsWithSongs.flatMap((playlist) => {
+    const shareRow = shareByPlaylistId.get(playlist.id)
+    if (!shareRow) {
+      return []
+    }
+
+    const ownerProfile = ownerProfileByUserId.get(shareRow.owner_user_id)
+    return [
+      {
+        ...playlist,
+        ownerUserId: shareRow.owner_user_id,
+        ownerUsername: ownerProfile?.username ?? null,
+        ownerFriendCode: ownerProfile?.friendCode ?? null,
+        sharedAt: shareRow.created_at,
+      },
+    ]
+  })
+
+  sharedPlaylists.sort((left, right) => right.sharedAt.localeCompare(left.sharedAt))
+  return sharedPlaylists
 }
 
 export const createPlaylistForCurrentUser = async (name: string): Promise<Playlist> => {
@@ -289,6 +454,77 @@ export const deletePlaylistForCurrentUser = async (playlistId: string): Promise<
     .eq('user_id', userId)
 
   throwIfError(error, 'Failed to delete playlist')
+}
+
+export const sharePlaylistWithFriendForCurrentUser = async (params: SharePlaylistParams): Promise<void> => {
+  const userId = await requireAuthenticatedUserId()
+  const playlistId = params.playlistId.trim()
+  const friendUserId = params.friendUserId.trim()
+
+  if (!playlistId) {
+    throw new Error('Missing playlist identifier.')
+  }
+
+  if (!friendUserId) {
+    throw new Error('Please choose a friend to share with.')
+  }
+
+  if (friendUserId === userId) {
+    throw new Error('You cannot share a playlist with yourself.')
+  }
+
+  await ensurePlaylistOwnedByUser(playlistId, userId)
+
+  const [firstUserId, secondUserId] = userId < friendUserId ? [userId, friendUserId] : [friendUserId, userId]
+  const { data: friendshipRow, error: friendshipError } = await supabase
+    .from('friendships')
+    .select('user_id')
+    .eq('user_id', firstUserId)
+    .eq('friend_user_id', secondUserId)
+    .maybeSingle()
+
+  throwIfError(friendshipError, 'Failed to validate friendship')
+
+  if (!friendshipRow) {
+    throw new Error('You can only share playlists with friends.')
+  }
+
+  const { error } = await supabase.from('playlist_shares').insert({
+    playlist_id: playlistId,
+    owner_user_id: userId,
+    shared_with_user_id: friendUserId,
+  })
+
+  if (error?.code === '23505') {
+    throw new Error('That friend already has access to this playlist.')
+  }
+
+  throwIfError(error, 'Failed to share playlist')
+}
+
+export const unsharePlaylistWithFriendForCurrentUser = async (params: SharePlaylistParams): Promise<void> => {
+  const userId = await requireAuthenticatedUserId()
+  const playlistId = params.playlistId.trim()
+  const friendUserId = params.friendUserId.trim()
+
+  if (!playlistId) {
+    throw new Error('Missing playlist identifier.')
+  }
+
+  if (!friendUserId) {
+    throw new Error('Missing friend identifier.')
+  }
+
+  await ensurePlaylistOwnedByUser(playlistId, userId)
+
+  const { error } = await supabase
+    .from('playlist_shares')
+    .delete()
+    .eq('playlist_id', playlistId)
+    .eq('owner_user_id', userId)
+    .eq('shared_with_user_id', friendUserId)
+
+  throwIfError(error, 'Failed to remove playlist share')
 }
 
 export const addSongToPlaylistForCurrentUser = async (params: AddSongToPlaylistParams): Promise<void> => {
