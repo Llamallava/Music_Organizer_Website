@@ -570,6 +570,15 @@ serve(async (request) => {
         .eq('user_id', user.id)
     }
 
+    console.log('[export] token scope after refresh:', tokenResponse.scope)
+    console.log('[export] spotify_user_id from db:', connectionRow.spotify_user_id)
+
+    const meCheck = await fetch('https://api.spotify.com/v1/me', {
+      headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+    })
+    const meBody = await meCheck.json()
+    console.log('[export] /v1/me status:', meCheck.status, 'body:', JSON.stringify(meBody))
+
     const createdPlaylist = await createSpotifyPlaylist({
       accessToken: tokenResponse.access_token,
       spotifyUserId: connectionRow.spotify_user_id,

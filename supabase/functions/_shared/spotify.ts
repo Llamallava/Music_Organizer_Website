@@ -141,13 +141,13 @@ export const fetchSpotifyProfile = async (accessToken: string) => {
 
 export const createSpotifyPlaylist = async (params: {
   accessToken: string
-  spotifyUserId: string
+  spotifyUserId?: string
   name: string
   description?: string
   isPublic?: boolean
 }) => {
   const response = await fetch(
-    `https://api.spotify.com/v1/users/${encodeURIComponent(params.spotifyUserId)}/playlists`,
+    `https://api.spotify.com/v1/me/playlists`,
     {
       method: 'POST',
       headers: {
