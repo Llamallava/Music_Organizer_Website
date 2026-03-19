@@ -15,6 +15,12 @@ import {
   type PlaylistOption,
 } from '../lib/db/playlistsData'
 import { sendRecommendationForCurrentUser, type RecommendationType } from '../lib/db/toListenData'
+import { addTagForCurrentUser, listTagsForAlbum, removeTagForCurrentUser } from '../lib/db/tagsData'
+import {
+  deleteLyricsOverrideForCurrentUser,
+  listLyricsOverridesForAlbum,
+  saveLyricsOverrideForCurrentUser,
+} from '../lib/db/lyricsData'
 
 type SectionDraft = {
   notes: string
@@ -119,6 +125,15 @@ function AlbumReviewPage() {
   const [activeSectionKey, setActiveSectionKey] = useState<string>(CONCLUSION_KEY)
   const [draftBySection, setDraftBySection] = useState<DraftMap>({})
   const [savedBySection, setSavedBySection] = useState<DraftMap>({})
+  const [tagsByTrack, setTagsByTrack] = useState<Record<number, string[]>>({})
+  const [tagInput, setTagInput] = useState('')
+  const [isTagSaving, setIsTagSaving] = useState(false)
+  const [tagErrorMessage, setTagErrorMessage] = useState<string | null>(null)
+  const [lyricsOverrideByTrack, setLyricsOverrideByTrack] = useState<Record<number, string>>({})
+  const [isEditingLyrics, setIsEditingLyrics] = useState(false)
+  const [lyricsEditText, setLyricsEditText] = useState('')
+  const [isSavingLyrics, setIsSavingLyrics] = useState(false)
+  const [lyricsErrorMessage, setLyricsErrorMessage] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -139,10 +154,12 @@ function AlbumReviewPage() {
       setInfoMessage(null)
 
       try {
-        const [loadedWorkspace, friendsOverview, playlistOptions] = await Promise.all([
+        const [loadedWorkspace, friendsOverview, playlistOptions, loadedTags, loadedLyricsOverrides] = await Promise.all([
           getAlbumWorkspaceForCurrentUser(userSavedAlbumId),
           getFriendsOverviewForCurrentUser(),
           listPlaylistOptionsForCurrentUser(),
+          listTagsForAlbum(userSavedAlbumId),
+          listLyricsOverridesForAlbum(userSavedAlbumId),
         ])
 
         if (!isActive) {
@@ -169,6 +186,8 @@ function AlbumReviewPage() {
         setWorkspace(loadedWorkspace)
         setDraftBySection(draftMap)
         setSavedBySection(draftMap)
+        setTagsByTrack(loadedTags)
+        setLyricsOverrideByTrack(loadedLyricsOverrides)
         setActiveSectionKey(firstTrack ? toTrackKey(firstTrack.trackNumber) : CONCLUSION_KEY)
       } catch (error) {
         if (!isActive) {
@@ -372,6 +391,118 @@ function AlbumReviewPage() {
     }
   }
 
+  const handleSaveLyrics = async () => {
+    if (!workspace || !activeTrack) {
+      return
+    }
+
+    setLyricsErrorMessage(null)
+    setIsSavingLyrics(true)
+
+    try {
+      if (lyricsEditText === activeTrack.lyrics) {
+        // Matches original — delete any existing override
+        await deleteLyricsOverrideForCurrentUser(workspace.userSavedAlbumId, activeTrack.trackNumber)
+        setLyricsOverrideByTrack((previous) => {
+          const next = { ...previous }
+          delete next[activeTrack.trackNumber]
+          return next
+        })
+      } else {
+        await saveLyricsOverrideForCurrentUser(
+          workspace.userSavedAlbumId,
+          activeTrack.trackNumber,
+          lyricsEditText,
+        )
+        setLyricsOverrideByTrack((previous) => ({
+          ...previous,
+          [activeTrack.trackNumber]: lyricsEditText,
+        }))
+      }
+
+      setIsEditingLyrics(false)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to save lyrics.'
+      setLyricsErrorMessage(message)
+    } finally {
+      setIsSavingLyrics(false)
+    }
+  }
+
+  const handleRevertLyrics = async () => {
+    if (!workspace || !activeTrack) {
+      return
+    }
+
+    setLyricsErrorMessage(null)
+    setIsSavingLyrics(true)
+
+    try {
+      await deleteLyricsOverrideForCurrentUser(workspace.userSavedAlbumId, activeTrack.trackNumber)
+      setLyricsOverrideByTrack((previous) => {
+        const next = { ...previous }
+        delete next[activeTrack.trackNumber]
+        return next
+      })
+      setIsEditingLyrics(false)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to revert lyrics.'
+      setLyricsErrorMessage(message)
+    } finally {
+      setIsSavingLyrics(false)
+    }
+  }
+
+  const handleAddTag = async () => {
+    if (!workspace || !activeTrack) {
+      return
+    }
+
+    const normalized = tagInput.trim().toLowerCase()
+    if (!normalized) {
+      return
+    }
+
+    setTagErrorMessage(null)
+    setIsTagSaving(true)
+
+    try {
+      await addTagForCurrentUser(workspace.userSavedAlbumId, activeTrack.trackNumber, normalized)
+      setTagsByTrack((previous) => {
+        const existing = previous[activeTrack.trackNumber] ?? []
+        if (existing.includes(normalized)) {
+          return previous
+        }
+        return { ...previous, [activeTrack.trackNumber]: [...existing, normalized] }
+      })
+      setTagInput('')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to add tag.'
+      setTagErrorMessage(message)
+    } finally {
+      setIsTagSaving(false)
+    }
+  }
+
+  const handleRemoveTag = async (tag: string) => {
+    if (!workspace || !activeTrack) {
+      return
+    }
+
+    setTagErrorMessage(null)
+
+    try {
+      await removeTagForCurrentUser(workspace.userSavedAlbumId, activeTrack.trackNumber, tag)
+      setTagsByTrack((previous) => ({
+        ...previous,
+        [activeTrack.trackNumber]: (previous[activeTrack.trackNumber] ?? []).filter((t) => t !== tag),
+      }))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to remove tag.'
+      setTagErrorMessage(message)
+    }
+  }
+
   if (isLoading) {
     return (
       <main className="min-h-screen px-6 py-8">
@@ -560,6 +691,62 @@ function AlbumReviewPage() {
               {!isDirty && <p className="text-xs text-slate-500">All changes saved</p>}
             </div>
 
+            {activeTrack && (
+              <div className="mt-4 border-t border-slate-200 pt-4">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Tags</p>
+
+                {(tagsByTrack[activeTrack.trackNumber] ?? []).length > 0 && (
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    {(tagsByTrack[activeTrack.trackNumber] ?? []).map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700"
+                      >
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => void handleRemoveTag(tag)}
+                          className="ml-1 text-indigo-400 hover:text-indigo-700"
+                          aria-label={`Remove tag ${tag}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={tagInput}
+                    onChange={(event) => setTagInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault()
+                        void handleAddTag()
+                      }
+                    }}
+                    placeholder="Add a tag..."
+                    maxLength={50}
+                    className="flex-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void handleAddTag()}
+                    disabled={isTagSaving || !tagInput.trim()}
+                    className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+                  >
+                    Add
+                  </button>
+                </div>
+
+                {tagErrorMessage && (
+                  <p className="mt-2 text-xs text-rose-600">{tagErrorMessage}</p>
+                )}
+              </div>
+            )}
+
             {errorMessage && (
               <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
                 {errorMessage}
@@ -574,17 +761,82 @@ function AlbumReviewPage() {
           </section>
 
           <aside className="rounded-xl border border-slate-200 bg-white p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Lyrics</p>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Lyrics</p>
+              {activeTrack && !isEditingLyrics && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const displayed = lyricsOverrideByTrack[activeTrack.trackNumber] ?? activeTrack.lyrics
+                    setLyricsEditText(displayed)
+                    setLyricsErrorMessage(null)
+                    setIsEditingLyrics(true)
+                  }}
+                  className="text-xs font-semibold text-slate-500 hover:text-slate-800"
+                >
+                  Edit
+                </button>
+              )}
+            </div>
+
             {activeTrack ? (
-              activeTrack.lyrics.trim() ? (
-                <pre className="mt-2 max-h-[72vh] overflow-auto whitespace-pre-wrap text-sm leading-relaxed text-slate-800">
-                  {activeTrack.lyrics}
-                </pre>
-              ) : (
-                <p className="mt-2 text-sm text-slate-600">No lyrics stored for this track.</p>
-              )
+              isEditingLyrics ? (
+                <>
+                  <textarea
+                    value={lyricsEditText}
+                    onChange={(event) => setLyricsEditText(event.target.value)}
+                    className="h-[60vh] w-full resize-none rounded-lg border border-slate-300 p-2 text-sm leading-relaxed text-slate-900"
+                  />
+                  {lyricsErrorMessage && (
+                    <p className="mt-1 text-xs text-rose-600">{lyricsErrorMessage}</p>
+                  )}
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void handleSaveLyrics()}
+                      disabled={isSavingLyrics}
+                      className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
+                    >
+                      {isSavingLyrics ? 'Saving...' : 'Save'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingLyrics(false)}
+                      disabled={isSavingLyrics}
+                      className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 disabled:opacity-60"
+                    >
+                      Cancel
+                    </button>
+                    {lyricsOverrideByTrack[activeTrack.trackNumber] !== undefined && (
+                      <button
+                        type="button"
+                        onClick={() => void handleRevertLyrics()}
+                        disabled={isSavingLyrics}
+                        className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 disabled:opacity-60"
+                      >
+                        Revert to original
+                      </button>
+                    )}
+                  </div>
+                </>
+              ) : (() => {
+                const displayed = lyricsOverrideByTrack[activeTrack.trackNumber] ?? activeTrack.lyrics
+                const hasOverride = lyricsOverrideByTrack[activeTrack.trackNumber] !== undefined
+                return displayed.trim() ? (
+                  <>
+                    {hasOverride && (
+                      <p className="mb-1 text-xs font-semibold text-indigo-500">Edited</p>
+                    )}
+                    <pre className="max-h-[72vh] overflow-auto whitespace-pre-wrap text-sm leading-relaxed text-slate-800">
+                      {displayed}
+                    </pre>
+                  </>
+                ) : (
+                  <p className="text-sm text-slate-600">No lyrics stored for this track.</p>
+                )
+              })()
             ) : (
-              <p className="mt-2 text-sm text-slate-600">Conclusion has no lyrics.</p>
+              <p className="text-sm text-slate-600">Conclusion has no lyrics.</p>
             )}
           </aside>
         </section>

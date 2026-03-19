@@ -1,5 +1,7 @@
 import { supabase } from '../supabaseClient'
 import { listSavedAlbumsForCurrentUser } from './reviewsData'
+import { listAllTagsForCurrentUser } from './tagsData'
+import { listAllLyricsOverridesForCurrentUser } from './lyricsData'
 
 export type SearchSongRecord = {
   userSavedAlbumId: string
@@ -14,6 +16,7 @@ export type SearchSongRecord = {
   reviewNotes: string
   score: number | null
   isInterlude: boolean
+  tags: string[]
 }
 
 const toTrackKey = (savedAlbumId: string, trackNumber: number) => `${savedAlbumId}:${trackNumber}`
@@ -35,18 +38,26 @@ export const listSearchSongsForCurrentUser = async (): Promise<SearchSongRecord[
   const albumIds = savedAlbums.map((album) => album.albumId)
   const savedAlbumByAlbumId = new Map(savedAlbums.map((album) => [album.albumId, album]))
 
-  const [{ data: reviewRows, error: reviewError }, { data: trackRows, error: trackError }] =
-    await Promise.all([
-      supabase
-        .from('review_sections')
-        .select('user_saved_album_id, track_number, is_interlude, notes, score')
-        .in('user_saved_album_id', savedAlbumIds)
-        .eq('section_type', 'track'),
-      supabase.from('album_tracks').select('album_id, track_number, title, lyrics').in('album_id', albumIds),
-    ])
+  const [
+    { data: reviewRows, error: reviewError },
+    { data: trackRows, error: trackError },
+    allTags,
+    allLyricsOverrides,
+  ] = await Promise.all([
+    supabase
+      .from('review_sections')
+      .select('user_saved_album_id, track_number, is_interlude, notes, score')
+      .in('user_saved_album_id', savedAlbumIds)
+      .eq('section_type', 'track'),
+    supabase.from('album_tracks').select('album_id, track_number, title, lyrics').in('album_id', albumIds),
+    listAllTagsForCurrentUser(),
+    listAllLyricsOverridesForCurrentUser(),
+  ])
 
   throwIfError(reviewError, 'Failed to load review sections for search')
   throwIfError(trackError, 'Failed to load track metadata for search')
+
+  const toTagKey = (savedAlbumId: string, trackNumber: number) => `${savedAlbumId}:${trackNumber}`
 
   const reviewBySavedAlbumAndTrack = new Map<
     string,
@@ -88,10 +99,11 @@ export const listSearchSongsForCurrentUser = async (): Promise<SearchSongRecord[
       savedAt: album.savedAt,
       trackNumber: track.track_number,
       trackTitle: track.title,
-      lyrics: track.lyrics,
+      lyrics: allLyricsOverrides[toTagKey(album.userSavedAlbumId, track.track_number)] ?? track.lyrics,
       reviewNotes: review?.notes ?? '',
       score: review?.score ?? null,
       isInterlude: review?.isInterlude ?? false,
+      tags: allTags[toTagKey(album.userSavedAlbumId, track.track_number)] ?? [],
     })
   }
 

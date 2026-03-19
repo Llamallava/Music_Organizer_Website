@@ -1,6 +1,5 @@
 import type { FormEvent } from 'react'
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
 import LinearBackButton from '../components/LinearBackButton'
 import { getFriendsOverviewForCurrentUser, type FriendProfile } from '../lib/db/friendsData'
@@ -16,7 +15,6 @@ import {
   type SharedPlaylistWithSongs,
 } from '../lib/db/playlistsData'
 import { searchSongs, type SongSearchResult } from '../lib/external/musicMetadata'
-import { exportPlaylistToSpotify, startSpotifyConnectFlow } from '../lib/external/spotifyPlaylistExport'
 
 const getFriendDisplayName = (username: string | null | undefined, friendCode: string | null | undefined) => {
   const normalizedUsername = username?.trim()
@@ -27,16 +25,7 @@ const getFriendDisplayName = (username: string | null | undefined, friendCode: s
   return friendCode ?? 'Unknown User'
 }
 
-type SpotifyExportResultSummary = {
-  sourcePlaylistName: string
-  destinationPlaylistUrl: string | null
-  matchedSongs: number
-  unmatchedSongs: number
-  totalSongs: number
-}
-
 function PlaylistsPage() {
-  const [searchParams, setSearchParams] = useSearchParams()
   const [playlists, setPlaylists] = useState<PlaylistWithShares[]>([])
   const [sharedPlaylists, setSharedPlaylists] = useState<SharedPlaylistWithSongs[]>([])
   const [friends, setFriends] = useState<FriendProfile[]>([])
@@ -51,13 +40,10 @@ function PlaylistsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
   const [isSearchingSongs, setIsSearchingSongs] = useState(false)
-  const [isStartingSpotifyConnect, setIsStartingSpotifyConnect] = useState(false)
   const [deletingPlaylistId, setDeletingPlaylistId] = useState<string | null>(null)
   const [addingSongKey, setAddingSongKey] = useState<string | null>(null)
-  const [exportingSpotifyPlaylistId, setExportingSpotifyPlaylistId] = useState<string | null>(null)
   const [sharingPlaylistId, setSharingPlaylistId] = useState<string | null>(null)
   const [unsharingShareKey, setUnsharingShareKey] = useState<string | null>(null)
-  const [lastSpotifyExportResult, setLastSpotifyExportResult] = useState<SpotifyExportResultSummary | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [infoMessage, setInfoMessage] = useState<string | null>(null)
 
@@ -152,25 +138,6 @@ function PlaylistsPage() {
       isActive = false
     }
   }, [])
-
-  useEffect(() => {
-    const spotifyConnectStatus = searchParams.get('spotifyConnect')
-    if (!spotifyConnectStatus) {
-      return
-    }
-
-    const message = searchParams.get('message')
-
-    if (spotifyConnectStatus === 'success') {
-      setErrorMessage(null)
-      setInfoMessage('Spotify account connected.')
-    } else if (spotifyConnectStatus === 'error') {
-      setInfoMessage(null)
-      setErrorMessage(message?.trim() || 'Failed to connect Spotify account.')
-    }
-
-    setSearchParams({}, { replace: true })
-  }, [searchParams, setSearchParams])
 
   const togglePlaylistExpansion = (playlistId: string) => {
     setExpandedByPlaylistId((previous) => ({
@@ -340,58 +307,6 @@ function PlaylistsPage() {
     }
   }
 
-  const handleConnectSpotify = async () => {
-    setErrorMessage(null)
-    setInfoMessage(null)
-    setLastSpotifyExportResult(null)
-    setIsStartingSpotifyConnect(true)
-
-    try {
-      const response = await startSpotifyConnectFlow()
-      if (!response.authorizeUrl) {
-        throw new Error('Spotify authorize URL was not returned.')
-      }
-
-      window.location.assign(response.authorizeUrl)
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to start Spotify connection.'
-      setErrorMessage(message)
-      setIsStartingSpotifyConnect(false)
-    }
-  }
-
-  const handleExportPlaylistToSpotify = async (playlist: PlaylistWithShares) => {
-    setErrorMessage(null)
-    setInfoMessage(null)
-    setLastSpotifyExportResult(null)
-    setExportingSpotifyPlaylistId(playlist.id)
-
-    try {
-      const response = await exportPlaylistToSpotify(playlist.id, false)
-      setLastSpotifyExportResult({
-        sourcePlaylistName: playlist.name,
-        destinationPlaylistUrl: response.destinationPlaylist.url,
-        matchedSongs: response.summary.matchedSongs,
-        unmatchedSongs: response.summary.unmatchedSongs,
-        totalSongs: response.summary.totalSongs,
-      })
-
-      const statusLabel =
-        response.exportRun.status === 'succeeded'
-          ? 'Spotify export completed.'
-          : response.exportRun.status === 'partial'
-            ? 'Spotify export completed with unmatched songs.'
-            : 'Spotify export finished, but no songs were matched.'
-
-      setInfoMessage(statusLabel)
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to export playlist to Spotify.'
-      setErrorMessage(message)
-    } finally {
-      setExportingSpotifyPlaylistId(null)
-    }
-  }
-
   return (
     <main className="min-h-screen px-6 py-8">
       <div className="mx-auto w-full max-w-3xl">
@@ -401,26 +316,6 @@ function PlaylistsPage() {
         <p className="mt-2 text-sm text-slate-700">
           Create playlists, share them with friends, and add songs from MusicBrainz.
         </p>
-
-        <section className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h2 className="text-sm font-bold uppercase tracking-wide text-emerald-900">Spotify Export</h2>
-              <p className="mt-1 text-sm text-emerald-800">
-                Connect your Spotify account to export one of your app playlists as a real Spotify playlist.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => void handleConnectSpotify()}
-              disabled={isStartingSpotifyConnect}
-              className="shrink-0 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-            >
-              {isStartingSpotifyConnect ? 'Connecting...' : 'Connect Spotify'}
-            </button>
-          </div>
-        </section>
 
         <form
           onSubmit={handleCreatePlaylist}
@@ -558,30 +453,6 @@ function PlaylistsPage() {
           </div>
         )}
 
-        {lastSpotifyExportResult && (
-          <div className="mt-4 rounded-lg border border-emerald-200 bg-white p-4 text-sm text-slate-800 shadow-sm">
-            <p className="font-semibold text-slate-900">
-              Spotify export summary for "{lastSpotifyExportResult.sourcePlaylistName}"
-            </p>
-            <p className="mt-1">
-              Matched {lastSpotifyExportResult.matchedSongs} of {lastSpotifyExportResult.totalSongs} songs.
-              {lastSpotifyExportResult.unmatchedSongs > 0
-                ? ` ${lastSpotifyExportResult.unmatchedSongs} could not be matched.`
-                : ' All songs matched.'}
-            </p>
-            {lastSpotifyExportResult.destinationPlaylistUrl && (
-              <a
-                href={lastSpotifyExportResult.destinationPlaylistUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-2 inline-flex text-sm font-semibold text-emerald-700 underline"
-              >
-                Open Spotify Playlist
-              </a>
-            )}
-          </div>
-        )}
-
         {isLoading && <p className="mt-6 rounded-lg bg-white p-4 text-sm text-slate-700">Loading playlists...</p>}
 
         {!isLoading && playlists.length === 0 && (
@@ -618,15 +489,6 @@ function PlaylistsPage() {
                     </button>
 
                     <div className="flex shrink-0 items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => void handleExportPlaylistToSpotify(playlist)}
-                        disabled={exportingSpotifyPlaylistId !== null}
-                        className="rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-700 disabled:opacity-60"
-                      >
-                        {exportingSpotifyPlaylistId === playlist.id ? 'Exporting...' : 'Export to Spotify'}
-                      </button>
-
                       <button
                         type="button"
                         onClick={() => void handleDeletePlaylist(playlist.id)}

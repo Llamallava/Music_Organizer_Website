@@ -122,6 +122,7 @@ function SearchPage() {
   const [trackQuery, setTrackQuery] = useState('')
   const [lyricsQuery, setLyricsQuery] = useState('')
   const [notesQuery, setNotesQuery] = useState('')
+  const [tagQuery, setTagQuery] = useState('')
   const [scoreMode, setScoreMode] = useState<ScoreMode>('any')
   const [interludeMode, setInterludeMode] = useState<InterludeMode>('any')
   const [minScoreInput, setMinScoreInput] = useState('')
@@ -171,6 +172,7 @@ function SearchPage() {
   const normalizedTrackQuery = trackQuery.trim().toLocaleLowerCase()
   const normalizedLyricsQuery = lyricsQuery.trim().toLocaleLowerCase()
   const normalizedNotesQuery = notesQuery.trim().toLocaleLowerCase()
+  const normalizedTagQuery = tagQuery.trim().toLocaleLowerCase()
   const parsedMinScore = parseOptionalNumber(minScoreInput)
   const parsedMaxScore = parseOptionalNumber(maxScoreInput)
 
@@ -223,6 +225,10 @@ function SearchPage() {
       }
 
       if (!includesCaseInsensitive(song.reviewNotes, normalizedNotesQuery)) {
+        return false
+      }
+
+      if (normalizedTagQuery && !song.tags.some((tag) => tag.includes(normalizedTagQuery))) {
         return false
       }
 
@@ -340,6 +346,7 @@ function SearchPage() {
     normalizedArtistQuery,
     normalizedLyricsQuery,
     normalizedNotesQuery,
+    normalizedTagQuery,
     normalizedTrackQuery,
     parsedMaxScore.value,
     parsedMinScore.value,
@@ -355,6 +362,7 @@ function SearchPage() {
     setTrackQuery('')
     setLyricsQuery('')
     setNotesQuery('')
+    setTagQuery('')
     setScoreMode('any')
     setInterludeMode('any')
     setMinScoreInput('')
@@ -432,6 +440,17 @@ function SearchPage() {
                 type="text"
                 value={notesQuery}
                 onChange={(event) => setNotesQuery(event.target.value)}
+                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              />
+            </label>
+
+            <label className="text-sm text-slate-700">
+              Tag contains
+              <input
+                type="text"
+                value={tagQuery}
+                onChange={(event) => setTagQuery(event.target.value)}
+                placeholder="e.g. rainy day"
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
               />
             </label>
@@ -587,6 +606,14 @@ function SearchPage() {
                       <span className="rounded-full bg-slate-100 px-2 py-1 font-semibold text-slate-700">
                         {song.isInterlude ? 'Interlude' : 'Track'}
                       </span>
+                      {song.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full bg-indigo-100 px-2 py-1 font-semibold text-indigo-700"
+                        >
+                          {tag}
+                        </span>
+                      ))}
                     </div>
 
                     <p className="mt-3 text-sm leading-relaxed text-slate-700">

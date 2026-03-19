@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l /c/Users/Matthew/source/repos/Music_Organizer_Website/src/**/*.tsx)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}
