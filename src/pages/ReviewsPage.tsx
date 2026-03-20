@@ -10,6 +10,7 @@ import {
   type SavedAlbumCard,
 } from '../lib/db/reviewsData'
 import { sendRecommendationForCurrentUser } from '../lib/db/toListenData'
+import { getHomeBackgroundForCurrentUser, setHomeBackgroundForCurrentUser } from '../lib/db/profileData'
 
 type PendingAction =
   | { type: 'remove'; album: SavedAlbumCard }
@@ -29,6 +30,7 @@ function ReviewsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [modalError, setModalError] = useState<string | null>(null)
   const [resetInput, setResetInput] = useState('')
+  const [backgroundAlbumId, setBackgroundAlbumId] = useState<string | null>(null)
 
   useEffect(() => {
     let isActive = true
@@ -38,9 +40,10 @@ function ReviewsPage() {
       setErrorMessage(null)
 
       try {
-        const [savedAlbums, friendsOverview] = await Promise.all([
+        const [savedAlbums, friendsOverview, currentBackground] = await Promise.all([
           listSavedAlbumsForCurrentUser(),
           getFriendsOverviewForCurrentUser(),
+          getHomeBackgroundForCurrentUser(),
         ])
 
         if (!isActive) {
@@ -50,6 +53,9 @@ function ReviewsPage() {
         setAlbums(savedAlbums)
         setFriends(friendsOverview.friends)
         setSelectedFriendUserId(friendsOverview.friends[0]?.userId ?? '')
+
+        const matchingAlbum = savedAlbums.find((a) => a.coverUrl === currentBackground)
+        setBackgroundAlbumId(matchingAlbum?.userSavedAlbumId ?? null)
       } catch (error) {
         if (!isActive) {
           return
@@ -177,6 +183,20 @@ function ReviewsPage() {
     }
   }
 
+  const handleSetBackground = async (album: SavedAlbumCard) => {
+    setActiveMenuAlbumId(null)
+
+    const isAlreadyBackground = backgroundAlbumId === album.userSavedAlbumId
+    const nextCoverUrl = isAlreadyBackground ? null : (album.coverUrl ?? null)
+
+    try {
+      await setHomeBackgroundForCurrentUser(nextCoverUrl)
+      setBackgroundAlbumId(isAlreadyBackground ? null : album.userSavedAlbumId)
+    } catch {
+      // silently fail — background is non-critical
+    }
+  }
+
   return (
     <main className="min-h-screen px-6 py-8">
       <div className="mx-auto w-full max-w-7xl">
@@ -261,8 +281,22 @@ function ReviewsPage() {
                     <p className="truncate text-xs text-slate-600">{album.artistName}</p>
                   </button>
 
+                  {backgroundAlbumId === album.userSavedAlbumId && (
+                    <div className="pointer-events-none absolute inset-0 rounded-lg ring-2 ring-indigo-500 ring-offset-1" />
+                  )}
+
                   {isMenuOpen && (
                     <div className="absolute left-0 top-0 z-10 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
+                      <button
+                        type="button"
+                        onClick={() => void handleSetBackground(album)}
+                        className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-indigo-700 hover:bg-indigo-50"
+                      >
+                        {backgroundAlbumId === album.userSavedAlbumId
+                          ? 'Remove home background'
+                          : 'Set as home background'}
+                      </button>
+                      <div className="my-1 border-t border-slate-100" />
                       <button
                         type="button"
                         onClick={() => openAction({ type: 'remove', album })}

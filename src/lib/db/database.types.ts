@@ -8,6 +8,8 @@ export type Database = {
           user_id: string
           username: string | null
           friend_code: string
+          home_background_cover_url: string | null
+          auto_background_enabled: boolean
           created_at: string
           updated_at: string
         }
@@ -15,6 +17,8 @@ export type Database = {
           user_id: string
           username?: string | null
           friend_code?: string
+          home_background_cover_url?: string | null
+          auto_background_enabled?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -22,6 +26,8 @@ export type Database = {
           user_id?: string
           username?: string | null
           friend_code?: string
+          home_background_cover_url?: string | null
+          auto_background_enabled?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -453,6 +459,18 @@ export type Database = {
           created_at: string
           updated_at: string
         }
+      }
+      set_home_background: {
+        Args: {
+          next_cover_url: string | null
+        }
+        Returns: void
+      }
+      set_auto_background_enabled: {
+        Args: {
+          enabled: boolean
+        }
+        Returns: void
       }
     }
     Enums: Record<string, never>

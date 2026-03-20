@@ -14,6 +14,8 @@ import ArtistDetailPage from './pages/ArtistDetailPage'
 import ArtistsPage from './pages/ArtistsPage'
 import MyStatsPage from './pages/MyStatsPage'
 import MyStuffPage from './pages/MyStuffPage'
+import CustomizePage from './pages/CustomizePage'
+import { BackgroundProvider } from './contexts/BackgroundContext'
 import ReviewsPage from './pages/ReviewsPage'
 import SearchPage from './pages/SearchPage'
 import ToListenPage from './pages/ToListenPage'
@@ -21,7 +23,7 @@ import PlaylistsPage from './pages/PlaylistsPage'
 
 function App() {
   return (
-    <>
+    <BackgroundProvider>
       <AccountMenu />
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -31,6 +33,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ExplorePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/customize"
+          element={
+            <ProtectedRoute>
+              <CustomizePage />
             </ProtectedRoute>
           }
         />
@@ -156,7 +166,7 @@ function App() {
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </>
+    </BackgroundProvider>
   )
 }
 
