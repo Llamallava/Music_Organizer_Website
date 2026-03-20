@@ -1,5 +1,6 @@
 import type { SaveAlbumTrackInput } from '../db/reviewsData'
 import { getLyricsAsync } from './geniusLyrics'
+import { getAlbumCoverUrls } from './spotifyAlbumCovers'
 
 export type AlbumSearchResult = {
   sourceProvider: 'musicbrainz'
@@ -90,8 +91,6 @@ type MusicBrainzReleaseLookupResponse = {
 }
 
 const MUSICBRAINZ_BASE = 'https://musicbrainz.org/ws/2'
-const COVER_ART_BASE = 'https://coverartarchive.org'
-const coverAvailabilityCache = new Map<string, boolean>()
 
 const fetchJson = async <T>(url: string): Promise<T> => {
   const response = await fetch(url, {
@@ -283,31 +282,6 @@ const mapWithConcurrency = async <T, R>(
   return results
 }
 
-const getCoverUrl = (releaseId: string): string => `${COVER_ART_BASE}/release/${releaseId}/front-500`
-
-const checkCoverAvailability = async (releaseId: string): Promise<boolean> => {
-  const cached = coverAvailabilityCache.get(releaseId)
-  if (cached !== undefined) {
-    return cached
-  }
-
-  const coverUrl = getCoverUrl(releaseId)
-
-  try {
-    const response = await fetch(coverUrl, {
-      method: 'HEAD',
-      redirect: 'manual',
-    })
-
-    const hasCover = response.status === 200 || (response.status >= 300 && response.status < 400)
-    coverAvailabilityCache.set(releaseId, hasCover)
-    return hasCover
-  } catch {
-    // If availability check fails, keep result eligible and let runtime image fallback decide.
-    coverAvailabilityCache.set(releaseId, true)
-    return true
-  }
-}
 
 export const searchAlbums = async (input: AlbumSearchInput): Promise<AlbumSearchResult[]> => {
   const artistName = input.artistName.trim()
@@ -336,12 +310,12 @@ export const searchAlbums = async (input: AlbumSearchInput): Promise<AlbumSearch
     const artistName = getArtistNameFromCredit(release['artist-credit'])
 
     return {
-      hasCover: true,
+      hasCover: false,
       sourceProvider: 'musicbrainz' as const,
       sourceAlbumId: release.id,
       title,
       artistName,
-      coverUrl: getCoverUrl(release.id),
+      coverUrl: null,
       releaseDate: toSqlDate(release.date),
       totalTracks: getTrackCount(release.media),
       dedupeKey: getAlbumDedupeKey({
@@ -364,14 +338,19 @@ export const searchAlbums = async (input: AlbumSearchInput): Promise<AlbumSearch
 
   const deduped = dedupeAlbumResults(prioritized)
   const limited = deduped.slice(0, 25)
-  const withAvailability = await mapWithConcurrency(limited, 6, async (result) => ({
+
+  const coverUrls = await getAlbumCoverUrls(
+    limited.map((r) => ({ artistName: r.artistName, albumTitle: r.title })),
+  )
+
+  const withCovers = limited.map((result, i) => ({
     ...result,
-    hasCover: await checkCoverAvailability(result.sourceAlbumId),
-    coverUrl: getCoverUrl(result.sourceAlbumId),
+    coverUrl: coverUrls[i] ?? null,
+    hasCover: coverUrls[i] != null,
   }))
 
-  const withCover = withAvailability.filter((result) => result.hasCover)
-  const withoutCover = withAvailability.filter((result) => !result.hasCover)
+  const withCover = withCovers.filter((result) => result.hasCover)
+  const withoutCover = withCovers.filter((result) => !result.hasCover)
 
   return [...withCover, ...withoutCover].map(({ dedupeKey: _dedupeKey, ...result }) => result)
 }
@@ -399,7 +378,6 @@ export const searchSongs = async (input: SongSearchInput): Promise<SongSearchRes
 
   const mappedResults: SongSearchResult[] = recordings.map((recording) => {
     const release = recording.releases?.[0]
-    const releaseId = release?.id?.trim()
 
     return {
       sourceProvider: 'musicbrainz',
@@ -407,7 +385,7 @@ export const searchSongs = async (input: SongSearchInput): Promise<SongSearchRes
       songName: recording.title?.trim() || 'Unknown Song',
       artistName: getArtistNameFromCredit(recording['artist-credit']),
       albumTitle: release?.title?.trim() || null,
-      coverUrl: releaseId ? getCoverUrl(releaseId) : null,
+      coverUrl: null,
       releaseDate: toSqlDate(release?.date),
     }
   })
@@ -438,7 +416,16 @@ export const searchSongs = async (input: SongSearchInput): Promise<SongSearchRes
     deduped.push(result)
   }
 
-  return deduped.slice(0, 40)
+  const limited = deduped.slice(0, 40)
+
+  const coverUrls = await getAlbumCoverUrls(
+    limited.map((r) => ({ artistName: r.artistName, albumTitle: r.albumTitle ?? '' })),
+  )
+
+  return limited.map((result, i) => ({
+    ...result,
+    coverUrl: coverUrls[i] ?? null,
+  }))
 }
 
 export const fetchAlbumTracksWithLyrics = async (

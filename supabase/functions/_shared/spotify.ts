@@ -249,6 +249,48 @@ export const searchSpotifyArtistImage = async (params: {
   return pick?.url ?? null
 }
 
+type SpotifyAlbumSearchResponse = {
+  albums: {
+    items: Array<{
+      id: string
+      name: string
+      artists: Array<{ name: string }>
+      images: Array<{ url: string; height: number; width: number }>
+    }>
+  }
+}
+
+export const searchSpotifyAlbumCover = async (params: {
+  accessToken: string
+  artistName: string
+  albumTitle: string
+}): Promise<string | null> => {
+  const url = new URL('https://api.spotify.com/v1/search')
+  url.searchParams.set('q', `album:${params.albumTitle} artist:${params.artistName}`)
+  url.searchParams.set('type', 'album')
+  url.searchParams.set('limit', '1')
+
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${params.accessToken}` },
+  })
+
+  if (!response.ok) {
+    return null
+  }
+
+  const data = (await response.json()) as SpotifyAlbumSearchResponse
+  const images = data.albums?.items?.[0]?.images
+
+  if (!images?.length) {
+    return null
+  }
+
+  // Prefer image closest to 500px wide
+  const sorted = [...images].sort((a, b) => a.width - b.width)
+  const pick = sorted.find((img) => img.width >= 300) ?? sorted[sorted.length - 1]
+  return pick?.url ?? null
+}
+
 export const addTracksToSpotifyPlaylist = async (params: {
   accessToken: string
   playlistId: string
