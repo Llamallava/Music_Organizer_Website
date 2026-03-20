@@ -23,6 +23,7 @@ function AddAlbumPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [infoMessage, setInfoMessage] = useState<string | null>(null)
+  const [loadedCovers, setLoadedCovers] = useState<Set<string>>(new Set())
 
   const selectedAlbum = useMemo(
     () => results.find((album) => album.sourceAlbumId === selectedAlbumId) ?? null,
@@ -36,6 +37,7 @@ function AddAlbumPage() {
     setInfoMessage(null)
     setSelectedAlbumId(null)
     setVisibleResultsCount(RESULTS_STEP)
+    setLoadedCovers(new Set())
 
     if (!artistNameQuery.trim() && !albumTitleQuery.trim()) {
       setErrorMessage('Enter an artist name, album title, or both.')
@@ -68,7 +70,6 @@ function AddAlbumPage() {
 
     setIsSaving(true)
     setErrorMessage(null)
-    setInfoMessage('Fetching tracks and lyrics, then saving...')
 
     try {
       const tracks = await fetchAlbumTracksWithLyrics(
@@ -103,14 +104,21 @@ function AddAlbumPage() {
 
   return (
     <main className="min-h-screen px-6 py-8">
+      {isSaving && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30">
+          <div className="flex flex-col items-center gap-4 rounded-xl bg-white px-10 py-8 shadow-xl text-center max-w-sm mx-4">
+            <div className="h-10 w-10 rounded-full border-4 border-slate-200 border-t-emerald-600 animate-spin" />
+            <p className="text-sm font-medium text-slate-800">
+              We are adding <span className="font-semibold">{selectedAlbum?.title}</span> by <span className="font-semibold">{selectedAlbum?.artistName}</span> to your library. This may take a while, please be patient.
+            </p>
+          </div>
+        </div>
+      )}
       <div className="mx-auto w-full max-w-7xl">
         <LinearBackButton />
 
         <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6">
           <h1 className="text-2xl font-bold text-slate-900">Add Album</h1>
-          <p className="mt-2 text-sm text-slate-700">
-            Search by artist name and album title, choose one result, and save it.
-          </p>
 
           <form onSubmit={handleSearch} className="mt-4 flex flex-col gap-3">
             <div className="grid gap-3 sm:grid-cols-2">
@@ -153,7 +161,20 @@ function AddAlbumPage() {
           )}
 
           {results.length > 0 && (
-            <div className="mt-6">
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                type="button"
+                disabled={!selectedAlbum || isSaving || isSearching}
+                onClick={() => void handleSave()}
+                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {isSaving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          )}
+
+          {results.length > 0 && (
+            <div className="mt-4">
               <div className="mb-3 text-xs text-slate-600">
                 Showing {Math.min(visibleResultsCount, results.length)} of {results.length} results
               </div>
@@ -167,14 +188,19 @@ function AddAlbumPage() {
                     key={album.sourceAlbumId}
                     type="button"
                     onClick={() => setSelectedAlbumId(album.sourceAlbumId)}
-                    className={`rounded-lg border p-3 text-left ${
+                    className={`rounded-lg border p-3 text-left transition-opacity duration-300 ${
                       isSelected
                         ? 'border-slate-900 bg-slate-50'
                         : 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
+                    } ${loadedCovers.has(album.sourceAlbumId) || !album.coverUrl ? 'opacity-100' : 'opacity-0'}`}
                   >
                     <div className="aspect-square w-full overflow-hidden rounded-md bg-slate-200">
-                      <AlbumCover src={album.coverUrl} alt={`${album.title} cover`} loading="lazy" />
+                      <AlbumCover
+                          src={album.coverUrl}
+                          alt={`${album.title} cover`}
+                          loading="lazy"
+                          onLoad={() => setLoadedCovers((prev) => { const next = new Set(prev); next.add(album.sourceAlbumId); return next })}
+                        />
                     </div>
 
                     <p className="mt-2 truncate text-sm font-semibold text-slate-900">{album.title}</p>
@@ -201,16 +227,6 @@ function AddAlbumPage() {
             </div>
           )}
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            <button
-              type="button"
-              disabled={!selectedAlbum || isSaving || isSearching}
-              onClick={() => void handleSave()}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-            >
-              {isSaving ? 'Saving...' : 'Save'}
-            </button>
-          </div>
         </section>
       </div>
     </main>

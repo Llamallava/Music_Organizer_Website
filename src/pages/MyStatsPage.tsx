@@ -9,8 +9,10 @@ import {
   getMyStatsForCurrentUser,
   type MyStatsData,
   type RankedAlbumStat,
+  type RankedArtistStat,
   type RankedSongStat,
 } from '../lib/db/statsData'
+import { getArtistImageUrls } from '../lib/external/spotifyArtistImages'
 
 type TopTenAlbumModuleConfig = {
   id: string
@@ -39,7 +41,15 @@ type GrandTotalWordsModuleConfig = {
   favoriteWords: FavoriteWordStat[]
 }
 
-type TopTenModuleConfig = TopTenAlbumModuleConfig | TopTenSongModuleConfig | GrandTotalWordsModuleConfig
+type TopTenArtistModuleConfig = {
+  id: string
+  moduleType: 'artist'
+  title: string
+  items: RankedArtistStat[]
+  artistImages: Map<string, string | null>
+}
+
+type TopTenModuleConfig = TopTenAlbumModuleConfig | TopTenSongModuleConfig | GrandTotalWordsModuleConfig | TopTenArtistModuleConfig
 
 const formatScoreValue = (score: number) => score.toFixed(1).replace(/\.0$/, '')
 const formatValue = (value: number, valueType: 'score' | 'words') =>
@@ -211,6 +221,75 @@ function GrandTotalWordsModule({
   )
 }
 
+function TopTenArtistsModule({ title, items, artistImages }: Omit<TopTenArtistModuleConfig, 'id' | 'moduleType'>) {
+  const firstArtist = items[0] ?? null
+  const remainingArtists = items.slice(1)
+
+  return (
+    <article className="rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm">
+      <h2 className="text-lg font-bold text-slate-900">{title}</h2>
+
+      {!firstArtist && <p className="mt-4 text-sm text-slate-600">No data yet.</p>}
+
+      {firstArtist && (
+        <>
+          <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">#1</p>
+
+            <div className="mt-3 flex gap-3">
+              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-slate-200">
+                <AlbumCover
+                  src={artistImages.get(firstArtist.artistName) ?? null}
+                  alt={`${firstArtist.artistName} profile`}
+                  loading="lazy"
+                />
+              </div>
+
+              <div className="min-w-0">
+                <p className="truncate text-lg font-extrabold text-slate-900">{firstArtist.artistName}</p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">
+                  Avg Score: {formatScoreValue(firstArtist.value)}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {firstArtist.albumCount} {firstArtist.albumCount === 1 ? 'album' : 'albums'} rated
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <ol className="mt-4 space-y-2">
+            {remainingArtists.map((artist, index) => (
+              <li
+                key={artist.artistName}
+                className="flex items-center gap-3 rounded-md bg-slate-50 px-3 py-2"
+              >
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-slate-200">
+                  <AlbumCover
+                    src={artistImages.get(artist.artistName) ?? null}
+                    alt={`${artist.artistName} profile`}
+                    loading="lazy"
+                  />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-slate-900">
+                    {index + 2}. {artist.artistName}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {artist.albumCount} {artist.albumCount === 1 ? 'album' : 'albums'} rated
+                  </p>
+                </div>
+
+                <p className="shrink-0 text-sm font-semibold text-slate-900">{formatScoreValue(artist.value)}</p>
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
+    </article>
+  )
+}
+
 function MyStatsPage() {
   const navigate = useNavigate()
   const { friendUserId } = useParams<{ friendUserId: string }>()
@@ -219,6 +298,7 @@ function MyStatsPage() {
   const [friendName, setFriendName] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [artistImages, setArtistImages] = useState<Map<string, string | null>>(new Map())
 
   useEffect(() => {
     let isActive = true
@@ -278,6 +358,25 @@ function MyStatsPage() {
     }
   }, [friendUserId])
 
+  useEffect(() => {
+    if (!statsData?.topArtistsByScore.length) {
+      return
+    }
+
+    let isActive = true
+    const names = statsData.topArtistsByScore.map((a) => a.artistName)
+
+    void getArtistImageUrls(names).then((images) => {
+      if (isActive) {
+        setArtistImages(images)
+      }
+    })
+
+    return () => {
+      isActive = false
+    }
+  }, [statsData])
+
   const modules = useMemo<TopTenModuleConfig[]>(() => {
     return [
       {
@@ -336,8 +435,15 @@ function MyStatsPage() {
         totalWords: statsData?.grandTotalWordsWritten ?? 0,
         favoriteWords: statsData?.favoriteWords ?? [],
       },
+      {
+        id: 'top-10-artists',
+        moduleType: 'artist',
+        title: 'Top 10 Artists',
+        items: statsData?.topArtistsByScore ?? [],
+        artistImages,
+      },
     ]
-  }, [statsData])
+  }, [statsData, artistImages])
 
   return (
     <main className="min-h-screen px-6 py-8">
@@ -398,6 +504,13 @@ function MyStatsPage() {
                   valueLabel={module.valueLabel}
                   valueType={module.valueType}
                   items={module.items}
+                />
+              ) : module.moduleType === 'artist' ? (
+                <TopTenArtistsModule
+                  key={module.id}
+                  title={module.title}
+                  items={module.items}
+                  artistImages={module.artistImages}
                 />
               ) : (
                 <GrandTotalWordsModule

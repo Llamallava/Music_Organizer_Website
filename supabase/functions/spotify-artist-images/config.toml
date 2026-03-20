@@ -1,0 +1,2 @@
+[functions.spotify-artist-images]
+verify_jwt = false

@@ -26,6 +26,12 @@ export type FavoriteWordStat = {
   count: number
 }
 
+export type RankedArtistStat = {
+  artistName: string
+  value: number
+  albumCount: number
+}
+
 export type MyStatsData = {
   topAlbumsByConclusionScore: RankedAlbumStat[]
   topAlbumsByTrackAverage: RankedAlbumStat[]
@@ -35,6 +41,7 @@ export type MyStatsData = {
   topSongsByWordsWritten: RankedSongStat[]
   grandTotalWordsWritten: number
   favoriteWords: FavoriteWordStat[]
+  topArtistsByScore: RankedArtistStat[]
 }
 
 type TrackScoreAccumulator = {
@@ -123,6 +130,7 @@ const buildStatsFromSavedAlbums = async (savedAlbums: SavedAlbumCard[]): Promise
       topSongsByWordsWritten: [],
       grandTotalWordsWritten: 0,
       favoriteWords: [],
+      topArtistsByScore: [],
     }
   }
 
@@ -145,6 +153,7 @@ const buildStatsFromSavedAlbums = async (savedAlbums: SavedAlbumCard[]): Promise
   const conclusionScoreBySavedAlbumId = new Map<string, number>()
   const trackAccumulatorBySavedAlbumId = new Map<string, TrackScoreAccumulator>()
   const trackTitleByAlbumAndNumber = new Map<string, string>()
+  const artistScoreAccumulator = new Map<string, { totalScore: number; albumCount: number }>()
   const wordsBySavedAlbumId = new Map<string, number>()
   const wordsBySavedAlbumTrackKey = new Map<string, { savedAlbumId: string; trackNumber: number; words: number }>()
   const wordFrequency = new Map<string, number>()
@@ -223,6 +232,34 @@ const buildStatsFromSavedAlbums = async (savedAlbums: SavedAlbumCard[]): Promise
       totalCount: 1,
     })
   }
+
+  for (const [savedAlbumId, score] of conclusionScoreBySavedAlbumId.entries()) {
+    const album = savedAlbumById.get(savedAlbumId)
+    if (!album) {
+      continue
+    }
+    const existing = artistScoreAccumulator.get(album.artistName)
+    if (existing) {
+      existing.totalScore += score
+      existing.albumCount += 1
+    } else {
+      artistScoreAccumulator.set(album.artistName, { totalScore: score, albumCount: 1 })
+    }
+  }
+
+  const topArtistsByScore = Array.from(artistScoreAccumulator.entries())
+    .map(([artistName, { totalScore, albumCount }]): RankedArtistStat => ({
+      artistName,
+      value: totalScore / albumCount,
+      albumCount,
+    }))
+    .sort((left, right) => {
+      if (right.value !== left.value) {
+        return right.value - left.value
+      }
+      return left.artistName.localeCompare(right.artistName)
+    })
+    .slice(0, 10)
 
   const topAlbumsByConclusionScore = Array.from(conclusionScoreBySavedAlbumId.entries())
     .flatMap(([savedAlbumId, score]) => {
@@ -307,6 +344,7 @@ const buildStatsFromSavedAlbums = async (savedAlbums: SavedAlbumCard[]): Promise
     topSongsByWordsWritten,
     grandTotalWordsWritten,
     favoriteWords,
+    topArtistsByScore,
   }
 }
 

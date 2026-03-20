@@ -186,6 +186,69 @@ export const searchSpotifyTracks = async (params: {
   return (await response.json()) as SpotifyTrackSearchResponse
 }
 
+export const getSpotifyClientCredentialsToken = async (clientId: string, clientSecret: string): Promise<string> => {
+  const body = new URLSearchParams({ grant_type: 'client_credentials' })
+
+  const response = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: {
+      Authorization: basicAuthHeader(clientId, clientSecret),
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body,
+  })
+
+  await ensureOk(response, 'Spotify client credentials token')
+  const data = (await response.json()) as { access_token: string }
+  return data.access_token
+}
+
+type SpotifyArtistImage = {
+  url: string
+  height: number
+  width: number
+}
+
+type SpotifyArtistSearchResponse = {
+  artists: {
+    items: Array<{
+      id: string
+      name: string
+      images: SpotifyArtistImage[]
+    }>
+  }
+}
+
+export const searchSpotifyArtistImage = async (params: {
+  accessToken: string
+  artistName: string
+}): Promise<string | null> => {
+  const url = new URL('https://api.spotify.com/v1/search')
+  url.searchParams.set('q', params.artistName)
+  url.searchParams.set('type', 'artist')
+  url.searchParams.set('limit', '1')
+
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${params.accessToken}` },
+  })
+
+  if (!response.ok) {
+    return null
+  }
+
+  const data = (await response.json()) as SpotifyArtistSearchResponse
+  const images = data.artists?.items?.[0]?.images
+
+  if (!images?.length) {
+    return null
+  }
+
+  // Prefer the image closest to 320px wide
+  const sorted = [...images].sort((a, b) => a.width - b.width)
+  const pick = sorted.find((img) => img.width >= 200) ?? sorted[sorted.length - 1]
+  return pick?.url ?? null
+}
+
 export const addTracksToSpotifyPlaylist = async (params: {
   accessToken: string
   playlistId: string

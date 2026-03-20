@@ -22,5 +22,10 @@ export const getSpotifyEnv = () => ({
   redirectUri: requireEnv('SPOTIFY_REDIRECT_URI'),
 })
 
+export const getSpotifyClientCredentialsEnv = () => ({
+  clientId: requireEnv('SPOTIFY_CLIENT_ID'),
+  clientSecret: requireEnv('SPOTIFY_CLIENT_SECRET'),
+})
+
 export const getAppOrigin = () => requireEnv('APP_ORIGIN')
 

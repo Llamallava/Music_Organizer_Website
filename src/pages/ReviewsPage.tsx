@@ -31,6 +31,7 @@ function ReviewsPage() {
   const [modalError, setModalError] = useState<string | null>(null)
   const [resetInput, setResetInput] = useState('')
   const [backgroundAlbumId, setBackgroundAlbumId] = useState<string | null>(null)
+  const [loadedCovers, setLoadedCovers] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     let isActive = true
@@ -237,7 +238,9 @@ function ReviewsPage() {
                 <div
                   key={album.userSavedAlbumId}
                   ref={isMenuOpen ? menuRef : null}
-                  className="relative"
+                  className={`relative transition-opacity duration-300 ${
+                    loadedCovers.has(album.userSavedAlbumId) || !album.coverUrl ? 'opacity-100' : 'opacity-0'
+                  }`}
                 >
                   <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-slate-200">
                     <button
@@ -246,7 +249,12 @@ function ReviewsPage() {
                       className="h-full w-full"
                       aria-label={`Open ${album.title}`}
                     >
-                      <AlbumCover src={album.coverUrl} alt={`${album.title} cover`} loading="lazy" />
+                      <AlbumCover
+                          src={album.coverUrl}
+                          alt={`${album.title} cover`}
+                          loading="lazy"
+                          onLoad={() => setLoadedCovers((prev) => { const next = new Set(prev); next.add(album.userSavedAlbumId); return next })}
+                        />
                     </button>
 
                     <button

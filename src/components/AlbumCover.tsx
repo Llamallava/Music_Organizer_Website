@@ -4,9 +4,10 @@ type AlbumCoverProps = {
   src: string | null
   alt: string
   loading?: 'lazy' | 'eager'
+  onLoad?: () => void
 }
 
-function AlbumCover({ src, alt, loading = 'lazy' }: AlbumCoverProps) {
+function AlbumCover({ src, alt, loading = 'lazy', onLoad }: AlbumCoverProps) {
   const [hasError, setHasError] = useState(false)
 
   useEffect(() => {
@@ -26,7 +27,8 @@ function AlbumCover({ src, alt, loading = 'lazy' }: AlbumCoverProps) {
       src={src}
       alt={alt}
       loading={loading}
-      onError={() => setHasError(true)}
+      onLoad={onLoad}
+      onError={() => { setHasError(true); onLoad?.() }}
       className="h-full w-full object-cover"
     />
   )
