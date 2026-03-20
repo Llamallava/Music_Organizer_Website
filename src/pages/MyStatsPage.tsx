@@ -345,13 +345,23 @@ function MyStatsPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <LinearBackButton />
 
-          <button
-            type="button"
-            onClick={() => navigate('/reviews')}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
-          >
-            Go to Reviews
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => navigate('/artists')}
+              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+            >
+              Your Artists
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate('/reviews')}
+              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+            >
+              Go to Reviews
+            </button>
+          </div>
         </div>
 
         <h1 className={`mt-5 font-black text-slate-900 ${isFriendView ? 'text-5xl tracking-tight' : 'text-3xl'}`}>

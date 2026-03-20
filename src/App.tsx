@@ -10,6 +10,8 @@ import FriendDetailPage from './pages/FriendDetailPage'
 import FriendsPage from './pages/FriendsPage'
 import FriendReviewsPage from './pages/FriendReviewsPage'
 import ExplorePage from './pages/ExplorePage'
+import ArtistDetailPage from './pages/ArtistDetailPage'
+import ArtistsPage from './pages/ArtistsPage'
 import MyStatsPage from './pages/MyStatsPage'
 import MyStuffPage from './pages/MyStuffPage'
 import ReviewsPage from './pages/ReviewsPage'
@@ -85,6 +87,22 @@ function App() {
           element={
             <ProtectedRoute>
               <MyStatsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/artists"
+          element={
+            <ProtectedRoute>
+              <ArtistsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/artists/:artistName"
+          element={
+            <ProtectedRoute>
+              <ArtistDetailPage />
             </ProtectedRoute>
           }
         />

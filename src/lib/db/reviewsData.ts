@@ -298,7 +298,7 @@ export const saveAlbumForCurrentUser = async (input: SaveAlbumInput): Promise<st
 const findSectionForTrack = async (userSavedAlbumId: string, trackNumber: number) => {
   const { data, error } = await supabase
     .from('review_sections')
-    .select('id')
+    .select('id, score')
     .eq('user_saved_album_id', userSavedAlbumId)
     .eq('section_type', 'track')
     .eq('track_number', trackNumber)
@@ -344,6 +344,15 @@ export const upsertTrackReviewSectionForCurrentUser = async (params: {
       .eq('id', existing.id)
 
     throwIfError(error, 'Failed to update track section')
+
+    if (existing.score !== params.score) {
+      const { error: historyError } = await supabase
+        .from('review_section_score_history')
+        .insert({ review_section_id: existing.id, old_score: existing.score, new_score: params.score })
+
+      throwIfError(historyError, 'Failed to record score history')
+    }
+
     return
   }
 
@@ -387,4 +396,37 @@ export const upsertConclusionSectionForCurrentUser = async (params: {
   })
 
   throwIfError(error, 'Failed to insert conclusion section')
+}
+
+export const removeAlbumForCurrentUser = async (userSavedAlbumId: string): Promise<void> => {
+  const userId = await requireAuthenticatedUserId()
+
+  const { error } = await supabase
+    .from('user_saved_albums')
+    .delete()
+    .eq('id', userSavedAlbumId)
+    .eq('user_id', userId)
+
+  throwIfError(error, 'Failed to remove album')
+}
+
+export const resetAlbumDataForCurrentUser = async (userSavedAlbumId: string): Promise<void> => {
+  const userId = await requireAuthenticatedUserId()
+
+  const { data: savedRow } = await supabase
+    .from('user_saved_albums')
+    .select('id')
+    .eq('id', userSavedAlbumId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (!savedRow) {
+    throw new Error('Album not found or not owned by current user.')
+  }
+
+  await Promise.all([
+    supabase.from('review_sections').delete().eq('user_saved_album_id', userSavedAlbumId),
+    supabase.from('song_tags').delete().eq('user_id', userId).eq('user_saved_album_id', userSavedAlbumId),
+    supabase.from('user_lyrics_overrides').delete().eq('user_id', userId).eq('user_saved_album_id', userSavedAlbumId),
+  ])
 }

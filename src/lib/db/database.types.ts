@@ -363,6 +363,38 @@ export type Database = {
         }
         Relationships: []
       }
+      review_section_score_history: {
+        Row: {
+          id: string
+          review_section_id: string
+          old_score: number | null
+          new_score: number | null
+          changed_at: string
+        }
+        Insert: {
+          id?: string
+          review_section_id: string
+          old_score?: number | null
+          new_score?: number | null
+          changed_at?: string
+        }
+        Update: {
+          id?: string
+          review_section_id?: string
+          old_score?: number | null
+          new_score?: number | null
+          changed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'review_section_score_history_review_section_id_fkey'
+            columns: ['review_section_id']
+            isOneToOne: false
+            referencedRelation: 'review_sections'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       review_sections: {
         Row: {
           id: string
