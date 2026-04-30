@@ -76,23 +76,23 @@ function FriendReviewsPage() {
       <div className="mx-auto w-full max-w-7xl">
         <LinearBackButton />
 
-        <h1 className="mt-5 text-5xl font-black tracking-tight text-slate-900">
+        <h1 className="mt-5 text-5xl font-black tracking-tight text-ink">
           {toPossessiveName(friendName ?? 'Friend')} Reviews
         </h1>
 
         {isLoading && (
-          <p className="mt-6 rounded-lg bg-white p-4 text-sm text-slate-700">Loading albums...</p>
+          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">Loading albums...</p>
         )}
 
         {!isLoading && errorMessage && (
-          <div className="mt-6 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <div className="mt-6 rounded-lg border border-err-edge bg-err-bg p-4 text-sm text-err">
             <p>Could not load albums.</p>
             <p className="mt-1">{errorMessage}</p>
           </div>
         )}
 
         {!isLoading && !errorMessage && albums.length === 0 && (
-          <p className="mt-6 rounded-lg bg-white p-4 text-sm text-slate-700">
+          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">
             {toPossessiveName(friendName ?? 'Friend')} review list is currently empty.
           </p>
         )}
@@ -106,12 +106,12 @@ function FriendReviewsPage() {
                 onClick={() => navigate(`/friends/${friendUserId}/reviews/${album.userSavedAlbumId}`)}
                 className="text-left"
               >
-                <div className="aspect-square w-full overflow-hidden rounded-lg bg-slate-200">
+                <div className="aspect-square w-full overflow-hidden rounded-lg bg-surface-2">
                   <AlbumCover src={album.coverUrl} alt={`${album.title} cover`} loading="lazy" />
                 </div>
 
-                <p className="mt-2 truncate text-sm font-semibold text-slate-900">{album.title}</p>
-                <p className="truncate text-xs text-slate-600">{album.artistName}</p>
+                <p className="mt-2 truncate text-sm font-semibold text-ink">{album.title}</p>
+                <p className="truncate text-xs text-ink-2">{album.artistName}</p>
               </button>
             ))}
           </section>

@@ -16,7 +16,7 @@ function AlbumCover({ src, alt, loading = 'lazy', onLoad }: AlbumCoverProps) {
 
   if (!src || hasError) {
     return (
-      <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-500">
+      <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-ink-3">
         No cover available
       </div>
     )

@@ -99,41 +99,41 @@ function FriendDetailPage() {
       <div className="mx-auto w-full max-w-3xl">
         <LinearBackButton />
 
-        <h1 className="mt-5 text-3xl font-black text-slate-900">Friend Profile</h1>
+        <h1 className="mt-5 text-3xl font-black text-ink">Friend Profile</h1>
 
-        {isLoading && <p className="mt-6 rounded-lg bg-white p-4 text-sm text-slate-700">Loading friend...</p>}
+        {isLoading && <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">Loading friend...</p>}
 
         {!isLoading && errorMessage && (
-          <div className="mt-6 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <div className="mt-6 rounded-lg border border-err-edge bg-err-bg p-4 text-sm text-err">
             <p>Could not load friend.</p>
             <p className="mt-1">{errorMessage}</p>
           </div>
         )}
 
         {!isLoading && !errorMessage && !friend && (
-          <p className="mt-6 rounded-lg bg-white p-4 text-sm text-slate-700">
+          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">
             This friend is not in your current list.
           </p>
         )}
 
         {!isLoading && !errorMessage && friend && (
-          <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-3xl font-black text-slate-900">{displayName}</p>
-            <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-600">
+          <section className="mt-6 rounded-xl border border-edge bg-surface p-6 shadow-sm">
+            <p className="text-3xl font-black text-ink">{displayName}</p>
+            <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-ink-2">
               Friend Code: {friend.friendCode}
             </p>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <button
                 type="button"
-                className="rounded-md bg-slate-900 px-4 py-3 text-sm font-semibold text-white"
+                className="rounded-md bg-cta px-4 py-3 text-sm font-semibold text-white"
                 onClick={() => navigate(`/friends/${friend.userId}/reviews`)}
               >
                 Read {toPossessiveName(displayName)} Reviews
               </button>
               <button
                 type="button"
-                className="rounded-md border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900"
+                className="rounded-md border border-edge bg-surface-2 px-4 py-3 text-sm font-semibold text-ink hover:bg-surface-3"
                 onClick={() => navigate(`/friends/${friend.userId}/stats`)}
               >
                 See {toPossessiveName(displayName)} Stats
@@ -147,14 +147,14 @@ function FriendDetailPage() {
                   setRemoveErrorMessage(null)
                   setIsRemoveDialogOpen(true)
                 }}
-                className="rounded-md border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                className="rounded-md border border-err-edge bg-err-bg px-4 py-3 text-sm font-semibold text-err transition hover:bg-err-bg/80"
               >
                 Remove Friend
               </button>
             </div>
 
             {removeErrorMessage && (
-              <p className="mt-3 text-sm text-rose-700">{removeErrorMessage}</p>
+              <p className="mt-3 text-sm text-err">{removeErrorMessage}</p>
             )}
           </section>
         )}
@@ -162,7 +162,7 @@ function FriendDetailPage() {
 
       {isRemoveDialogOpen && friend && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
           onClick={() => {
             if (!isRemoving) {
               setIsRemoveDialogOpen(false)
@@ -173,19 +173,19 @@ function FriendDetailPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="confirm-remove-friend-title"
-            className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-5 shadow-xl"
+            className="w-full max-w-sm rounded-xl border border-edge bg-surface p-5 shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2 id="confirm-remove-friend-title" className="text-lg font-bold text-slate-900">
+            <h2 id="confirm-remove-friend-title" className="text-lg font-bold text-ink">
               Remove this friend?
             </h2>
-            <p className="mt-2 text-sm text-slate-700">
+            <p className="mt-2 text-sm text-ink">
               You can always add them again later with their friend code.
             </p>
 
-            <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-              <p className="text-sm font-semibold text-slate-900">{displayName}</p>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
+            <div className="mt-4 rounded-lg border border-edge bg-surface-2 px-4 py-3">
+              <p className="text-sm font-semibold text-ink">{displayName}</p>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-ink-2">
                 {friend.friendCode}
               </p>
             </div>
@@ -195,7 +195,7 @@ function FriendDetailPage() {
                 type="button"
                 onClick={() => setIsRemoveDialogOpen(false)}
                 disabled={isRemoving}
-                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg border border-edge px-4 py-2 text-sm font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel
               </button>
@@ -203,7 +203,7 @@ function FriendDetailPage() {
                 type="button"
                 onClick={handleConfirmRemoveFriend}
                 disabled={isRemoving}
-                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-rose-300"
+                className="rounded-lg bg-err-edge px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isRemoving ? 'Removing...' : 'Confirm Remove'}
               </button>

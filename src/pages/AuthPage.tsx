@@ -81,17 +81,17 @@ function AuthPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center px-6">
-      <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6">
+      <div className="w-full max-w-md rounded-xl border border-edge bg-surface p-6">
         <LinearBackButton className="mb-4" />
 
-        <h1 className="text-2xl font-bold text-slate-900">
+        <h1 className="text-2xl font-bold text-ink">
           {mode === 'sign-in' ? 'Sign In' : 'Create Account'}
         </h1>
-        <p className="mt-2 text-sm text-slate-700">Use your email and password to continue.</p>
+        <p className="mt-2 text-sm text-ink">Use your email and password to continue.</p>
 
         <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-3">
           {mode === 'sign-up' && (
-            <label className="text-sm font-semibold text-slate-800">
+            <label className="text-sm font-semibold text-ink">
               Username
               <input
                 type="text"
@@ -101,12 +101,12 @@ function AuthPage() {
                 required
                 minLength={3}
                 maxLength={32}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
               />
             </label>
           )}
 
-          <label className="text-sm font-semibold text-slate-800">
+          <label className="text-sm font-semibold text-ink">
             Email
             <input
               type="email"
@@ -114,11 +114,11 @@ function AuthPage() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
             />
           </label>
 
-          <label className="text-sm font-semibold text-slate-800">
+          <label className="text-sm font-semibold text-ink">
             Password
             <input
               type="password"
@@ -127,18 +127,18 @@ function AuthPage() {
               onChange={(event) => setPassword(event.target.value)}
               required
               minLength={8}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
             />
           </label>
 
           {errorMessage && (
-            <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+            <div className="rounded-lg border border-err-edge bg-err-bg p-3 text-sm text-err">
               {errorMessage}
             </div>
           )}
 
           {infoMessage && (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+            <div className="rounded-lg border border-ok-edge bg-ok-bg p-3 text-sm text-ok">
               {infoMessage}
             </div>
           )}
@@ -146,7 +146,7 @@ function AuthPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            className="rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
           >
             {isSubmitting
               ? 'Please wait...'
@@ -166,7 +166,7 @@ function AuthPage() {
               setUsername('')
             }
           }}
-          className="mt-4 text-sm font-semibold text-slate-700 underline"
+          className="mt-4 text-sm font-semibold text-ink-2 underline"
         >
           {mode === 'sign-in'
             ? "Don't have an account? Create one"

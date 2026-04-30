@@ -44,7 +44,7 @@ function LinearBackButton({ className, label = 'Back' }: LinearBackButtonProps) 
     <button
       type="button"
       onClick={() => navigate(previousPath)}
-      className={['rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-900', className]
+      className={['rounded-lg bg-surface-2 px-4 py-2 text-sm font-semibold text-ink hover:bg-surface-3', className]
         .filter(Boolean)
         .join(' ')}
     >

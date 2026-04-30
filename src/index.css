@@ -1,17 +1,42 @@
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap');
 @import 'tailwindcss';
 
+@theme {
+  --color-surface: #141020;
+  --color-surface-2: #1c1630;
+  --color-surface-3: #252040;
+  --color-edge: #2a2150;
+  --color-cta: #7c3aed;
+  --color-pink: #db2777;
+  --color-mint: #86efac;
+  --color-ink: #ede9fe;
+  --color-ink-2: #c4b5fd;
+  --color-ink-3: #7c6fad;
+  --color-err: #fca5a5;
+  --color-err-bg: #1c0910;
+  --color-err-edge: #9b1c1c;
+  --color-ok: #6ee7b7;
+  --color-ok-bg: #052e16;
+  --color-ok-edge: #166534;
+  --color-info: #c4b5fd;
+  --color-info-bg: #130a26;
+  --color-info-edge: #5b21b6;
+  --color-warn: #fde68a;
+  --color-warn-bg: #1c0f02;
+  --color-warn-edge: #92400e;
+}
+
 :root {
   font-family: 'Sora', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #102039;
+  color: #ede9fe;
   background:
-    radial-gradient(circle at 16% 20%, #c8f4f6 0%, transparent 42%),
-    radial-gradient(circle at 82% 88%, #dcffdc 0%, transparent 40%),
-    linear-gradient(145deg, #edf2fa 0%, #f8fbfd 52%, #edf8f0 100%);
+    radial-gradient(ellipse at 15% 30%, rgba(124, 58, 237, 0.2) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 75%, rgba(219, 39, 119, 0.12) 0%, transparent 50%),
+    #0c0a15;
 }
 
 * {
@@ -26,4 +51,21 @@ body {
 
 #root {
   min-height: 100vh;
+}
+
+input,
+textarea,
+select {
+  background-color: #1c1630;
+  color: #ede9fe;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #7c6fad;
+}
+
+select option {
+  background-color: #1c1630;
+  color: #ede9fe;
 }

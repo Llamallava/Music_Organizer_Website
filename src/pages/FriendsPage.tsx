@@ -134,15 +134,15 @@ function FriendsPage() {
       <div className="mx-auto w-full max-w-3xl">
         <LinearBackButton />
 
-        <h1 className="mt-5 text-3xl font-black text-slate-900">Friends</h1>
-        <p className="mt-2 text-sm text-slate-700">
+        <h1 className="mt-5 text-3xl font-black text-ink">Friends</h1>
+        <p className="mt-2 text-sm text-ink">
           Share your friend code to connect and track your current friend list.
         </p>
 
-        {isLoading && <p className="mt-6 rounded-lg bg-white p-4 text-sm text-slate-700">Loading friends...</p>}
+        {isLoading && <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">Loading friends...</p>}
 
         {!isLoading && errorMessage && (
-          <div className="mt-6 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <div className="mt-6 rounded-lg border border-err-edge bg-err-bg p-4 text-sm text-err">
             <p>Could not load friends.</p>
             <p className="mt-1">{errorMessage}</p>
           </div>
@@ -150,15 +150,15 @@ function FriendsPage() {
 
         {!isLoading && !errorMessage && friendsOverview && (
           <>
-            <section className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Your Friend Code</p>
-              <p className="mt-3 text-4xl font-black tracking-wider text-slate-900">
+            <section className="mt-6 rounded-xl border border-edge bg-surface p-5 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-wide text-ink-3">Your Friend Code</p>
+              <p className="mt-3 text-4xl font-black tracking-wider text-ink">
                 {friendsOverview.myFriendCode}
               </p>
             </section>
 
-            <section className="mt-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="text-lg font-bold text-slate-900">Add Friend by Code</h2>
+            <section className="mt-4 rounded-xl border border-edge bg-surface p-5 shadow-sm">
+              <h2 className="text-lg font-bold text-ink">Add Friend by Code</h2>
               <form onSubmit={handleAddFriend} className="mt-3 flex flex-col gap-3 sm:flex-row">
                 <input
                   type="text"
@@ -166,50 +166,50 @@ function FriendsPage() {
                   onChange={(event) => setFriendCodeInput(event.target.value.toUpperCase())}
                   placeholder="Enter friend code"
                   disabled={isSubmitting}
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm uppercase tracking-wide"
+                  className="w-full rounded-md border border-edge px-3 py-2 text-sm uppercase tracking-wide"
                 />
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-400"
+                  className="rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isSubmitting ? 'Checking...' : 'Add Friend'}
                 </button>
               </form>
 
               {submitMessage && (
-                <p className="mt-3 text-sm text-slate-700">
+                <p className="mt-3 text-sm text-ink">
                   {submitMessage}
                 </p>
               )}
             </section>
 
-            <section className="mt-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="text-lg font-bold text-slate-900">Current Friends</h2>
+            <section className="mt-4 rounded-xl border border-edge bg-surface p-5 shadow-sm">
+              <h2 className="text-lg font-bold text-ink">Current Friends</h2>
 
               {friendsOverview.friends.length === 0 ? (
-                <p className="mt-3 text-sm text-slate-600">No friends added yet.</p>
+                <p className="mt-3 text-sm text-ink-2">No friends added yet.</p>
               ) : (
                 <ul className="mt-3 space-y-2">
                   {friendsOverview.friends.map((friend) => (
                     <li key={friend.userId}>
-                      <div className="flex items-center gap-2 rounded-md bg-slate-50 px-2 py-2">
+                      <div className="flex items-center gap-2 rounded-md bg-surface-2 px-2 py-2">
                         <button
                           type="button"
                           onClick={() => navigate(`/friends/${friend.userId}`)}
-                          className="flex min-w-0 flex-1 items-center justify-between rounded-md px-2 py-1 text-left transition hover:bg-slate-100"
+                          className="flex min-w-0 flex-1 items-center justify-between rounded-md px-2 py-1 text-left transition hover:bg-surface-3"
                         >
-                          <span className="truncate pr-4 text-sm font-semibold text-slate-900">
+                          <span className="truncate pr-4 text-sm font-semibold text-ink">
                             {getDisplayName(friend.username)}
                           </span>
-                          <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                          <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-ink-2">
                             {friend.friendCode}
                           </span>
                         </button>
                         <button
                           type="button"
                           onClick={() => setPendingFriendToRemove(friend)}
-                          className="shrink-0 rounded-md border border-rose-300 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
+                          className="shrink-0 rounded-md border border-err-edge bg-err-bg px-3 py-1.5 text-xs font-semibold text-err transition hover:bg-err-bg/80"
                         >
                           Remove
                         </button>
@@ -225,7 +225,7 @@ function FriendsPage() {
 
       {pendingFriend && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
           onClick={() => {
             if (!isConfirmingAdd) {
               setPendingFriend(null)
@@ -236,22 +236,22 @@ function FriendsPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="confirm-add-friend-title"
-            className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-5 shadow-xl"
+            className="w-full max-w-sm rounded-xl border border-edge bg-surface p-5 shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2 id="confirm-add-friend-title" className="text-lg font-bold text-slate-900">
+            <h2 id="confirm-add-friend-title" className="text-lg font-bold text-ink">
               Add this friend?
             </h2>
 
-            <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-              <p className="text-sm font-semibold text-slate-900">{getDisplayName(pendingFriend.username)}</p>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
+            <div className="mt-4 rounded-lg border border-edge bg-surface-2 px-4 py-3">
+              <p className="text-sm font-semibold text-ink">{getDisplayName(pendingFriend.username)}</p>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-ink-2">
                 {pendingFriend.friendCode}
               </p>
             </div>
 
             {isPendingFriendAlreadyAdded && (
-              <p className="mt-3 text-sm text-slate-700">This user is already in your friends list.</p>
+              <p className="mt-3 text-sm text-ink">This user is already in your friends list.</p>
             )}
 
             <div className="mt-5 flex justify-end gap-2">
@@ -259,7 +259,7 @@ function FriendsPage() {
                 type="button"
                 onClick={() => setPendingFriend(null)}
                 disabled={isConfirmingAdd}
-                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg border border-edge px-4 py-2 text-sm font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel
               </button>
@@ -267,7 +267,7 @@ function FriendsPage() {
                 type="button"
                 onClick={handleConfirmAddFriend}
                 disabled={isConfirmingAdd || isPendingFriendAlreadyAdded}
-                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-400"
+                className="rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isConfirmingAdd ? 'Adding...' : 'Confirm Add'}
               </button>
@@ -278,7 +278,7 @@ function FriendsPage() {
 
       {pendingFriendToRemove && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
           onClick={() => {
             if (!isConfirmingRemove) {
               setPendingFriendToRemove(null)
@@ -289,21 +289,21 @@ function FriendsPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="confirm-remove-friend-title"
-            className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-5 shadow-xl"
+            className="w-full max-w-sm rounded-xl border border-edge bg-surface p-5 shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2 id="confirm-remove-friend-title" className="text-lg font-bold text-slate-900">
+            <h2 id="confirm-remove-friend-title" className="text-lg font-bold text-ink">
               Remove this friend?
             </h2>
-            <p className="mt-2 text-sm text-slate-700">
+            <p className="mt-2 text-sm text-ink">
               You can add them back later with their friend code.
             </p>
 
-            <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-              <p className="text-sm font-semibold text-slate-900">
+            <div className="mt-4 rounded-lg border border-edge bg-surface-2 px-4 py-3">
+              <p className="text-sm font-semibold text-ink">
                 {getDisplayName(pendingFriendToRemove.username)}
               </p>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-ink-2">
                 {pendingFriendToRemove.friendCode}
               </p>
             </div>
@@ -313,7 +313,7 @@ function FriendsPage() {
                 type="button"
                 onClick={() => setPendingFriendToRemove(null)}
                 disabled={isConfirmingRemove}
-                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg border border-edge px-4 py-2 text-sm font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel
               </button>
@@ -321,7 +321,7 @@ function FriendsPage() {
                 type="button"
                 onClick={handleConfirmRemoveFriend}
                 disabled={isConfirmingRemove}
-                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-rose-300"
+                className="rounded-lg bg-err-edge px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isConfirmingRemove ? 'Removing...' : 'Confirm Remove'}
               </button>

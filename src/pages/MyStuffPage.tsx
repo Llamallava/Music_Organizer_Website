@@ -12,7 +12,7 @@ function MyStuffPage() {
         <button
           type="button"
           onClick={() => navigate('/reviews')}
-          className="rounded-lg bg-slate-900 px-4 py-3 text-base font-semibold text-white"
+          className="rounded-lg bg-cta px-4 py-3 text-base font-semibold text-white"
         >
           My Reviews
         </button>
@@ -20,7 +20,7 @@ function MyStuffPage() {
         <button
           type="button"
           onClick={() => navigate('/search')}
-          className="rounded-lg bg-slate-600 px-4 py-3 text-base font-semibold text-white"
+          className="rounded-lg bg-surface-2 px-4 py-3 text-base font-semibold text-ink hover:bg-surface-3"
         >
           Search
         </button>
@@ -28,7 +28,7 @@ function MyStuffPage() {
         <button
           type="button"
           onClick={() => navigate('/stats')}
-          className="rounded-lg bg-slate-600 px-4 py-3 text-base font-semibold text-white"
+          className="rounded-lg bg-surface-2 px-4 py-3 text-base font-semibold text-ink hover:bg-surface-3"
         >
           My Stats
         </button>
@@ -36,7 +36,7 @@ function MyStuffPage() {
         <button
           type="button"
           onClick={() => navigate('/to-listen')}
-          className="rounded-lg bg-slate-600 px-4 py-3 text-base font-semibold text-white"
+          className="rounded-lg bg-surface-2 px-4 py-3 text-base font-semibold text-ink hover:bg-surface-3"
         >
           To-Listen
         </button>
@@ -44,7 +44,7 @@ function MyStuffPage() {
         <button
           type="button"
           onClick={() => navigate('/playlists')}
-          className="rounded-lg bg-slate-600 px-4 py-3 text-base font-semibold text-white"
+          className="rounded-lg bg-surface-2 px-4 py-3 text-base font-semibold text-ink hover:bg-surface-3"
         >
           Playlists
         </button>

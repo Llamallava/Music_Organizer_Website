@@ -133,7 +133,7 @@ function FriendAlbumReviewPage() {
       <main className="min-h-screen px-6 py-8">
         <div className="mx-auto w-full max-w-6xl">
           <LinearBackButton />
-          <p className="mt-6 rounded-lg bg-white px-4 py-3 text-sm text-slate-700">
+          <p className="mt-6 rounded-lg bg-surface px-4 py-3 text-sm text-ink">
             Loading review workspace...
           </p>
         </div>
@@ -147,11 +147,11 @@ function FriendAlbumReviewPage() {
         <div className="mx-auto w-full max-w-6xl">
           <LinearBackButton />
 
-          <h1 className="mt-5 text-5xl font-black tracking-tight text-slate-900">
+          <h1 className="mt-5 text-5xl font-black tracking-tight text-ink">
             {toPossessiveName(friendName ?? 'Friend')} Reviews
           </h1>
 
-          <div className="mt-6 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <div className="mt-6 rounded-lg border border-err-edge bg-err-bg p-4 text-sm text-err">
             {errorMessage ?? 'Could not load this album review.'}
           </div>
         </div>
@@ -170,23 +170,23 @@ function FriendAlbumReviewPage() {
       <div className="mx-auto w-full max-w-[1500px]">
         <LinearBackButton />
 
-        <h1 className="mt-5 text-5xl font-black tracking-tight text-slate-900">
+        <h1 className="mt-5 text-5xl font-black tracking-tight text-ink">
           {toPossessiveName(displayName)} Reviews
         </h1>
-        <p className="mt-1 text-sm text-slate-600">Read-only view.</p>
+        <p className="mt-1 text-sm text-ink-2">Read-only view.</p>
 
         <section className="mt-6 grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_320px]">
           <aside className="space-y-4">
-            <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <div className="aspect-square w-full overflow-hidden rounded-lg bg-slate-200">
+            <div className="rounded-xl border border-edge bg-surface p-4">
+              <div className="aspect-square w-full overflow-hidden rounded-lg bg-surface-2">
                 <AlbumCover src={workspace.album.coverUrl} alt={`${workspace.album.title} cover`} loading="eager" />
               </div>
-              <h2 className="mt-3 text-base font-bold text-slate-900">{workspace.album.title}</h2>
-              <p className="text-sm text-slate-700">{workspace.album.artistName}</p>
+              <h2 className="mt-3 text-base font-bold text-ink">{workspace.album.title}</h2>
+              <p className="text-sm text-ink">{workspace.album.artistName}</p>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-3">
-              <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Tracklist</p>
+            <div className="rounded-xl border border-edge bg-surface p-3">
+              <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-ink-3">Tracklist</p>
               <div className="max-h-[60vh] space-y-1 overflow-auto pr-1">
                 {workspace.tracks.map((track) => {
                   const key = toTrackKey(track.trackNumber)
@@ -198,7 +198,7 @@ function FriendAlbumReviewPage() {
                       type="button"
                       onClick={() => setActiveSectionKey(key)}
                       className={`w-full rounded-lg px-3 py-2 text-left text-sm ${
-                        isActive ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
+                        isActive ? 'bg-cta text-white' : 'bg-surface-2 text-ink hover:bg-surface-3'
                       }`}
                     >
                       <span className="mr-2 font-semibold">{track.trackNumber}.</span>
@@ -212,8 +212,8 @@ function FriendAlbumReviewPage() {
                   onClick={() => setActiveSectionKey(CONCLUSION_KEY)}
                   className={`w-full rounded-lg px-3 py-2 text-left text-sm font-semibold ${
                     activeSectionKey === CONCLUSION_KEY
-                      ? 'bg-slate-900 text-white'
-                      : 'bg-amber-100 text-amber-900 hover:bg-amber-200'
+                      ? 'bg-cta text-white'
+                      : 'bg-surface-2 text-pink hover:bg-surface-3'
                   }`}
                 >
                   Conclusion
@@ -222,22 +222,22 @@ function FriendAlbumReviewPage() {
             </div>
           </aside>
 
-          <section className="rounded-xl border border-slate-200 bg-white p-4">
+          <section className="rounded-xl border border-edge bg-surface p-4">
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Review Section</p>
-                <h2 className="text-lg font-bold text-slate-900">
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">Review Section</p>
+                <h2 className="text-lg font-bold text-ink">
                   {activeTrack ? `${activeTrack.trackNumber}. ${activeTrack.title}` : 'Conclusion'}
                 </h2>
               </div>
 
-              <p className="rounded-md bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-800">
+              <p className="rounded-md bg-surface-2 px-3 py-1 text-sm font-semibold text-ink">
                 Score: {scoreText}
               </p>
             </div>
 
             {activeTrack && activeSection?.isInterlude && (
-              <p className="mb-3 inline-flex rounded-md bg-amber-100 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-amber-900">
+              <p className="mb-3 inline-flex rounded-md bg-warn-bg px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-warn">
                 Interlude
               </p>
             )}
@@ -246,22 +246,22 @@ function FriendAlbumReviewPage() {
               value={notesText}
               readOnly
               placeholder="No notes written for this section."
-              className="h-[62vh] w-full resize-none rounded-lg border border-slate-300 bg-slate-50 p-3 text-sm leading-relaxed text-slate-900"
+              className="h-[62vh] w-full resize-none rounded-lg border border-edge bg-surface-2 p-3 text-sm leading-relaxed text-ink"
             />
           </section>
 
-          <aside className="rounded-xl border border-slate-200 bg-white p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Lyrics</p>
+          <aside className="rounded-xl border border-edge bg-surface p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">Lyrics</p>
             {activeTrack ? (
               activeTrack.lyrics.trim() ? (
-                <pre className="mt-2 max-h-[72vh] overflow-auto whitespace-pre-wrap text-sm leading-relaxed text-slate-800">
+                <pre className="mt-2 max-h-[72vh] overflow-auto whitespace-pre-wrap text-sm leading-relaxed text-ink">
                   {activeTrack.lyrics}
                 </pre>
               ) : (
-                <p className="mt-2 text-sm text-slate-600">No lyrics stored for this track.</p>
+                <p className="mt-2 text-sm text-ink-2">No lyrics stored for this track.</p>
               )
             ) : (
-              <p className="mt-2 text-sm text-slate-600">Conclusion has no lyrics.</p>
+              <p className="mt-2 text-sm text-ink-2">Conclusion has no lyrics.</p>
             )}
           </aside>
         </section>

@@ -70,22 +70,22 @@ function ExplorePage() {
   return (
     <main className="min-h-screen px-6 py-8">
       <div className="mx-auto w-full max-w-3xl">
-        <h1 className="text-3xl font-black text-slate-900">Explore</h1>
-        <p className="mt-2 text-sm text-slate-700">Notifications and activity updates.</p>
+        <h1 className="text-3xl font-black text-ink">Explore</h1>
+        <p className="mt-2 text-sm text-ink">Notifications and activity updates.</p>
 
         {isLoading && (
-          <p className="mt-6 rounded-lg bg-white p-4 text-sm text-slate-700">Loading notifications...</p>
+          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">Loading notifications...</p>
         )}
 
         {!isLoading && errorMessage && (
-          <div className="mt-6 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <div className="mt-6 rounded-lg border border-err-edge bg-err-bg p-4 text-sm text-err">
             <p>Could not load notifications.</p>
             <p className="mt-1">{errorMessage}</p>
           </div>
         )}
 
         {!isLoading && !errorMessage && notifications.length === 0 && (
-          <p className="mt-6 rounded-lg bg-white p-4 text-sm text-slate-700">
+          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">
             No notifications yet.
           </p>
         )}
@@ -95,10 +95,10 @@ function ExplorePage() {
             {notifications.map((notification) => (
               <article
                 key={notification.id}
-                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="rounded-xl border border-edge bg-surface p-4 shadow-sm"
               >
-                <p className="text-sm font-semibold text-slate-900">{renderNotificationText(notification)}</p>
-                <p className="mt-2 text-xs text-slate-500">{formatNotificationTime(notification.createdAt)}</p>
+                <p className="text-sm font-semibold text-ink">{renderNotificationText(notification)}</p>
+                <p className="mt-2 text-xs text-ink-3">{formatNotificationTime(notification.createdAt)}</p>
               </article>
             ))}
           </section>

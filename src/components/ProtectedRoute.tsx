@@ -12,7 +12,7 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (isLoading) {
     return (
       <main className="flex min-h-screen items-center justify-center px-6">
-        <p className="rounded-lg bg-white px-4 py-3 text-sm text-slate-700">Checking session...</p>
+        <p className="rounded-lg bg-surface px-4 py-3 text-sm text-ink">Checking session...</p>
       </main>
     )
   }

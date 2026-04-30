@@ -167,17 +167,17 @@ function ToListenPage() {
       <div className="mx-auto w-full max-w-3xl">
         <LinearBackButton />
 
-        <h1 className="mt-5 text-3xl font-black text-slate-900">To-Listen</h1>
-        <p className="mt-2 text-sm text-slate-700">
+        <h1 className="mt-5 text-3xl font-black text-ink">To-Listen</h1>
+        <p className="mt-2 text-sm text-ink">
           Track songs for yourself and send recommendations directly to friends.
         </p>
 
-        <div className="mt-6 inline-flex rounded-lg border border-slate-300 bg-white p-1">
+        <div className="mt-6 inline-flex rounded-lg border border-edge bg-surface-2 p-1">
           <button
             type="button"
             onClick={() => setActiveTab('to-listen')}
             className={`rounded-md px-4 py-2 text-sm font-semibold ${
-              activeTab === 'to-listen' ? 'bg-slate-900 text-white' : 'text-slate-700'
+              activeTab === 'to-listen' ? 'bg-cta text-white' : 'text-ink'
             }`}
           >
             To-Listen
@@ -186,7 +186,7 @@ function ToListenPage() {
             type="button"
             onClick={() => setActiveTab('recommendations')}
             className={`rounded-md px-4 py-2 text-sm font-semibold ${
-              activeTab === 'recommendations' ? 'bg-slate-900 text-white' : 'text-slate-700'
+              activeTab === 'recommendations' ? 'bg-cta text-white' : 'text-ink'
             }`}
           >
             Recommendations
@@ -194,7 +194,7 @@ function ToListenPage() {
         </div>
 
         {errorMessage && (
-          <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+          <div className="mt-4 rounded-lg border border-err-edge bg-err-bg p-3 text-sm text-err">
             {errorMessage}
           </div>
         )}
@@ -203,28 +203,28 @@ function ToListenPage() {
           <>
             <form
               onSubmit={handleAddToListen}
-              className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+              className="mt-6 rounded-xl border border-edge bg-surface p-4 shadow-sm"
             >
               <div className="grid gap-3 md:grid-cols-2">
-                <label className="text-sm font-semibold text-slate-800">
+                <label className="text-sm font-semibold text-ink">
                   Song Name
                   <input
                     type="text"
                     value={toListenSongName}
                     onChange={(event) => setToListenSongName(event.target.value)}
                     required
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
                   />
                 </label>
 
-                <label className="text-sm font-semibold text-slate-800">
+                <label className="text-sm font-semibold text-ink">
                   Artist Name
                   <input
                     type="text"
                     value={toListenArtistName}
                     onChange={(event) => setToListenArtistName(event.target.value)}
                     required
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
                   />
                 </label>
               </div>
@@ -232,18 +232,18 @@ function ToListenPage() {
               <button
                 type="submit"
                 disabled={isSubmittingToListen}
-                className="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                className="mt-4 rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
               >
                 {isSubmittingToListen ? 'Adding...' : 'Add to List'}
               </button>
             </form>
 
             {isLoading && (
-              <p className="mt-6 rounded-lg bg-white p-4 text-sm text-slate-700">Loading to-listen songs...</p>
+              <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">Loading to-listen songs...</p>
             )}
 
             {!isLoading && toListenSongs.length === 0 && (
-              <p className="mt-6 rounded-lg bg-white p-4 text-sm text-slate-700">
+              <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">
                 Your to-listen list is empty. Add a song above.
               </p>
             )}
@@ -253,18 +253,18 @@ function ToListenPage() {
                 {toListenSongs.map((song) => (
                   <article
                     key={song.id}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                    className="flex items-center justify-between gap-3 rounded-xl border border-edge bg-surface p-4 shadow-sm"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-base font-semibold text-slate-900">{song.songName}</p>
-                      <p className="truncate text-sm text-slate-700">{song.artistName}</p>
+                      <p className="truncate text-base font-semibold text-ink">{song.songName}</p>
+                      <p className="truncate text-sm text-ink">{song.artistName}</p>
                     </div>
 
                     <button
                       type="button"
                       onClick={() => handleMarkToListenListened(song.id)}
                       disabled={removingToListenSongId !== null}
-                      className="shrink-0 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                      className="shrink-0 rounded-lg bg-cta px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
                     >
                       {removingToListenSongId === song.id ? 'Removing...' : 'Listened to it'}
                     </button>
@@ -279,38 +279,38 @@ function ToListenPage() {
           <>
             <form
               onSubmit={handleSendRecommendation}
-              className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+              className="mt-6 rounded-xl border border-edge bg-surface p-4 shadow-sm"
             >
               <div className="grid gap-3 md:grid-cols-3">
-                <label className="text-sm font-semibold text-slate-800">
+                <label className="text-sm font-semibold text-ink">
                   Song Name
                   <input
                     type="text"
                     value={recommendationSongName}
                     onChange={(event) => setRecommendationSongName(event.target.value)}
                     required
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
                   />
                 </label>
 
-                <label className="text-sm font-semibold text-slate-800">
+                <label className="text-sm font-semibold text-ink">
                   Artist Name
                   <input
                     type="text"
                     value={recommendationArtistName}
                     onChange={(event) => setRecommendationArtistName(event.target.value)}
                     required
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
                   />
                 </label>
 
-                <label className="text-sm font-semibold text-slate-800">
+                <label className="text-sm font-semibold text-ink">
                   Send To
                   <select
                     value={selectedFriendUserId}
                     onChange={(event) => setSelectedFriendUserId(event.target.value)}
                     disabled={friends.length === 0}
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
                   >
                     {friends.length === 0 && <option value="">No friends available</option>}
                     {friends.map((friend) => (
@@ -325,32 +325,32 @@ function ToListenPage() {
               <button
                 type="submit"
                 disabled={isSubmittingRecommendation || friends.length === 0}
-                className="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                className="mt-4 rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
               >
                 {isSubmittingRecommendation ? 'Sending...' : 'Send Recommendation'}
               </button>
 
               {friends.length === 0 && (
-                <p className="mt-3 text-sm text-slate-700">
+                <p className="mt-3 text-sm text-ink">
                   Add at least one friend before sending recommendations.
                 </p>
               )}
             </form>
 
             {recommendationSubmitMessage && (
-              <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+              <div className="mt-4 rounded-lg border border-ok-edge bg-ok-bg p-3 text-sm text-ok">
                 {recommendationSubmitMessage}
               </div>
             )}
 
             {isLoading && (
-              <p className="mt-6 rounded-lg bg-white p-4 text-sm text-slate-700">
+              <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">
                 Loading recommendations...
               </p>
             )}
 
             {!isLoading && receivedRecommendations.length === 0 && (
-              <p className="mt-6 rounded-lg bg-white p-4 text-sm text-slate-700">
+              <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">
                 No recommendations yet.
               </p>
             )}
@@ -360,17 +360,17 @@ function ToListenPage() {
                 {receivedRecommendations.map((recommendation) => (
                   <article
                     key={recommendation.id}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                    className="flex items-center justify-between gap-3 rounded-xl border border-edge bg-surface p-4 shadow-sm"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-base font-semibold text-slate-900">
+                      <p className="truncate text-base font-semibold text-ink">
                         {recommendation.songName}
                       </p>
-                      <p className="truncate text-sm text-slate-700">{recommendation.artistName}</p>
-                      <p className="truncate text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      <p className="truncate text-sm text-ink">{recommendation.artistName}</p>
+                      <p className="truncate text-xs font-semibold uppercase tracking-wide text-ink-3">
                         {recommendation.recommendationType === 'album' ? 'Album' : 'Song'}
                       </p>
-                      <p className="truncate text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      <p className="truncate text-xs font-semibold uppercase tracking-wide text-ink-3">
                         From {getFriendDisplayName(recommendation.senderUsername, recommendation.senderFriendCode)}
                       </p>
                     </div>
@@ -379,7 +379,7 @@ function ToListenPage() {
                       type="button"
                       onClick={() => handleMarkRecommendationListened(recommendation.id)}
                       disabled={removingRecommendationId !== null}
-                      className="shrink-0 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                      className="shrink-0 rounded-lg bg-cta px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
                     >
                       {removingRecommendationId === recommendation.id ? 'Removing...' : 'Listened to it'}
                     </button>

@@ -381,66 +381,66 @@ function SearchPage() {
           <button
             type="button"
             onClick={() => navigate('/reviews')}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+            className="rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white"
           >
             Go to Reviews
           </button>
         </div>
 
-        <h1 className="mt-5 text-3xl font-black text-slate-900">Search Songs</h1>
-        <p className="mt-2 text-sm text-slate-700">
+        <h1 className="mt-5 text-3xl font-black text-ink">Search Songs</h1>
+        <p className="mt-2 text-sm text-ink">
           Combine filters to answer questions like lyrics keyword matches or artist + score ranges.
         </p>
 
-        <section className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <section className="mt-6 rounded-xl border border-edge bg-surface p-4 shadow-sm">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-            <label className="text-sm text-slate-700">
+            <label className="text-sm text-ink">
               Artist contains
               <input
                 type="text"
                 value={artistQuery}
                 onChange={(event) => setArtistQuery(event.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-md border border-edge px-3 py-2 text-sm"
               />
             </label>
 
-            <label className="text-sm text-slate-700">
+            <label className="text-sm text-ink">
               Album contains
               <input
                 type="text"
                 value={albumQuery}
                 onChange={(event) => setAlbumQuery(event.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-md border border-edge px-3 py-2 text-sm"
               />
             </label>
 
-            <label className="text-sm text-slate-700">
+            <label className="text-sm text-ink">
               Song contains
               <input
                 type="text"
                 value={trackQuery}
                 onChange={(event) => setTrackQuery(event.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-md border border-edge px-3 py-2 text-sm"
               />
             </label>
 
-            <label className="text-sm text-slate-700">
+            <label className="text-sm text-ink">
               Lyrics contain
               <input
                 type="text"
                 value={lyricsQuery}
                 onChange={(event) => setLyricsQuery(event.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-md border border-edge px-3 py-2 text-sm"
               />
             </label>
 
-            <label className="text-sm text-slate-700">
+            <label className="text-sm text-ink">
               Notes contain
               <input
                 type="text"
                 value={notesQuery}
                 onChange={(event) => setNotesQuery(event.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-md border border-edge px-3 py-2 text-sm"
               />
             </label>
 
@@ -457,12 +457,12 @@ function SearchPage() {
           </div>
 
           <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-            <label className="text-sm text-slate-700">
+            <label className="text-sm text-ink">
               Score mode
               <select
                 value={scoreMode}
                 onChange={(event) => setScoreMode(event.target.value as ScoreMode)}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-md border border-edge px-3 py-2 text-sm"
               >
                 <option value="any">Any</option>
                 <option value="scored">Scored only</option>
@@ -470,12 +470,12 @@ function SearchPage() {
               </select>
             </label>
 
-            <label className="text-sm text-slate-700">
+            <label className="text-sm text-ink">
               Interludes
               <select
                 value={interludeMode}
                 onChange={(event) => setInterludeMode(event.target.value as InterludeMode)}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-md border border-edge px-3 py-2 text-sm"
               >
                 <option value="any">Any</option>
                 <option value="only">Interludes only</option>
@@ -483,13 +483,13 @@ function SearchPage() {
               </select>
             </label>
 
-            <label className="text-sm text-slate-700">
+            <label className="text-sm text-ink">
               Min score
               <div className="mt-1 flex gap-2">
                 <select
                   value={minScoreOperator}
                   onChange={(event) => setMinScoreOperator(event.target.value as ScoreMinOperator)}
-                  className="w-20 rounded-md border border-slate-300 px-2 py-2 text-sm"
+                  className="w-20 rounded-md border border-edge px-2 py-2 text-sm"
                 >
                   <option value="gte">&gt;=</option>
                   <option value="gt">&gt;</option>
@@ -498,18 +498,18 @@ function SearchPage() {
                   type="text"
                   value={minScoreInput}
                   onChange={(event) => setMinScoreInput(event.target.value)}
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-edge px-3 py-2 text-sm"
                 />
               </div>
             </label>
 
-            <label className="text-sm text-slate-700">
+            <label className="text-sm text-ink">
               Max score
               <div className="mt-1 flex gap-2">
                 <select
                   value={maxScoreOperator}
                   onChange={(event) => setMaxScoreOperator(event.target.value as ScoreMaxOperator)}
-                  className="w-20 rounded-md border border-slate-300 px-2 py-2 text-sm"
+                  className="w-20 rounded-md border border-edge px-2 py-2 text-sm"
                 >
                   <option value="lte">&lt;=</option>
                   <option value="lt">&lt;</option>
@@ -518,17 +518,17 @@ function SearchPage() {
                   type="text"
                   value={maxScoreInput}
                   onChange={(event) => setMaxScoreInput(event.target.value)}
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-edge px-3 py-2 text-sm"
                 />
               </div>
             </label>
 
-            <label className="text-sm text-slate-700">
+            <label className="text-sm text-ink">
               Sort
               <select
                 value={sortOrder}
                 onChange={(event) => setSortOrder(event.target.value as SortOrder)}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-md border border-edge px-3 py-2 text-sm"
               >
                 <option value="artist">Artist / Album / Track</option>
                 <option value="score-desc">Score high to low</option>
@@ -538,44 +538,44 @@ function SearchPage() {
             </label>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-3">
-            <p className="text-sm text-slate-700">
-              Results: <span className="font-semibold text-slate-900">{filteredSongs.length}</span>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-edge pt-3">
+            <p className="text-sm text-ink">
+              Results: <span className="font-semibold text-ink">{filteredSongs.length}</span>
             </p>
 
             <button
               type="button"
               onClick={clearFilters}
-              className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-900"
+              className="rounded-lg bg-surface-2 px-3 py-2 text-sm font-semibold text-ink hover:bg-surface-3"
             >
               Clear Filters
             </button>
           </div>
 
           {validationMessage && (
-            <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+            <div className="mt-3 rounded-lg border border-err-edge bg-err-bg p-3 text-sm text-err">
               {validationMessage}
             </div>
           )}
         </section>
 
-        {isLoading && <p className="mt-6 rounded-lg bg-white p-4 text-sm text-slate-700">Loading songs...</p>}
+        {isLoading && <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">Loading songs...</p>}
 
         {!isLoading && errorMessage && (
-          <div className="mt-6 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <div className="mt-6 rounded-lg border border-err-edge bg-err-bg p-4 text-sm text-err">
             <p>Could not load searchable songs.</p>
             <p className="mt-1">{errorMessage}</p>
           </div>
         )}
 
         {!isLoading && !errorMessage && songs.length === 0 && (
-          <p className="mt-6 rounded-lg bg-white p-4 text-sm text-slate-700">
+          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">
             No songs found yet. Add and review albums to start searching.
           </p>
         )}
 
         {!isLoading && !errorMessage && songs.length > 0 && filteredSongs.length === 0 && !validationMessage && (
-          <p className="mt-6 rounded-lg bg-white p-4 text-sm text-slate-700">
+          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">
             No songs matched the current filters.
           </p>
         )}
@@ -585,25 +585,25 @@ function SearchPage() {
             {filteredSongs.map((song) => (
               <article
                 key={`${song.userSavedAlbumId}:${song.trackNumber}`}
-                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="rounded-xl border border-edge bg-surface p-4 shadow-sm"
               >
                 <div className="flex flex-col gap-3 md:flex-row md:items-start">
-                  <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-200">
+                  <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-surface-2">
                     <AlbumCover src={song.coverUrl} alt={`${song.albumTitle} cover`} loading="lazy" />
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <p className="text-lg font-bold text-slate-900">
+                    <p className="text-lg font-bold text-ink">
                       {song.trackNumber}. {song.trackTitle}
                     </p>
-                    <p className="text-sm font-semibold text-slate-700">{song.artistName}</p>
-                    <p className="text-sm text-slate-600">{song.albumTitle}</p>
+                    <p className="text-sm font-semibold text-ink">{song.artistName}</p>
+                    <p className="text-sm text-ink-2">{song.albumTitle}</p>
 
                     <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                      <span className="rounded-full bg-slate-100 px-2 py-1 font-semibold text-slate-700">
+                      <span className="rounded-full bg-surface-2 px-2 py-1 font-semibold text-ink-2">
                         Score: {formatScore(song.score)}
                       </span>
-                      <span className="rounded-full bg-slate-100 px-2 py-1 font-semibold text-slate-700">
+                      <span className="rounded-full bg-surface-2 px-2 py-1 font-semibold text-ink-2">
                         {song.isInterlude ? 'Interlude' : 'Track'}
                       </span>
                       {song.tags.map((tag) => (
@@ -616,13 +616,13 @@ function SearchPage() {
                       ))}
                     </div>
 
-                    <p className="mt-3 text-sm leading-relaxed text-slate-700">
+                    <p className="mt-3 text-sm leading-relaxed text-ink">
                       {buildLyricsSnippet(song.lyrics, normalizedLyricsQuery)}
                     </p>
 
                     {song.reviewNotes.trim() && (
-                      <p className="mt-2 text-sm text-slate-600">
-                        <span className="font-semibold text-slate-700">Notes:</span> {song.reviewNotes}
+                      <p className="mt-2 text-sm text-ink-2">
+                        <span className="font-semibold text-ink">Notes:</span> {song.reviewNotes}
                       </p>
                     )}
                   </div>
@@ -630,7 +630,7 @@ function SearchPage() {
                   <button
                     type="button"
                     onClick={() => navigate(`/reviews/${song.userSavedAlbumId}`)}
-                    className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
+                    className="rounded-lg bg-cta px-3 py-2 text-sm font-semibold text-white"
                   >
                     Open Review
                   </button>
