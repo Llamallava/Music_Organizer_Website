@@ -85,7 +85,7 @@ function HomePage() {
             className={
               hasBackground
                 ? 'rounded-lg border border-white/20 bg-white/15 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/25'
-                : 'rounded-lg bg-slate-900 px-4 py-3 text-base font-semibold text-white'
+                : 'rounded-lg bg-cta px-4 py-3 text-base font-semibold text-white'
             }
           >
             My Reviews
@@ -97,7 +97,7 @@ function HomePage() {
             className={
               hasBackground
                 ? 'rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/20'
-                : 'rounded-lg bg-slate-600 px-4 py-3 text-base font-semibold text-white'
+                : 'rounded-lg bg-surface-2 px-4 py-3 text-base font-semibold text-ink hover:bg-surface-3'
             }
           >
             Search
@@ -109,7 +109,7 @@ function HomePage() {
             className={
               hasBackground
                 ? 'rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/20'
-                : 'rounded-lg bg-slate-600 px-4 py-3 text-base font-semibold text-white'
+                : 'rounded-lg bg-surface-2 px-4 py-3 text-base font-semibold text-ink hover:bg-surface-3'
             }
           >
             My Stats
@@ -121,7 +121,7 @@ function HomePage() {
             className={
               hasBackground
                 ? 'rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/20'
-                : 'rounded-lg bg-slate-600 px-4 py-3 text-base font-semibold text-white'
+                : 'rounded-lg bg-surface-2 px-4 py-3 text-base font-semibold text-ink hover:bg-surface-3'
             }
           >
             To-Listen
@@ -133,7 +133,7 @@ function HomePage() {
             className={
               hasBackground
                 ? 'rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/20'
-                : 'rounded-lg bg-slate-600 px-4 py-3 text-base font-semibold text-white'
+                : 'rounded-lg bg-surface-2 px-4 py-3 text-base font-semibold text-ink hover:bg-surface-3'
             }
           >
             Playlists
@@ -142,7 +142,7 @@ function HomePage() {
 
         <div className="flex flex-1 items-center justify-center">
           <h1
-            className={`text-6xl font-black tracking-tight ${hasBackground ? 'text-white drop-shadow-lg' : 'text-slate-900'}`}
+            className={`text-6xl font-black tracking-tight ${hasBackground ? 'text-white drop-shadow-lg' : 'text-ink'}`}
           >
             Music Organizer
           </h1>

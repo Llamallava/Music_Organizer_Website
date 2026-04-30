@@ -67,25 +67,25 @@ function TopTenAlbumsModule({
   const remainingAlbums = items.slice(1)
 
   return (
-    <article className="rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-      <h2 className="text-lg font-bold text-slate-900">{title}</h2>
+    <article className="rounded-xl border border-edge bg-surface p-4 shadow-sm">
+      <h2 className="text-lg font-bold text-ink">{title}</h2>
 
-      {!firstAlbum && <p className="mt-4 text-sm text-slate-600">No data yet.</p>}
+      {!firstAlbum && <p className="mt-4 text-sm text-ink-2">No data yet.</p>}
 
       {firstAlbum && (
         <>
-          <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">#1</p>
+          <div className="mt-4 rounded-lg border border-edge bg-surface-2 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">#1</p>
 
             <div className="mt-3 flex gap-3">
-              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-slate-200">
+              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-surface-3">
                 <AlbumCover src={firstAlbum.coverUrl} alt={`${firstAlbum.title} cover`} loading="lazy" />
               </div>
 
               <div className="min-w-0">
-                <p className="truncate text-lg font-extrabold text-slate-900">{firstAlbum.title}</p>
-                <p className="truncate text-base font-semibold text-slate-700">{firstAlbum.artistName}</p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">
+                <p className="truncate text-lg font-extrabold text-ink">{firstAlbum.title}</p>
+                <p className="truncate text-base font-semibold text-ink">{firstAlbum.artistName}</p>
+                <p className="mt-1 text-sm font-semibold text-ink">
                   {valueLabel}: {formatValue(firstAlbum.value, valueType)}
                 </p>
               </div>
@@ -96,16 +96,16 @@ function TopTenAlbumsModule({
             {remainingAlbums.map((album, index) => (
               <li
                 key={album.userSavedAlbumId}
-                className="flex items-center justify-between gap-3 rounded-md bg-slate-50 px-3 py-2"
+                className="flex items-center justify-between gap-3 rounded-md bg-surface-2 px-3 py-2"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-900">
+                  <p className="truncate text-sm font-semibold text-ink">
                     {index + 2}. {album.title}
                   </p>
-                  <p className="truncate text-xs text-slate-600">{album.artistName}</p>
+                  <p className="truncate text-xs text-ink-2">{album.artistName}</p>
                 </div>
 
-                <p className="shrink-0 text-sm font-semibold text-slate-900">
+                <p className="shrink-0 text-sm font-semibold text-ink">
                   {formatValue(album.value, valueType)}
                 </p>
               </li>
@@ -127,26 +127,26 @@ function TopTenSongsModule({
   const remainingSongs = items.slice(1)
 
   return (
-    <article className="rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-      <h2 className="text-lg font-bold text-slate-900">{title}</h2>
+    <article className="rounded-xl border border-edge bg-surface p-4 shadow-sm">
+      <h2 className="text-lg font-bold text-ink">{title}</h2>
 
-      {!firstSong && <p className="mt-4 text-sm text-slate-600">No data yet.</p>}
+      {!firstSong && <p className="mt-4 text-sm text-ink-2">No data yet.</p>}
 
       {firstSong && (
         <>
-          <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">#1</p>
+          <div className="mt-4 rounded-lg border border-edge bg-surface-2 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">#1</p>
 
             <div className="mt-3 flex gap-3">
-              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-slate-200">
+              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-surface-3">
                 <AlbumCover src={firstSong.coverUrl} alt={`${firstSong.albumTitle} cover`} loading="lazy" />
               </div>
 
               <div className="min-w-0">
-                <p className="truncate text-lg font-extrabold text-slate-900">{firstSong.trackTitle}</p>
-                <p className="truncate text-base font-semibold text-slate-700">{firstSong.artistName}</p>
-                <p className="truncate text-sm text-slate-600">{firstSong.albumTitle}</p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">
+                <p className="truncate text-lg font-extrabold text-ink">{firstSong.trackTitle}</p>
+                <p className="truncate text-base font-semibold text-ink">{firstSong.artistName}</p>
+                <p className="truncate text-sm text-ink-2">{firstSong.albumTitle}</p>
+                <p className="mt-1 text-sm font-semibold text-ink">
                   {valueLabel}: {formatValue(firstSong.value, valueType)}
                 </p>
               </div>
@@ -157,16 +157,16 @@ function TopTenSongsModule({
             {remainingSongs.map((song, index) => (
               <li
                 key={`${song.userSavedAlbumId}:${song.trackNumber}`}
-                className="flex items-center justify-between gap-3 rounded-md bg-slate-50 px-3 py-2"
+                className="flex items-center justify-between gap-3 rounded-md bg-surface-2 px-3 py-2"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-900">
+                  <p className="truncate text-sm font-semibold text-ink">
                     {index + 2}. {song.trackTitle}
                   </p>
-                  <p className="truncate text-xs text-slate-600">{song.artistName} - {song.albumTitle}</p>
+                  <p className="truncate text-xs text-ink-2">{song.artistName} - {song.albumTitle}</p>
                 </div>
 
-                <p className="shrink-0 text-sm font-semibold text-slate-900">
+                <p className="shrink-0 text-sm font-semibold text-ink">
                   {formatValue(song.value, valueType)}
                 </p>
               </li>
@@ -185,35 +185,35 @@ function GrandTotalWordsModule({
   favoriteWords,
 }: Omit<GrandTotalWordsModuleConfig, 'id' | 'moduleType'>) {
   return (
-    <article className="col-span-2 rounded-xl border border-slate-200 bg-white/90 p-5 shadow-sm">
+    <article className="col-span-2 rounded-xl border border-edge bg-surface p-5 shadow-sm">
       <div className="grid gap-5 md:grid-cols-2">
         <div>
-          <h2 className="text-lg font-bold text-slate-900">{title}</h2>
-          <p className="mt-1 text-sm text-slate-600">Combined across all reviews on this account.</p>
-          <p className="mt-4 text-4xl font-black tracking-tight text-slate-900">
+          <h2 className="text-lg font-bold text-ink">{title}</h2>
+          <p className="mt-1 text-sm text-ink-2">Combined across all reviews on this account.</p>
+          <p className="mt-4 text-4xl font-black tracking-tight text-ink">
             {formatValue(totalWords, 'words')}
           </p>
-          <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-slate-500">{valueLabel}</p>
+          <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-ink-3">{valueLabel}</p>
         </div>
 
         <div>
-          <p className="text-sm font-semibold text-slate-900">Your favorite words:</p>
+          <p className="text-sm font-semibold text-ink">Your favorite words:</p>
           {favoriteWords.length > 0 ? (
             <ul className="mt-3 space-y-2">
               {favoriteWords.map((item, index) => (
                 <li
                   key={item.word}
-                  className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2 text-sm"
+                  className="flex items-center justify-between rounded-md bg-surface-2 px-3 py-2 text-sm"
                 >
-                  <span className="font-semibold text-slate-900">
+                  <span className="font-semibold text-ink">
                     {index + 1}. {item.word}
                   </span>
-                  <span className="text-slate-600">{item.count.toLocaleString()}</span>
+                  <span className="text-ink-2">{item.count.toLocaleString()}</span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="mt-2 text-sm text-slate-600">No words yet.</p>
+            <p className="mt-2 text-sm text-ink-2">No words yet.</p>
           )}
         </div>
       </div>
@@ -226,18 +226,18 @@ function TopTenArtistsModule({ title, items, artistImages }: Omit<TopTenArtistMo
   const remainingArtists = items.slice(1)
 
   return (
-    <article className="rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-      <h2 className="text-lg font-bold text-slate-900">{title}</h2>
+    <article className="rounded-xl border border-edge bg-surface p-4 shadow-sm">
+      <h2 className="text-lg font-bold text-ink">{title}</h2>
 
-      {!firstArtist && <p className="mt-4 text-sm text-slate-600">No data yet.</p>}
+      {!firstArtist && <p className="mt-4 text-sm text-ink-2">No data yet.</p>}
 
       {firstArtist && (
         <>
-          <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">#1</p>
+          <div className="mt-4 rounded-lg border border-edge bg-surface-2 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">#1</p>
 
             <div className="mt-3 flex gap-3">
-              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-slate-200">
+              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-surface-3">
                 <AlbumCover
                   src={artistImages.get(firstArtist.artistName) ?? null}
                   alt={`${firstArtist.artistName} profile`}
@@ -246,11 +246,11 @@ function TopTenArtistsModule({ title, items, artistImages }: Omit<TopTenArtistMo
               </div>
 
               <div className="min-w-0">
-                <p className="truncate text-lg font-extrabold text-slate-900">{firstArtist.artistName}</p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">
+                <p className="truncate text-lg font-extrabold text-ink">{firstArtist.artistName}</p>
+                <p className="mt-1 text-sm font-semibold text-ink">
                   Avg Score: {formatScoreValue(firstArtist.value)}
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-ink-3">
                   {firstArtist.albumCount} {firstArtist.albumCount === 1 ? 'album' : 'albums'} rated
                 </p>
               </div>
@@ -261,9 +261,9 @@ function TopTenArtistsModule({ title, items, artistImages }: Omit<TopTenArtistMo
             {remainingArtists.map((artist, index) => (
               <li
                 key={artist.artistName}
-                className="flex items-center gap-3 rounded-md bg-slate-50 px-3 py-2"
+                className="flex items-center gap-3 rounded-md bg-surface-2 px-3 py-2"
               >
-                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-slate-200">
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-surface-3">
                   <AlbumCover
                     src={artistImages.get(artist.artistName) ?? null}
                     alt={`${artist.artistName} profile`}
@@ -272,15 +272,15 @@ function TopTenArtistsModule({ title, items, artistImages }: Omit<TopTenArtistMo
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-slate-900">
+                  <p className="truncate text-sm font-semibold text-ink">
                     {index + 2}. {artist.artistName}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-ink-3">
                     {artist.albumCount} {artist.albumCount === 1 ? 'album' : 'albums'} rated
                   </p>
                 </div>
 
-                <p className="shrink-0 text-sm font-semibold text-slate-900">{formatScoreValue(artist.value)}</p>
+                <p className="shrink-0 text-sm font-semibold text-ink">{formatScoreValue(artist.value)}</p>
               </li>
             ))}
           </ol>
@@ -455,7 +455,7 @@ function MyStatsPage() {
             <button
               type="button"
               onClick={() => navigate('/artists')}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+              className="rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white"
             >
               Your Artists
             </button>
@@ -463,24 +463,24 @@ function MyStatsPage() {
             <button
               type="button"
               onClick={() => navigate('/reviews')}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+              className="rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white"
             >
               Go to Reviews
             </button>
           </div>
         </div>
 
-        <h1 className={`mt-5 font-black text-slate-900 ${isFriendView ? 'text-5xl tracking-tight' : 'text-3xl'}`}>
+        <h1 className={`mt-5 font-black text-ink ${isFriendView ? 'text-5xl tracking-tight' : 'text-3xl'}`}>
           {isFriendView ? `${toPossessiveName(friendName ?? 'Friend')} Stats` : 'My Stats'}
         </h1>
-        <p className="mt-2 text-sm text-slate-700">
+        <p className="mt-2 text-sm text-ink">
           This page uses modular 2-column cards so additional stat modules can be added easily.
         </p>
 
-        {isLoading && <p className="mt-6 rounded-lg bg-white p-4 text-sm text-slate-700">Loading stats...</p>}
+        {isLoading && <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">Loading stats...</p>}
 
         {!isLoading && errorMessage && (
-          <div className="mt-6 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <div className="mt-6 rounded-lg border border-err-edge bg-err-bg p-4 text-sm text-err">
             <p>Could not load stats.</p>
             <p className="mt-1">{errorMessage}</p>
           </div>

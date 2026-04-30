@@ -312,16 +312,16 @@ function PlaylistsPage() {
       <div className="mx-auto w-full max-w-3xl">
         <LinearBackButton />
 
-        <h1 className="mt-5 text-3xl font-black text-slate-900">Playlists</h1>
-        <p className="mt-2 text-sm text-slate-700">
+        <h1 className="mt-5 text-3xl font-black text-ink">Playlists</h1>
+        <p className="mt-2 text-sm text-ink">
           Create playlists, share them with friends, and add songs from MusicBrainz.
         </p>
 
         <form
           onSubmit={handleCreatePlaylist}
-          className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+          className="mt-6 rounded-xl border border-edge bg-surface p-4 shadow-sm"
         >
-          <label className="text-sm font-semibold text-slate-800">
+          <label className="text-sm font-semibold text-ink">
             New Playlist Name
             <input
               type="text"
@@ -329,56 +329,56 @@ function PlaylistsPage() {
               onChange={(event) => setNewPlaylistName(event.target.value)}
               required
               maxLength={120}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
             />
           </label>
 
           <button
             type="submit"
             disabled={isCreating}
-            className="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            className="mt-4 rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
           >
             {isCreating ? 'Creating...' : 'Create Playlist'}
           </button>
         </form>
 
-        <section className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-900">Add Songs From MusicBrainz</h2>
-          <p className="mt-1 text-sm text-slate-700">
+        <section className="mt-6 rounded-xl border border-edge bg-surface p-4 shadow-sm">
+          <h2 className="text-lg font-bold text-ink">Add Songs From MusicBrainz</h2>
+          <p className="mt-1 text-sm text-ink">
             Search individual songs and add them directly to one of your playlists.
           </p>
 
           <form onSubmit={handleSearchSongs} className="mt-4 space-y-3">
             <div className="grid gap-3 md:grid-cols-2">
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-ink">
                 Song title
                 <input
                   type="text"
                   value={musicBrainzSongQuery}
                   onChange={(event) => setMusicBrainzSongQuery(event.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
                 />
               </label>
 
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-ink">
                 Artist name
                 <input
                   type="text"
                   value={musicBrainzArtistQuery}
                   onChange={(event) => setMusicBrainzArtistQuery(event.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
                 />
               </label>
             </div>
 
             <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-ink">
                 Target Playlist
                 <select
                   value={selectedAddPlaylistId}
                   onChange={(event) => setSelectedAddPlaylistId(event.target.value)}
                   disabled={playlists.length === 0}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
                 >
                   {playlists.length === 0 && <option value="">No playlists available</option>}
                   {playlists.map((playlist) => (
@@ -392,7 +392,7 @@ function PlaylistsPage() {
               <button
                 type="submit"
                 disabled={isSearchingSongs}
-                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                className="rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
               >
                 {isSearchingSongs ? 'Searching...' : 'Search Songs'}
               </button>
@@ -400,29 +400,29 @@ function PlaylistsPage() {
           </form>
 
           {playlists.length === 0 && (
-            <p className="mt-3 text-sm text-slate-700">Create a playlist before adding songs.</p>
+            <p className="mt-3 text-sm text-ink">Create a playlist before adding songs.</p>
           )}
 
           {!isSearchingSongs && searchResults.length > 0 && (
             <>
-              <p className="mt-4 text-sm text-slate-700">
-                Results: <span className="font-semibold text-slate-900">{searchResults.length}</span>
+              <p className="mt-4 text-sm text-ink">
+                Results: <span className="font-semibold text-ink">{searchResults.length}</span>
               </p>
               <div className="mt-3 max-h-[420px] space-y-2 overflow-auto pr-1">
                 {searchResults.map((song) => (
                   <article
                     key={song.sourceSongId}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+                    className="flex items-center justify-between gap-3 rounded-lg border border-edge bg-surface-2 px-3 py-2"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-slate-200">
+                      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-surface-3">
                         <AlbumCover src={song.coverUrl} alt={`${song.songName} cover`} loading="lazy" />
                       </div>
 
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-slate-900">{song.songName}</p>
-                        <p className="truncate text-xs text-slate-700">{song.artistName}</p>
-                        <p className="truncate text-xs text-slate-500">{song.albumTitle ?? 'Single / Unknown Album'}</p>
+                        <p className="truncate text-sm font-semibold text-ink">{song.songName}</p>
+                        <p className="truncate text-xs text-ink">{song.artistName}</p>
+                        <p className="truncate text-xs text-ink-3">{song.albumTitle ?? 'Single / Unknown Album'}</p>
                       </div>
                     </div>
 
@@ -430,7 +430,7 @@ function PlaylistsPage() {
                       type="button"
                       onClick={() => void handleAddSongToPlaylist(song)}
                       disabled={addingSongKey !== null || playlists.length === 0 || !selectedAddPlaylistId}
-                      className="shrink-0 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                      className="shrink-0 rounded-lg bg-cta px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
                     >
                       {addingSongKey === song.sourceSongId ? 'Adding...' : 'Add to Playlist'}
                     </button>
@@ -442,21 +442,21 @@ function PlaylistsPage() {
         </section>
 
         {errorMessage && (
-          <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+          <div className="mt-4 rounded-lg border border-err-edge bg-err-bg p-3 text-sm text-err">
             {errorMessage}
           </div>
         )}
 
         {infoMessage && (
-          <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+          <div className="mt-4 rounded-lg border border-ok-edge bg-ok-bg p-3 text-sm text-ok">
             {infoMessage}
           </div>
         )}
 
-        {isLoading && <p className="mt-6 rounded-lg bg-white p-4 text-sm text-slate-700">Loading playlists...</p>}
+        {isLoading && <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">Loading playlists...</p>}
 
         {!isLoading && playlists.length === 0 && (
-          <p className="mt-6 rounded-lg bg-white p-4 text-sm text-slate-700">
+          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">
             No playlists yet. Create your first playlist above.
           </p>
         )}
@@ -472,7 +472,7 @@ function PlaylistsPage() {
               return (
                 <article
                   key={playlist.id}
-                  className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                  className="rounded-xl border border-edge bg-surface p-4 shadow-sm"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <button
@@ -480,8 +480,8 @@ function PlaylistsPage() {
                       onClick={() => togglePlaylistExpansion(playlist.id)}
                       className="min-w-0 text-left"
                     >
-                      <p className="truncate text-base font-semibold text-slate-900">{playlist.name}</p>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      <p className="truncate text-base font-semibold text-ink">{playlist.name}</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">
                         {playlist.songs.length} {playlist.songs.length === 1 ? 'song' : 'songs'} - Shared with{' '}
                         {playlist.sharedWith.length} {playlist.sharedWith.length === 1 ? 'friend' : 'friends'} -{' '}
                         {isExpanded ? 'Expanded' : 'Collapsed'}
@@ -493,7 +493,7 @@ function PlaylistsPage() {
                         type="button"
                         onClick={() => void handleDeletePlaylist(playlist.id)}
                         disabled={deletingPlaylistId !== null}
-                        className="rounded-lg border border-rose-300 bg-white px-3 py-2 text-sm font-semibold text-rose-700 disabled:opacity-60"
+                        className="rounded-lg border border-err-edge bg-surface px-3 py-2 text-sm font-semibold text-err disabled:opacity-60"
                       >
                         {deletingPlaylistId === playlist.id ? 'Deleting...' : 'Delete'}
                       </button>
@@ -502,12 +502,12 @@ function PlaylistsPage() {
 
                   {isExpanded && (
                     <div className="mt-4 space-y-3">
-                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                        <p className="text-sm font-semibold text-slate-900">Share Playlist</p>
-                        <p className="mt-1 text-xs text-slate-700">Friends you share with can view this playlist.</p>
+                      <div className="rounded-lg border border-edge bg-surface-2 p-3">
+                        <p className="text-sm font-semibold text-ink">Share Playlist</p>
+                        <p className="mt-1 text-xs text-ink">Friends you share with can view this playlist.</p>
 
                         <div className="mt-3 grid gap-2 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-                          <label className="text-sm font-semibold text-slate-800">
+                          <label className="text-sm font-semibold text-ink">
                             Friend
                             <select
                               value={shareTarget}
@@ -518,7 +518,7 @@ function PlaylistsPage() {
                                 }))
                               }
                               disabled={availableFriends.length === 0 || sharingPlaylistId !== null}
-                              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                              className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
                             >
                               {availableFriends.length === 0 && <option value="">No friends available</option>}
                               {availableFriends.map((friend) => (
@@ -533,14 +533,14 @@ function PlaylistsPage() {
                             type="button"
                             onClick={() => void handleSharePlaylist(playlist.id)}
                             disabled={!shareTarget || sharingPlaylistId !== null}
-                            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                            className="rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
                           >
                             {sharingPlaylistId === playlist.id ? 'Sharing...' : 'Share'}
                           </button>
                         </div>
 
                         {friends.length === 0 && (
-                          <p className="mt-2 text-xs text-slate-700">Add a friend first to share playlists.</p>
+                          <p className="mt-2 text-xs text-ink">Add a friend first to share playlists.</p>
                         )}
 
                         {playlist.sharedWith.length > 0 && (
@@ -551,16 +551,16 @@ function PlaylistsPage() {
                               return (
                                 <div
                                   key={shareKey}
-                                  className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2"
+                                  className="flex items-center justify-between gap-3 rounded-lg border border-edge bg-surface px-3 py-2"
                                 >
-                                  <p className="min-w-0 truncate text-sm text-slate-800">
+                                  <p className="min-w-0 truncate text-sm text-ink">
                                     {getFriendDisplayName(recipient.friendUsername, recipient.friendCode)}
                                   </p>
                                   <button
                                     type="button"
                                     onClick={() => void handleUnsharePlaylist(playlist.id, recipient.friendUserId)}
                                     disabled={unsharingShareKey !== null}
-                                    className="shrink-0 rounded-lg border border-rose-300 bg-white px-3 py-1 text-xs font-semibold text-rose-700 disabled:opacity-60"
+                                    className="shrink-0 rounded-lg border border-err-edge bg-surface px-3 py-1 text-xs font-semibold text-err disabled:opacity-60"
                                   >
                                     {unsharingShareKey === shareKey ? 'Removing...' : 'Remove'}
                                   </button>
@@ -572,7 +572,7 @@ function PlaylistsPage() {
                       </div>
 
                       {playlist.songs.length === 0 && (
-                        <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                        <p className="rounded-lg bg-surface-2 px-3 py-2 text-sm text-ink">
                           This playlist is empty.
                         </p>
                       )}
@@ -580,9 +580,9 @@ function PlaylistsPage() {
                       {playlist.songs.map((song) => (
                         <article
                           key={song.id}
-                          className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+                          className="flex items-center gap-3 rounded-lg border border-edge bg-surface-2 px-3 py-2"
                         >
-                          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-slate-200">
+                          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-surface-3">
                             <AlbumCover
                               src={song.coverUrl}
                               alt={`${song.albumTitle ?? song.trackTitle} cover`}
@@ -591,8 +591,8 @@ function PlaylistsPage() {
                           </div>
 
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-slate-900">{song.trackTitle}</p>
-                            <p className="truncate text-xs text-slate-700">
+                            <p className="truncate text-sm font-semibold text-ink">{song.trackTitle}</p>
+                            <p className="truncate text-xs text-ink">
                               {song.artistName} - {song.albumTitle ?? 'Single / Unknown Album'}
                             </p>
                           </div>
@@ -608,11 +608,11 @@ function PlaylistsPage() {
 
         {!isLoading && (
           <section className="mt-8">
-            <h2 className="text-xl font-black text-slate-900">Shared With Me</h2>
-            <p className="mt-1 text-sm text-slate-700">Read-only playlists friends have shared with you.</p>
+            <h2 className="text-xl font-black text-ink">Shared With Me</h2>
+            <p className="mt-1 text-sm text-ink">Read-only playlists friends have shared with you.</p>
 
             {sharedPlaylists.length === 0 && (
-              <p className="mt-4 rounded-lg bg-white p-4 text-sm text-slate-700">No playlists shared with you yet.</p>
+              <p className="mt-4 rounded-lg bg-surface p-4 text-sm text-ink">No playlists shared with you yet.</p>
             )}
 
             {sharedPlaylists.length > 0 && (
@@ -624,15 +624,15 @@ function PlaylistsPage() {
                   return (
                     <article
                       key={playlist.id}
-                      className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                      className="rounded-xl border border-edge bg-surface p-4 shadow-sm"
                     >
                       <button
                         type="button"
                         onClick={() => toggleSharedPlaylistExpansion(playlist.id)}
                         className="w-full min-w-0 text-left"
                       >
-                        <p className="truncate text-base font-semibold text-slate-900">{playlist.name}</p>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <p className="truncate text-base font-semibold text-ink">{playlist.name}</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">
                           Shared by {ownerName} - {playlist.songs.length} {playlist.songs.length === 1 ? 'song' : 'songs'} -{' '}
                           {isExpanded ? 'Expanded' : 'Collapsed'}
                         </p>
@@ -641,7 +641,7 @@ function PlaylistsPage() {
                       {isExpanded && (
                         <div className="mt-4 space-y-2">
                           {playlist.songs.length === 0 && (
-                            <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                            <p className="rounded-lg bg-surface-2 px-3 py-2 text-sm text-ink">
                               This playlist is empty.
                             </p>
                           )}
@@ -649,9 +649,9 @@ function PlaylistsPage() {
                           {playlist.songs.map((song) => (
                             <article
                               key={song.id}
-                              className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+                              className="flex items-center gap-3 rounded-lg border border-edge bg-surface-2 px-3 py-2"
                             >
-                              <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-slate-200">
+                              <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-surface-3">
                                 <AlbumCover
                                   src={song.coverUrl}
                                   alt={`${song.albumTitle ?? song.trackTitle} cover`}
@@ -660,8 +660,8 @@ function PlaylistsPage() {
                               </div>
 
                               <div className="min-w-0">
-                                <p className="truncate text-sm font-semibold text-slate-900">{song.trackTitle}</p>
-                                <p className="truncate text-xs text-slate-700">
+                                <p className="truncate text-sm font-semibold text-ink">{song.trackTitle}</p>
+                                <p className="truncate text-xs text-ink">
                                   {song.artistName} - {song.albumTitle ?? 'Single / Unknown Album'}
                                 </p>
                               </div>

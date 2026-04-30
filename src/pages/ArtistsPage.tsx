@@ -47,21 +47,21 @@ function ArtistsPage() {
           <LinearBackButton />
         </div>
 
-        <h1 className="mt-5 text-3xl font-black text-slate-900">Your Artists</h1>
+        <h1 className="mt-5 text-3xl font-black text-ink">Your Artists</h1>
 
         {isLoading && (
-          <p className="mt-6 rounded-lg bg-white p-4 text-sm text-slate-700">Loading artists...</p>
+          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">Loading artists...</p>
         )}
 
         {!isLoading && errorMessage && (
-          <div className="mt-6 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <div className="mt-6 rounded-lg border border-err-edge bg-err-bg p-4 text-sm text-err">
             <p>Could not load artists.</p>
             <p className="mt-1">{errorMessage}</p>
           </div>
         )}
 
         {!isLoading && !errorMessage && artists.length === 0 && (
-          <p className="mt-6 text-sm text-slate-600">No artists found. Save some albums first.</p>
+          <p className="mt-6 text-sm text-ink-2">No artists found. Save some albums first.</p>
         )}
 
         {!isLoading && !errorMessage && artists.length > 0 && (
@@ -71,7 +71,7 @@ function ArtistsPage() {
                 key={artist}
                 type="button"
                 onClick={() => navigate(`/artists/${encodeURIComponent(artist)}`)}
-                className="w-full rounded-xl border border-slate-200 bg-white/90 px-5 py-4 text-left text-base font-semibold text-slate-900 shadow-sm hover:bg-slate-50"
+                className="w-full rounded-xl border border-edge bg-surface px-5 py-4 text-left text-base font-semibold text-ink shadow-sm hover:bg-surface-2"
               >
                 {artist}
               </button>

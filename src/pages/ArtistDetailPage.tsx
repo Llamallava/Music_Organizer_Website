@@ -10,7 +10,7 @@ function ArtistDetailPage() {
       <div className="mx-auto w-full max-w-7xl">
         <LinearBackButton />
 
-        <h1 className="mt-5 text-5xl font-black tracking-tight text-slate-900">{decodedName}</h1>
+        <h1 className="mt-5 text-5xl font-black tracking-tight text-ink">{decodedName}</h1>
       </div>
     </main>
   )

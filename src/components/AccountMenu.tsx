@@ -301,7 +301,7 @@ function AccountMenu() {
             setIsBellOpen((previous) => !previous)
             setIsOpen(false)
           }}
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-edge bg-surface text-ink shadow-sm"
           aria-label="Open notifications"
           aria-haspopup="dialog"
           aria-expanded={isBellOpen}
@@ -318,31 +318,31 @@ function AccountMenu() {
         </button>
 
         {isBellOpen && (
-          <div className="absolute right-0 mt-2 w-80 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
-            <div className="border-b border-slate-200 px-4 py-3">
-              <h2 className="text-sm font-bold text-slate-900">Notifications</h2>
+          <div className="absolute right-0 mt-2 w-80 overflow-hidden rounded-xl border border-edge bg-surface shadow-lg">
+            <div className="border-b border-edge px-4 py-3">
+              <h2 className="text-sm font-bold text-ink">Notifications</h2>
             </div>
 
             {isLoadingNotifications && (
-              <p className="px-4 py-3 text-sm text-slate-700">Loading...</p>
+              <p className="px-4 py-3 text-sm text-ink">Loading...</p>
             )}
 
             {!isLoadingNotifications && notificationsError && (
-              <p className="px-4 py-3 text-sm text-rose-600">{notificationsError}</p>
+              <p className="px-4 py-3 text-sm text-err">{notificationsError}</p>
             )}
 
             {!isLoadingNotifications && !notificationsError && notifications.length === 0 && (
-              <p className="px-4 py-3 text-sm text-slate-700">No notifications yet.</p>
+              <p className="px-4 py-3 text-sm text-ink">No notifications yet.</p>
             )}
 
             {!isLoadingNotifications && !notificationsError && notifications.length > 0 && (
-              <div className="max-h-96 divide-y divide-slate-100 overflow-auto">
+              <div className="max-h-96 divide-y divide-edge overflow-auto">
                 {notifications.map((notification) => (
                   <div key={notification.id} className="px-4 py-3">
-                    <p className="text-sm font-semibold text-slate-900">
+                    <p className="text-sm font-semibold text-ink">
                       {renderNotificationText(notification)}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-ink-3">
                       {formatNotificationTime(notification.createdAt)}
                     </p>
                   </div>
@@ -361,7 +361,7 @@ function AccountMenu() {
             setIsOpen((previous) => !previous)
             setIsBellOpen(false)
           }}
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-edge bg-surface text-ink shadow-sm"
           aria-label="Open account menu"
           aria-haspopup="menu"
           aria-expanded={isOpen}
@@ -380,7 +380,7 @@ function AccountMenu() {
         {isOpen && (
           <div
             role="menu"
-            className={`absolute right-0 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg ${
+            className={`absolute right-0 mt-2 overflow-hidden rounded-xl border border-edge bg-surface p-1 shadow-lg ${
               view === 'details' ? 'w-80' : 'w-44'
             }`}
           >
@@ -390,7 +390,7 @@ function AccountMenu() {
                   type="button"
                   role="menuitem"
                   onClick={() => setView('details')}
-                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-800 hover:bg-slate-100"
+                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-ink hover:bg-surface-2"
                 >
                   Account Details
                 </button>
@@ -399,19 +399,19 @@ function AccountMenu() {
                   type="button"
                   role="menuitem"
                   onClick={() => navigate('/customize')}
-                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-800 hover:bg-slate-100"
+                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-ink hover:bg-surface-2"
                 >
                   Customize
                 </button>
 
-                <div className="my-1 border-t border-slate-200" />
+                <div className="my-1 border-t border-edge" />
 
                 <button
                   type="button"
                   role="menuitem"
                   onClick={() => void handleLogOut()}
                   disabled={isLoggingOut}
-                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-60"
+                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-err hover:bg-err-bg disabled:opacity-60"
                 >
                   {isLoggingOut ? 'Logging Out...' : 'Log Out'}
                 </button>
@@ -422,18 +422,18 @@ function AccountMenu() {
                   <button
                     type="button"
                     onClick={() => setView('root')}
-                    className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                    className="rounded-lg px-2 py-1 text-sm font-semibold text-ink hover:bg-surface-2"
                     aria-label="Back to account menu"
                   >
                     Back
                   </button>
-                  <p className="text-sm font-semibold text-slate-900">Account Details</p>
+                  <p className="text-sm font-semibold text-ink">Account Details</p>
                 </div>
 
-                <div className="my-1 border-t border-slate-200" />
+                <div className="my-1 border-t border-edge" />
 
                 <div className="px-3 pb-2 pt-1">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">
                     Username
                   </p>
                   {isEditingUsername ? (
@@ -444,7 +444,7 @@ function AccountMenu() {
                         onChange={(event) => setUsernameDraft(event.target.value)}
                         minLength={3}
                         maxLength={32}
-                        className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                        className="mt-1 w-full rounded-md border border-edge px-2 py-1 text-sm"
                         autoComplete="username"
                       />
                       <div className="mt-2 flex gap-2">
@@ -452,7 +452,7 @@ function AccountMenu() {
                           type="button"
                           onClick={() => void handleSaveUsername()}
                           disabled={isSavingUsername}
-                          className="rounded-md bg-slate-900 px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"
+                          className="rounded-md bg-cta px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"
                         >
                           {isSavingUsername ? 'Saving...' : 'Save'}
                         </button>
@@ -460,7 +460,7 @@ function AccountMenu() {
                           type="button"
                           onClick={handleCancelUsernameEdit}
                           disabled={isSavingUsername}
-                          className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-60"
+                          className="rounded-md border border-edge px-2 py-1 text-xs font-semibold text-ink disabled:opacity-60"
                         >
                           Cancel
                         </button>
@@ -468,14 +468,14 @@ function AccountMenu() {
                     </>
                   ) : (
                     <div className="mt-1 flex items-center gap-2">
-                      <p className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-900">
+                      <p className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
                         {isLoadingProfile ? 'Loading...' : accountUsername}
                       </p>
                       <button
                         type="button"
                         onClick={handleStartUsernameEdit}
                         disabled={isLoadingProfile || isSavingUsername}
-                        className="rounded-md border border-slate-300 p-1 text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-md border border-edge p-1 text-ink-2 hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
                         aria-label="Change username"
                       >
                         <svg
@@ -491,44 +491,44 @@ function AccountMenu() {
                     </div>
                   )}
                   {usernameErrorMessage && (
-                    <p className="mt-2 text-xs font-semibold text-rose-600">
+                    <p className="mt-2 text-xs font-semibold text-err">
                       {usernameErrorMessage}
                     </p>
                   )}
                   {usernameInfoMessage && (
-                    <p className="mt-2 text-xs font-semibold text-emerald-600">
+                    <p className="mt-2 text-xs font-semibold text-ok">
                       {usernameInfoMessage}
                     </p>
                   )}
                 </div>
 
                 <div className="px-3 pb-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">
                     Email
                   </p>
-                  <p className="mt-1 min-w-0 truncate text-sm text-slate-800">
+                  <p className="mt-1 min-w-0 truncate text-sm text-ink">
                     {user.email ?? 'Not set'}
                   </p>
                 </div>
 
                 {profileFriendCode && (
                   <div className="px-3 pb-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">
                       Friend Code
                     </p>
-                    <p className="mt-1 min-w-0 truncate text-sm text-slate-800">
+                    <p className="mt-1 min-w-0 truncate text-sm text-ink">
                       {profileFriendCode}
                     </p>
                   </div>
                 )}
 
-                <div className="my-1 border-t border-slate-200" />
+                <div className="my-1 border-t border-edge" />
 
                 <button
                   type="button"
                   role="menuitem"
                   disabled
-                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-500 disabled:cursor-not-allowed"
+                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-ink-3 disabled:cursor-not-allowed"
                 >
                   Change Password
                 </button>
@@ -537,7 +537,7 @@ function AccountMenu() {
                   type="button"
                   role="menuitem"
                   disabled
-                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-500 disabled:cursor-not-allowed"
+                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-ink-3 disabled:cursor-not-allowed"
                 >
                   Change Email
                 </button>

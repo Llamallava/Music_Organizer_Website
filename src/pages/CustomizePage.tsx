@@ -22,7 +22,7 @@ function Toggle({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
-        checked ? 'bg-slate-900' : 'bg-slate-300'
+        checked ? 'bg-cta' : 'bg-surface-3'
       }`}
     >
       <span
@@ -82,18 +82,18 @@ function CustomizePage() {
       <div className="mx-auto w-full max-w-2xl">
         <LinearBackButton />
 
-        <h1 className="mt-6 text-3xl font-black text-slate-900">Customize</h1>
+        <h1 className="mt-6 text-3xl font-black text-ink">Customize</h1>
 
         <section className="mt-8">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-3">
             Backgrounds
           </h2>
 
-          <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <div className="mt-3 overflow-hidden rounded-xl border border-edge bg-surface">
             <div className="flex items-center justify-between px-4 py-4">
               <div>
-                <p className="text-sm font-semibold text-slate-900">Automatic background</p>
-                <p className="mt-0.5 text-xs text-slate-500">
+                <p className="text-sm font-semibold text-ink">Automatic background</p>
+                <p className="mt-0.5 text-xs text-ink-3">
                   Cycle through album covers from your recent activity on the home page.
                 </p>
               </div>
