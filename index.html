@@ -5,6 +5,23 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Everything Music</title>
+    <script>
+      // Decode path encoded by 404.html redirect for GitHub Pages SPA routing.
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var p = params.get('p');
+        if (p) {
+          var h = params.get('h');
+          params.delete('p');
+          params.delete('h');
+          var remaining = params.toString();
+          window.history.replaceState(
+            null, null,
+            '/' + p + (remaining ? '?' + remaining : '') + (h ? '#' + h : '')
+          );
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
