@@ -9,11 +9,11 @@ import {
   upsertTrackReviewSectionForCurrentUser,
   type AlbumWorkspace,
 } from '../lib/db/reviewsData'
-import {
-  addSongToPlaylistForCurrentUser,
-  listPlaylistOptionsForCurrentUser,
-  type PlaylistOption,
-} from '../lib/db/playlistsData'
+// import {
+//   addSongToPlaylistForCurrentUser,
+//   listPlaylistOptionsForCurrentUser,
+//   type PlaylistOption,
+// } from '../lib/db/playlistsData'
 import { sendRecommendationForCurrentUser, type RecommendationType } from '../lib/db/toListenData'
 import { addTagForCurrentUser, listTagsForAlbum, removeTagForCurrentUser } from '../lib/db/tagsData'
 import {
@@ -29,11 +29,11 @@ type SectionDraft = {
 }
 
 type DraftMap = Record<string, SectionDraft>
-type PlaylistSelection = {
-  trackNumber: number
-  itemTitle: string
-  artistName: string
-}
+// type PlaylistSelection = {
+//   trackNumber: number
+//   itemTitle: string
+//   artistName: string
+// }
 
 const CONCLUSION_KEY = 'conclusion'
 
@@ -116,13 +116,14 @@ function AlbumReviewPage() {
   const [isRecommendationModalOpen, setIsRecommendationModalOpen] = useState(false)
   const [isRecommendationSubmitting, setIsRecommendationSubmitting] = useState(false)
   const [recommendationErrorMessage, setRecommendationErrorMessage] = useState<string | null>(null)
-  const [playlists, setPlaylists] = useState<PlaylistOption[]>([])
-  const [selectedPlaylistId, setSelectedPlaylistId] = useState('')
-  const [playlistSelection, setPlaylistSelection] = useState<PlaylistSelection | null>(null)
-  const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false)
-  const [isPlaylistSubmitting, setIsPlaylistSubmitting] = useState(false)
-  const [playlistErrorMessage, setPlaylistErrorMessage] = useState<string | null>(null)
+  // const [playlists, setPlaylists] = useState<PlaylistOption[]>([])
+  // const [selectedPlaylistId, setSelectedPlaylistId] = useState('')
+  // const [playlistSelection, setPlaylistSelection] = useState<PlaylistSelection | null>(null)
+  // const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false)
+  // const [isPlaylistSubmitting, setIsPlaylistSubmitting] = useState(false)
+  // const [playlistErrorMessage, setPlaylistErrorMessage] = useState<string | null>(null)
   const [activeSectionKey, setActiveSectionKey] = useState<string>(CONCLUSION_KEY)
+  const [trackNameCopied, setTrackNameCopied] = useState(false)
   const [draftBySection, setDraftBySection] = useState<DraftMap>({})
   const [savedBySection, setSavedBySection] = useState<DraftMap>({})
   const [tagsByTrack, setTagsByTrack] = useState<Record<number, string[]>>({})
@@ -159,10 +160,10 @@ function AlbumReviewPage() {
       setInfoMessage(null)
 
       try {
-        const [loadedWorkspace, friendsOverview, playlistOptions, loadedTags, loadedLyricsOverrides] = await Promise.all([
+        const [loadedWorkspace, friendsOverview, /* playlistOptions, */ loadedTags, loadedLyricsOverrides] = await Promise.all([
           getAlbumWorkspaceForCurrentUser(userSavedAlbumId),
           getFriendsOverviewForCurrentUser(),
-          listPlaylistOptionsForCurrentUser(),
+          // listPlaylistOptionsForCurrentUser(),
           listTagsForAlbum(userSavedAlbumId),
           listLyricsOverridesForAlbum(userSavedAlbumId),
         ])
@@ -175,8 +176,8 @@ function AlbumReviewPage() {
         setSelectedRecommendationFriendUserId(
           (previous) => previous || friendsOverview.friends[0]?.userId || '',
         )
-        setPlaylists(playlistOptions)
-        setSelectedPlaylistId((previous) => previous || playlistOptions[0]?.id || '')
+        // setPlaylists(playlistOptions)
+        // setSelectedPlaylistId((previous) => previous || playlistOptions[0]?.id || '')
 
         if (!loadedWorkspace) {
           setWorkspace(null)
@@ -338,12 +339,12 @@ function AlbumReviewPage() {
     setIsRecommendationModalOpen(true)
   }
 
-  const openPlaylistModal = (selection: PlaylistSelection) => {
-    setPlaylistErrorMessage(null)
-    setIsRecommendationModalOpen(false)
-    setPlaylistSelection(selection)
-    setIsPlaylistModalOpen(true)
-  }
+  // const openPlaylistModal = (selection: PlaylistSelection) => {
+  //   setPlaylistErrorMessage(null)
+  //   setIsRecommendationModalOpen(false)
+  //   setPlaylistSelection(selection)
+  //   setIsPlaylistModalOpen(true)
+  // }
 
   const handleSendRecommendation = async () => {
     if (!workspace || !recommendationItemTitle || !recommendationArtistName) {
@@ -372,31 +373,31 @@ function AlbumReviewPage() {
     }
   }
 
-  const handleAddSongToPlaylist = async () => {
-    if (!workspace || !playlistSelection) {
-      return
-    }
-
-    setPlaylistErrorMessage(null)
-    setInfoMessage(null)
-    setIsPlaylistSubmitting(true)
-
-    try {
-      await addSongToPlaylistForCurrentUser({
-        playlistId: selectedPlaylistId,
-        userSavedAlbumId: workspace.userSavedAlbumId,
-        trackNumber: playlistSelection.trackNumber,
-      })
-
-      setIsPlaylistModalOpen(false)
-      setInfoMessage(`Added "${playlistSelection.itemTitle}" to playlist.`)
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to add song to playlist.'
-      setPlaylistErrorMessage(message)
-    } finally {
-      setIsPlaylistSubmitting(false)
-    }
-  }
+  // const handleAddSongToPlaylist = async () => {
+  //   if (!workspace || !playlistSelection) {
+  //     return
+  //   }
+  //
+  //   setPlaylistErrorMessage(null)
+  //   setInfoMessage(null)
+  //   setIsPlaylistSubmitting(true)
+  //
+  //   try {
+  //     await addSongToPlaylistForCurrentUser({
+  //       playlistId: selectedPlaylistId,
+  //       userSavedAlbumId: workspace.userSavedAlbumId,
+  //       trackNumber: playlistSelection.trackNumber,
+  //     })
+  //
+  //     setIsPlaylistModalOpen(false)
+  //     setInfoMessage(`Added "${playlistSelection.itemTitle}" to playlist.`)
+  //   } catch (error) {
+  //     const message = error instanceof Error ? error.message : 'Failed to add song to playlist.'
+  //     setPlaylistErrorMessage(message)
+  //   } finally {
+  //     setIsPlaylistSubmitting(false)
+  //   }
+  // }
 
   const handleSaveCurrentSection = async () => {
     if (!workspace) {
@@ -619,13 +620,21 @@ function AlbumReviewPage() {
                       void navigator.clipboard.writeText(
                         `${activeTrack.title} by ${workspace.album.artistName}`,
                       )
+                      setTrackNameCopied(true)
+                      setTimeout(() => setTrackNameCopied(false), 1500)
                     }}
-                    className="text-ink-3 hover:text-ink"
+                    className={trackNameCopied ? 'text-green-500' : 'text-ink-3 hover:text-ink'}
                     aria-label="Copy song and artist name"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden="true">
-                      <path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1Zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm0 16H8V7h11v14Z" />
-                    </svg>
+                    {trackNameCopied ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden="true">
+                        <path fillRule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden="true">
+                        <path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1Zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm0 16H8V7h11v14Z" />
+                      </svg>
+                    )}
                   </button>
                 )}
               </div>
@@ -795,7 +804,7 @@ function AlbumReviewPage() {
                       >
                         Recommend album to friend
                       </button>
-                      {activeTrack && (
+                      {/* {activeTrack && (
                         <button
                           type="button"
                           onClick={() => {
@@ -810,7 +819,7 @@ function AlbumReviewPage() {
                         >
                           Add song to playlist
                         </button>
-                      )}
+                      )} */}
                     </div>
                   )}
                 </div>
@@ -1030,7 +1039,7 @@ function AlbumReviewPage() {
         </div>
       )}
 
-      {isPlaylistModalOpen && workspace && playlistSelection && (
+      {/* {isPlaylistModalOpen && workspace && playlistSelection && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
           onClick={() => {
@@ -1105,7 +1114,7 @@ function AlbumReviewPage() {
             </div>
           </div>
         </div>
-      )}
+      )} */}
     </main>
   )
 }

@@ -473,9 +473,6 @@ function MyStatsPage() {
         <h1 className={`mt-5 font-black text-ink ${isFriendView ? 'text-5xl tracking-tight' : 'text-3xl'}`}>
           {isFriendView ? `${toPossessiveName(friendName ?? 'Friend')} Stats` : 'My Stats'}
         </h1>
-        <p className="mt-2 text-sm text-ink">
-          This page uses modular 2-column cards so additional stat modules can be added easily.
-        </p>
 
         {isLoading && <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">Loading stats...</p>}
 

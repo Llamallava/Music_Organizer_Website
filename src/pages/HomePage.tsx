@@ -127,7 +127,7 @@ function HomePage() {
             To-Listen
           </button>
 
-          <button
+          {/* <button
             type="button"
             onClick={() => navigate('/playlists')}
             className={
@@ -137,7 +137,7 @@ function HomePage() {
             }
           >
             Playlists
-          </button>
+          </button> */}
         </div>
 
         <div className="flex flex-1 items-center justify-center">

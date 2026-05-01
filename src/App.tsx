@@ -19,7 +19,7 @@ import { BackgroundProvider } from './contexts/BackgroundContext'
 import ReviewsPage from './pages/ReviewsPage'
 import SearchPage from './pages/SearchPage'
 import ToListenPage from './pages/ToListenPage'
-import PlaylistsPage from './pages/PlaylistsPage'
+// import PlaylistsPage from './pages/PlaylistsPage'
 
 function App() {
   return (
@@ -60,14 +60,14 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
+        {/* <Route
           path="/playlists"
           element={
             <ProtectedRoute>
               <PlaylistsPage />
             </ProtectedRoute>
           }
-        />
+        /> */}
         <Route
           path="/reviews"
           element={

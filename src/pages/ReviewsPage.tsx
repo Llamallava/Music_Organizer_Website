@@ -125,6 +125,9 @@ function ReviewsPage() {
     if (!pendingAction || pendingAction.type !== 'remove') {
       return
     }
+    if (resetInput !== pendingAction.album.title) {
+      return
+    }
 
     setIsSubmitting(true)
     setModalError(null)
@@ -349,11 +352,27 @@ function ReviewsPage() {
             {pendingAction.type === 'remove' && (
               <>
                 <h2 className="text-lg font-bold text-ink">Remove album?</h2>
-                <p className="mt-2 text-sm text-ink">
-                  This will remove{' '}
+                <div className="mt-3 rounded-lg border border-warn-edge bg-warn-bg p-3 text-sm text-warn">
+                  This will permanently remove{' '}
                   <span className="font-semibold">{pendingAction.album.title}</span> from your
-                  library. Your review data will also be deleted.
-                </p>
+                  library. All review data will also be deleted.
+                </div>
+                <label className="mt-4 block text-sm font-semibold text-ink">
+                  Type the album title to confirm
+                  <input
+                    type="text"
+                    value={resetInput}
+                    onChange={(event) => setResetInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' && resetInput === pendingAction.album.title) {
+                        void handleRemove()
+                      }
+                    }}
+                    placeholder={pendingAction.album.title}
+                    autoFocus
+                    className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
+                  />
+                </label>
                 {modalError && (
                   <p className="mt-3 text-sm text-err">{modalError}</p>
                 )}
@@ -369,7 +388,7 @@ function ReviewsPage() {
                   <button
                     type="button"
                     onClick={() => void handleRemove()}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || resetInput !== pendingAction.album.title}
                     className="rounded-lg bg-err-edge px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
                   >
                     {isSubmitting ? 'Removing...' : 'Remove'}

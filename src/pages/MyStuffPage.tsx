@@ -41,13 +41,13 @@ function MyStuffPage() {
           To-Listen
         </button>
 
-        <button
+        {/* <button
           type="button"
           onClick={() => navigate('/playlists')}
           className="rounded-lg bg-surface-2 px-4 py-3 text-base font-semibold text-ink hover:bg-surface-3"
         >
           Playlists
-        </button>
+        </button> */}
       </div>
     </main>
   )
