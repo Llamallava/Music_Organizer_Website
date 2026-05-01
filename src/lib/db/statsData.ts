@@ -238,12 +238,14 @@ const buildStatsFromSavedAlbums = async (savedAlbums: SavedAlbumCard[]): Promise
     if (!album) {
       continue
     }
-    const existing = artistScoreAccumulator.get(album.artistName)
-    if (existing) {
-      existing.totalScore += score
-      existing.albumCount += 1
-    } else {
-      artistScoreAccumulator.set(album.artistName, { totalScore: score, albumCount: 1 })
+    for (const artistName of album.artistNames) {
+      const existing = artistScoreAccumulator.get(artistName)
+      if (existing) {
+        existing.totalScore += score
+        existing.albumCount += 1
+      } else {
+        artistScoreAccumulator.set(artistName, { totalScore: score, albumCount: 1 })
+      }
     }
   }
 

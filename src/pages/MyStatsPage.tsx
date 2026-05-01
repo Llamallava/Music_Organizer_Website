@@ -460,13 +460,6 @@ function MyStatsPage() {
               Your Artists
             </button>
 
-            <button
-              type="button"
-              onClick={() => navigate('/reviews')}
-              className="rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white"
-            >
-              Go to Reviews
-            </button>
           </div>
         </div>
 

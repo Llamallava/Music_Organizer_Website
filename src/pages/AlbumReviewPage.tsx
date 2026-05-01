@@ -5,6 +5,7 @@ import LinearBackButton from '../components/LinearBackButton'
 import { getFriendsOverviewForCurrentUser, type FriendProfile } from '../lib/db/friendsData'
 import {
   getAlbumWorkspaceForCurrentUser,
+  updateTrackLyrics,
   upsertConclusionSectionForCurrentUser,
   upsertTrackReviewSectionForCurrentUser,
   type AlbumWorkspace,
@@ -21,6 +22,7 @@ import {
   listLyricsOverridesForAlbum,
   saveLyricsOverrideForCurrentUser,
 } from '../lib/db/lyricsData'
+import { getLyricsAsync } from '../lib/external/geniusLyrics'
 
 type SectionDraft = {
   notes: string
@@ -135,6 +137,9 @@ function AlbumReviewPage() {
   const [lyricsEditText, setLyricsEditText] = useState('')
   const [isSavingLyrics, setIsSavingLyrics] = useState(false)
   const [lyricsErrorMessage, setLyricsErrorMessage] = useState<string | null>(null)
+  const [isLyricsMenuOpen, setIsLyricsMenuOpen] = useState(false)
+  const [isRefetchingLyrics, setIsRefetchingLyrics] = useState(false)
+  const lyricsMenuRef = useRef<HTMLDivElement | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [showSavedMark, setShowSavedMark] = useState(false)
@@ -275,6 +280,35 @@ function AlbumReviewPage() {
       document.removeEventListener('keydown', handleKeyDown)
     }
   }, [isTagPopoverOpen])
+
+  useEffect(() => {
+    if (!isLyricsMenuOpen) {
+      return
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!(event.target instanceof Node)) {
+        return
+      }
+      if (!lyricsMenuRef.current?.contains(event.target)) {
+        setIsLyricsMenuOpen(false)
+      }
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsLyricsMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isLyricsMenuOpen])
 
   const activeDraft = draftBySection[activeSectionKey] ?? defaultDraft()
   const activeSavedDraft = savedBySection[activeSectionKey] ?? defaultDraft()
@@ -516,6 +550,45 @@ function AlbumReviewPage() {
       setLyricsErrorMessage(message)
     } finally {
       setIsSavingLyrics(false)
+    }
+  }
+
+  const handleRefetchLyrics = async () => {
+    if (!workspace || !activeTrack) {
+      return
+    }
+
+    setIsLyricsMenuOpen(false)
+    setIsRefetchingLyrics(true)
+    setLyricsErrorMessage(null)
+
+    try {
+      const artistName = workspace.album.artistNames[0] ?? workspace.album.artistName
+      const newLyrics = await getLyricsAsync(activeTrack.title, artistName)
+      await updateTrackLyrics(activeTrack.id, newLyrics)
+      // Clear any user override so the updated base lyrics are shown
+      await deleteLyricsOverrideForCurrentUser(workspace.userSavedAlbumId, activeTrack.trackNumber)
+      setLyricsOverrideByTrack((previous) => {
+        const next = { ...previous }
+        delete next[activeTrack.trackNumber]
+        return next
+      })
+      setWorkspace((previous) => {
+        if (!previous) {
+          return previous
+        }
+        return {
+          ...previous,
+          tracks: previous.tracks.map((t) =>
+            t.id === activeTrack.id ? { ...t, lyrics: newLyrics } : t,
+          ),
+        }
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to re-fetch lyrics.'
+      setLyricsErrorMessage(message)
+    } finally {
+      setIsRefetchingLyrics(false)
     }
   }
 
@@ -881,18 +954,50 @@ function AlbumReviewPage() {
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">Lyrics</p>
               {activeTrack && !isEditingLyrics && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const displayed = lyricsOverrideByTrack[activeTrack.trackNumber] ?? activeTrack.lyrics
-                    setLyricsEditText(displayed)
-                    setLyricsErrorMessage(null)
-                    setIsEditingLyrics(true)
-                  }}
-                  className="text-xs font-semibold text-ink-3 hover:text-ink"
-                >
-                  Edit
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const displayed = lyricsOverrideByTrack[activeTrack.trackNumber] ?? activeTrack.lyrics
+                      setLyricsEditText(displayed)
+                      setLyricsErrorMessage(null)
+                      setIsEditingLyrics(true)
+                    }}
+                    className="text-xs font-semibold text-ink-3 hover:text-ink"
+                  >
+                    Edit
+                  </button>
+                  <div ref={lyricsMenuRef} className="relative">
+                    <button
+                      type="button"
+                      disabled={isRefetchingLyrics}
+                      onClick={() => setIsLyricsMenuOpen((open) => !open)}
+                      className="flex h-5 w-5 items-center justify-center rounded text-ink-3 hover:bg-surface-2 hover:text-ink disabled:opacity-40"
+                      aria-label="Lyrics options"
+                    >
+                      {isRefetchingLyrics ? (
+                        <span className="text-xs">...</span>
+                      ) : (
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                          <circle cx="8" cy="2.5" r="1.5" />
+                          <circle cx="8" cy="8" r="1.5" />
+                          <circle cx="8" cy="13.5" r="1.5" />
+                        </svg>
+                      )}
+                    </button>
+                    {isLyricsMenuOpen && (
+                      <div className="absolute right-0 top-full z-20 mt-1 min-w-[140px] rounded-lg border border-edge bg-surface shadow-lg">
+                        <button
+                          type="button"
+                          onClick={() => void handleRefetchLyrics()}
+                          className="w-full px-3 py-2 text-left text-xs text-ink hover:bg-surface-2"
+                        >
+                          Re-fetch lyrics
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
 

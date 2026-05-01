@@ -20,7 +20,7 @@ function ArtistsPage() {
         const albums = await listSavedAlbumsForCurrentUser()
         if (!isActive) return
 
-        const unique = [...new Set(albums.map((a) => a.artistName))].sort((a, b) =>
+        const unique = [...new Set(albums.flatMap((a) => a.artistNames))].sort((a, b) =>
           a.localeCompare(b),
         )
         setArtists(unique)

@@ -12,7 +12,7 @@ import {
 
 function AddAlbumPage() {
   const navigate = useNavigate()
-  const RESULTS_STEP = 5
+  const RESULTS_STEP = 8
 
   const [artistNameQuery, setArtistNameQuery] = useState('')
   const [albumTitleQuery, setAlbumTitleQuery] = useState('')
@@ -75,6 +75,7 @@ function AddAlbumPage() {
       const tracks = await fetchAlbumTracksWithLyrics(
         selectedAlbum.sourceAlbumId,
         selectedAlbum.artistName,
+        selectedAlbum.artistNames,
       )
 
       if (tracks.length === 0) {
@@ -88,7 +89,7 @@ function AddAlbumPage() {
         artistName: selectedAlbum.artistName,
         coverUrl: selectedAlbum.coverUrl,
         releaseDate: selectedAlbum.releaseDate,
-        metadata: {},
+        metadata: { artists: selectedAlbum.artistNames },
         tracks,
       })
 

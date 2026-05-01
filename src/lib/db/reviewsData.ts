@@ -8,10 +8,22 @@ export type SavedAlbumCard = {
   albumId: string
   title: string
   artistName: string
+  artistNames: string[]
   coverUrl: string | null
   releaseDate: string | null
   totalTracks: number
   savedAt: string
+}
+
+const extractArtistNames = (artistName: string, metadata: Json): string[] => {
+  if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
+    const artists = (metadata as Record<string, Json>).artists
+    if (Array.isArray(artists) && artists.length > 0) {
+      const names = artists.filter((a): a is string => typeof a === 'string')
+      if (names.length > 0) return names
+    }
+  }
+  return [artistName]
 }
 
 export type AlbumTrack = {
@@ -39,6 +51,7 @@ export type AlbumWorkspace = {
     id: string
     title: string
     artistName: string
+    artistNames: string[]
     coverUrl: string | null
     releaseDate: string | null
     totalTracks: number
@@ -102,7 +115,7 @@ const listSavedAlbumsByUserId = async (userId: string): Promise<SavedAlbumCard[]
 
   const { data: albumRows, error: albumsError } = await supabase
     .from('albums')
-    .select('id, title, artist_name, cover_url, release_date, total_tracks')
+    .select('id, title, artist_name, cover_url, release_date, total_tracks, metadata')
     .in('id', albumIds)
 
   throwIfError(albumsError, 'Failed to load album metadata')
@@ -120,6 +133,7 @@ const listSavedAlbumsByUserId = async (userId: string): Promise<SavedAlbumCard[]
       albumId: album.id,
       title: album.title,
       artistName: album.artist_name,
+      artistNames: extractArtistNames(album.artist_name, album.metadata),
       coverUrl: album.cover_url,
       releaseDate: album.release_date,
       totalTracks: album.total_tracks,
@@ -157,7 +171,7 @@ const getAlbumWorkspaceByUserId = async (
 
   const { data: albumRow, error: albumError } = await supabase
     .from('albums')
-    .select('id, title, artist_name, cover_url, release_date, total_tracks')
+    .select('id, title, artist_name, cover_url, release_date, total_tracks, metadata')
     .eq('id', savedAlbumRow.album_id)
     .maybeSingle()
 
@@ -189,6 +203,7 @@ const getAlbumWorkspaceByUserId = async (
       id: albumRow.id,
       title: albumRow.title,
       artistName: albumRow.artist_name,
+      artistNames: extractArtistNames(albumRow.artist_name, albumRow.metadata),
       coverUrl: albumRow.cover_url,
       releaseDate: albumRow.release_date,
       totalTracks: albumRow.total_tracks,
@@ -408,6 +423,17 @@ export const removeAlbumForCurrentUser = async (userSavedAlbumId: string): Promi
     .eq('user_id', userId)
 
   throwIfError(error, 'Failed to remove album')
+}
+
+export const updateTrackLyrics = async (trackId: string, lyrics: string): Promise<void> => {
+  await requireAuthenticatedUserId()
+
+  const { error } = await supabase
+    .from('album_tracks')
+    .update({ lyrics })
+    .eq('id', trackId)
+
+  throwIfError(error, 'Failed to update track lyrics')
 }
 
 export const resetAlbumDataForCurrentUser = async (userSavedAlbumId: string): Promise<void> => {

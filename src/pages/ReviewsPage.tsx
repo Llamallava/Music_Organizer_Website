@@ -215,8 +215,10 @@ function ReviewsPage() {
           </button>
         </div>
 
-        {isLoading && (
-          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">Loading albums...</p>
+        {(isLoading || (!errorMessage && albums.length > 0 && loadedCovers.size < albums.filter((a) => a.coverUrl).length)) && (
+          <div className="mt-12 flex justify-center">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-surface-2 border-t-cta" />
+          </div>
         )}
 
         {!isLoading && errorMessage && (
@@ -233,7 +235,11 @@ function ReviewsPage() {
         )}
 
         {!isLoading && !errorMessage && albums.length > 0 && (
-          <section className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+          <section
+            className={`mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 transition-opacity duration-500 ${
+              loadedCovers.size >= albums.filter((a) => a.coverUrl).length ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            }`}
+          >
             {albums.map((album) => {
               const isMenuOpen = activeMenuAlbumId === album.userSavedAlbumId
 
@@ -241,9 +247,7 @@ function ReviewsPage() {
                 <div
                   key={album.userSavedAlbumId}
                   ref={isMenuOpen ? menuRef : null}
-                  className={`relative transition-opacity duration-300 ${
-                    loadedCovers.has(album.userSavedAlbumId) || !album.coverUrl ? 'opacity-100' : 'opacity-0'
-                  }`}
+                  className="relative"
                 >
                   <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-surface-2">
                     <button
@@ -255,7 +259,7 @@ function ReviewsPage() {
                       <AlbumCover
                           src={album.coverUrl}
                           alt={`${album.title} cover`}
-                          loading="lazy"
+                          loading="eager"
                           onLoad={() => setLoadedCovers((prev) => { const next = new Set(prev); next.add(album.userSavedAlbumId); return next })}
                         />
                     </button>

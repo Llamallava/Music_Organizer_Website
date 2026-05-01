@@ -7,6 +7,7 @@ export type AlbumSearchResult = {
   sourceAlbumId: string
   title: string
   artistName: string
+  artistNames: string[]
   coverUrl: string | null
   hasCover: boolean
   releaseDate: string | null
@@ -35,6 +36,7 @@ export type SongSearchResult = {
 
 type MusicBrainzArtistCredit = {
   name?: string
+  joinphrase?: string
   artist?: {
     name?: string
   }
@@ -150,11 +152,21 @@ const getArtistNameFromCredit = (credit: MusicBrainzArtistCredit[] | undefined):
   }
 
   const joined = credit
-    .map((entry) => entry.name ?? entry.artist?.name ?? '')
+    .map((entry) => (entry.name ?? entry.artist?.name ?? '') + (entry.joinphrase ?? ''))
     .join('')
     .trim()
 
   return joined || 'Unknown Artist'
+}
+
+const getIndividualArtistNamesFromCredit = (credit: MusicBrainzArtistCredit[] | undefined): string[] => {
+  if (!credit || credit.length === 0) {
+    return []
+  }
+
+  return credit
+    .map((entry) => (entry.name ?? entry.artist?.name ?? '').trim())
+    .filter(Boolean)
 }
 
 const getTrackCount = (media: MusicBrainzMediaSummary[] | undefined): number => {
@@ -307,7 +319,9 @@ export const searchAlbums = async (input: AlbumSearchInput): Promise<AlbumSearch
 
   const mappedResults: AlbumSearchCandidate[] = releases.map((release) => {
     const title = release.title?.trim() || 'Unknown Album'
-    const artistName = getArtistNameFromCredit(release['artist-credit'])
+    const credit = release['artist-credit']
+    const artistName = getArtistNameFromCredit(credit)
+    const artistNames = getIndividualArtistNamesFromCredit(credit)
 
     return {
       hasCover: false,
@@ -315,6 +329,7 @@ export const searchAlbums = async (input: AlbumSearchInput): Promise<AlbumSearch
       sourceAlbumId: release.id,
       title,
       artistName,
+      artistNames: artistNames.length > 0 ? artistNames : [artistName],
       coverUrl: null,
       releaseDate: toSqlDate(release.date),
       totalTracks: getTrackCount(release.media),
@@ -431,6 +446,7 @@ export const searchSongs = async (input: SongSearchInput): Promise<SongSearchRes
 export const fetchAlbumTracksWithLyrics = async (
   sourceAlbumId: string,
   artistName: string,
+  artistNames: string[] = [],
 ): Promise<SaveAlbumTrackInput[]> => {
   const url = `${MUSICBRAINZ_BASE}/release/${encodeURIComponent(sourceAlbumId)}?fmt=json&inc=recordings`
   const data = await fetchJson<MusicBrainzReleaseLookupResponse>(url)
@@ -457,8 +473,10 @@ export const fetchAlbumTracksWithLyrics = async (
     }
   }
 
+  const primaryArtistName = artistNames[0] ?? artistName
+
   const tracksWithLyrics = await mapWithConcurrency(flattenedTracks, 4, async (track) => {
-    const lyrics = await getLyricsAsync(track.title, artistName)
+    const lyrics = await getLyricsAsync(track.title, primaryArtistName)
     return {
       trackNumber: track.trackNumber,
       title: track.title,

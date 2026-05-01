@@ -208,25 +208,50 @@ const extractLyricsFromHtml = (html: string): string => {
   }
 
   const extractTextWithSeparator = (node: Element): string => {
-    const textParts: string[] = []
+    const lines: string[] = []
+    let currentLine = ''
+
+    const flushLine = (): void => {
+      lines.push(currentLine.trim())
+      currentLine = ''
+    }
+
+    const BLOCK_TAGS = new Set(['div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'tr'])
 
     const walk = (current: Node): void => {
       if (current.nodeType === 3) {
-        const value = (current.nodeValue ?? '').replace(/\u00a0/g, ' ').trim()
-        if (value) {
-          textParts.push(value)
-        }
+        currentLine += (current.nodeValue ?? '').replace(/\u00a0/g, ' ')
         return
       }
 
-      const children = Array.from(current.childNodes)
-      for (const child of children) {
+      if (current.nodeType !== 1) return
+
+      const tag = (current as Element).tagName.toLowerCase()
+      if (tag === 'br') {
+        flushLine()
+        return
+      }
+
+      const isBlock = BLOCK_TAGS.has(tag)
+      if (isBlock && currentLine.trim()) {
+        flushLine()
+      }
+
+      for (const child of Array.from(current.childNodes)) {
         walk(child)
+      }
+
+      if (isBlock && currentLine.trim()) {
+        flushLine()
       }
     }
 
     walk(node)
-    return textParts.join('\n').replace(/\n{3,}/g, '\n\n').trim()
+    if (currentLine.trim()) {
+      flushLine()
+    }
+
+    return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim()
   }
 
   const extractContainerText = (node: Element): string => {
@@ -246,7 +271,6 @@ const NOISE_LINE_PATTERNS: RegExp[] = [
   /^\s*return\s+to\s+.*\s+lyrics\s*$/i,
   /^\s*\d+\s+contributors?.*$/i,
   /^\s*\d+(\.\d+)?[kmb]?\s+views?.*$/i,
-  /^\s*\[[^\]]+\]\s*$/i,
 ]
 
 const LEADING_NOISE_PATTERNS: RegExp[] = [
