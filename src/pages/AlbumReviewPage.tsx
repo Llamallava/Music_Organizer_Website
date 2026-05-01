@@ -332,7 +332,6 @@ function AlbumReviewPage() {
     artistName: string
   }) => {
     setRecommendationErrorMessage(null)
-    setIsPlaylistModalOpen(false)
     setRecommendationType(params.recommendationType)
     setRecommendationItemTitle(params.itemTitle)
     setRecommendationArtistName(params.artistName)
