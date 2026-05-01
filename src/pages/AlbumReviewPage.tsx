@@ -673,10 +673,10 @@ function AlbumReviewPage() {
 
   return (
     <main className="flex h-screen flex-col overflow-hidden px-6 py-4">
-      <div className="mx-auto flex min-h-0 w-full max-w-[1500px] flex-1 flex-col">
+      <div className="mx-auto flex min-h-0 w-full max-w-[2400px] flex-1 flex-col">
         <LinearBackButton className="self-start" />
 
-        <section className="mt-4 grid min-h-0 flex-1 gap-4 lg:grid-cols-[280px_minmax(0,1fr)_320px]">
+        <section className="mt-4 grid min-h-0 flex-1 gap-4 lg:grid-cols-[clamp(240px,18%,500px)_minmax(0,1fr)_clamp(280px,21%,560px)]">
           <aside className="flex min-h-0 flex-col gap-4">
             <div className="rounded-xl border border-edge bg-surface p-4">
               <div className="aspect-square w-full overflow-hidden rounded-lg bg-surface-2">

@@ -77,40 +77,6 @@ const scoreBoundsConflict = (
   return minOperator === 'gt' || maxOperator === 'lt'
 }
 
-const buildLyricsSnippet = (lyrics: string, query: string) => {
-  const normalizedLyrics = lyrics.trim()
-  if (!normalizedLyrics) {
-    return 'No lyrics stored.'
-  }
-
-  const maxLength = 170
-  if (!query) {
-    if (normalizedLyrics.length <= maxLength) {
-      return normalizedLyrics
-    }
-
-    return `${normalizedLyrics.slice(0, maxLength)}...`
-  }
-
-  const lowerLyrics = normalizedLyrics.toLocaleLowerCase()
-  const hitIndex = lowerLyrics.indexOf(query)
-
-  if (hitIndex < 0) {
-    if (normalizedLyrics.length <= maxLength) {
-      return normalizedLyrics
-    }
-
-    return `${normalizedLyrics.slice(0, maxLength)}...`
-  }
-
-  const contextRadius = 70
-  const start = Math.max(0, hitIndex - contextRadius)
-  const end = Math.min(normalizedLyrics.length, hitIndex + query.length + contextRadius)
-  const prefix = start > 0 ? '...' : ''
-  const suffix = end < normalizedLyrics.length ? '...' : ''
-  return `${prefix}${normalizedLyrics.slice(start, end)}${suffix}`
-}
-
 function SearchPage() {
   const navigate = useNavigate()
   const [songs, setSongs] = useState<SearchSongRecord[]>([])
@@ -130,6 +96,7 @@ function SearchPage() {
   const [maxScoreInput, setMaxScoreInput] = useState('')
   const [maxScoreOperator, setMaxScoreOperator] = useState<ScoreMaxOperator>('lte')
   const [sortOrder, setSortOrder] = useState<SortOrder>('artist')
+  const [hasSearched, setHasSearched] = useState(false)
 
   useEffect(() => {
     let isActive = true
@@ -370,6 +337,7 @@ function SearchPage() {
     setMaxScoreInput('')
     setMaxScoreOperator('lte')
     setSortOrder('artist')
+    setHasSearched(false)
   }
 
   return (
@@ -378,13 +346,6 @@ function SearchPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <LinearBackButton />
 
-          <button
-            type="button"
-            onClick={() => navigate('/reviews')}
-            className="rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white"
-          >
-            Go to Reviews
-          </button>
         </div>
 
         <h1 className="mt-5 text-3xl font-black text-ink">Search Songs</h1>
@@ -539,17 +500,30 @@ function SearchPage() {
           </div>
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-edge pt-3">
-            <p className="text-sm text-ink">
-              Results: <span className="font-semibold text-ink">{filteredSongs.length}</span>
-            </p>
+            {hasSearched ? (
+              <p className="text-sm text-ink">
+                Results: <span className="font-semibold text-ink">{filteredSongs.length}</span>
+              </p>
+            ) : (
+              <span />
+            )}
 
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="rounded-lg bg-surface-2 px-3 py-2 text-sm font-semibold text-ink hover:bg-surface-3"
-            >
-              Clear Filters
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="rounded-lg bg-surface-2 px-3 py-2 text-sm font-semibold text-ink hover:bg-surface-3"
+              >
+                Clear Filters
+              </button>
+              <button
+                type="button"
+                onClick={() => setHasSearched(true)}
+                className="rounded-lg bg-cta px-3 py-2 text-sm font-semibold text-white"
+              >
+                Search
+              </button>
+            </div>
           </div>
 
           {validationMessage && (
@@ -559,28 +533,28 @@ function SearchPage() {
           )}
         </section>
 
-        {isLoading && <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">Loading songs...</p>}
+        {hasSearched && isLoading && <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">Loading songs...</p>}
 
-        {!isLoading && errorMessage && (
+        {hasSearched && !isLoading && errorMessage && (
           <div className="mt-6 rounded-lg border border-err-edge bg-err-bg p-4 text-sm text-err">
             <p>Could not load searchable songs.</p>
             <p className="mt-1">{errorMessage}</p>
           </div>
         )}
 
-        {!isLoading && !errorMessage && songs.length === 0 && (
+        {hasSearched && !isLoading && !errorMessage && songs.length === 0 && (
           <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">
             No songs found yet. Add and review albums to start searching.
           </p>
         )}
 
-        {!isLoading && !errorMessage && songs.length > 0 && filteredSongs.length === 0 && !validationMessage && (
+        {hasSearched && !isLoading && !errorMessage && songs.length > 0 && filteredSongs.length === 0 && !validationMessage && (
           <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">
             No songs matched the current filters.
           </p>
         )}
 
-        {!isLoading && !errorMessage && filteredSongs.length > 0 && (
+        {hasSearched && !isLoading && !errorMessage && filteredSongs.length > 0 && (
           <section className="mt-6 space-y-3">
             {filteredSongs.map((song) => (
               <article
@@ -616,9 +590,7 @@ function SearchPage() {
                       ))}
                     </div>
 
-                    <p className="mt-3 text-sm leading-relaxed text-ink">
-                      {buildLyricsSnippet(song.lyrics, normalizedLyricsQuery)}
-                    </p>
+                    
 
                     {song.reviewNotes.trim() && (
                       <p className="mt-2 text-sm text-ink-2">

@@ -167,7 +167,7 @@ function FriendAlbumReviewPage() {
 
   return (
     <main className="min-h-screen px-6 py-8">
-      <div className="mx-auto w-full max-w-[1500px]">
+      <div className="mx-auto w-full max-w-[2400px]">
         <LinearBackButton />
 
         <h1 className="mt-5 text-5xl font-black tracking-tight text-ink">
@@ -175,7 +175,7 @@ function FriendAlbumReviewPage() {
         </h1>
         <p className="mt-1 text-sm text-ink-2">Read-only view.</p>
 
-        <section className="mt-6 grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_320px]">
+        <section className="mt-6 grid gap-4 lg:grid-cols-[clamp(240px,18%,500px)_minmax(0,1fr)_clamp(280px,21%,560px)]">
           <aside className="space-y-4">
             <div className="rounded-xl border border-edge bg-surface p-4">
               <div className="aspect-square w-full overflow-hidden rounded-lg bg-surface-2">
