@@ -25,7 +25,8 @@ import {
 import { getLyricsAsync } from '../lib/external/geniusLyrics'
 
 type SectionDraft = {
-  notes: string
+  notesLyrically: string
+  notesSonically: string
   scoreInput: string
   isInterlude: boolean
 }
@@ -43,7 +44,8 @@ const toTrackKey = (trackNumber: number) => `track:${trackNumber}`
 const getFriendDisplayName = (friend: FriendProfile) => friend.username?.trim() || friend.friendCode
 
 const defaultDraft = (): SectionDraft => ({
-  notes: '',
+  notesLyrically: '',
+  notesSonically: '',
   scoreInput: '',
   isInterlude: false,
 })
@@ -81,7 +83,8 @@ const buildInitialDraftMap = (workspace: AlbumWorkspace): DraftMap => {
   for (const section of workspace.sections) {
     if (section.sectionType === 'track' && section.trackNumber) {
       map[toTrackKey(section.trackNumber)] = {
-        notes: section.notes,
+        notesLyrically: section.notesLyrically,
+        notesSonically: section.notesSonically,
         scoreInput: section.score === null ? '' : String(section.score),
         isInterlude: section.isInterlude,
       }
@@ -90,7 +93,8 @@ const buildInitialDraftMap = (workspace: AlbumWorkspace): DraftMap => {
 
     if (section.sectionType === 'conclusion') {
       map[CONCLUSION_KEY] = {
-        notes: section.notes,
+        notesLyrically: section.notesLyrically,
+        notesSonically: section.notesSonically,
         scoreInput: section.score === null ? '' : String(section.score),
         isInterlude: false,
       }
@@ -125,6 +129,7 @@ function AlbumReviewPage() {
   // const [isPlaylistSubmitting, setIsPlaylistSubmitting] = useState(false)
   // const [playlistErrorMessage, setPlaylistErrorMessage] = useState<string | null>(null)
   const [activeSectionKey, setActiveSectionKey] = useState<string>(CONCLUSION_KEY)
+  const [activeNotesTab, setActiveNotesTab] = useState<'lyrically' | 'sonically'>('lyrically')
   const [trackNameCopied, setTrackNameCopied] = useState(false)
   const [draftBySection, setDraftBySection] = useState<DraftMap>({})
   const [savedBySection, setSavedBySection] = useState<DraftMap>({})
@@ -313,7 +318,8 @@ function AlbumReviewPage() {
   const activeDraft = draftBySection[activeSectionKey] ?? defaultDraft()
   const activeSavedDraft = savedBySection[activeSectionKey] ?? defaultDraft()
   const isDirty =
-    activeDraft.notes !== activeSavedDraft.notes ||
+    activeDraft.notesLyrically !== activeSavedDraft.notesLyrically ||
+    activeDraft.notesSonically !== activeSavedDraft.notesSonically ||
     activeDraft.scoreInput !== activeSavedDraft.scoreInput ||
     activeDraft.isInterlude !== activeSavedDraft.isInterlude
 
@@ -330,12 +336,12 @@ function AlbumReviewPage() {
     return workspace.tracks.find((track) => track.trackNumber === trackNumber) ?? null
   }, [activeSectionKey, workspace])
 
-  const handleNotesChange = (value: string) => {
+  const handleNotesChange = (tab: 'lyrically' | 'sonically', value: string) => {
     setDraftBySection((previous) => ({
       ...previous,
       [activeSectionKey]: {
         ...(previous[activeSectionKey] ?? defaultDraft()),
-        notes: value,
+        ...(tab === 'lyrically' ? { notesLyrically: value } : { notesSonically: value }),
       },
     }))
   }
@@ -447,7 +453,7 @@ function AlbumReviewPage() {
       if (activeSectionKey === CONCLUSION_KEY) {
         await upsertConclusionSectionForCurrentUser({
           userSavedAlbumId: workspace.userSavedAlbumId,
-          notes: activeDraft.notes,
+          notesLyrically: activeDraft.notesLyrically,
           score,
         })
       } else {
@@ -460,13 +466,15 @@ function AlbumReviewPage() {
           userSavedAlbumId: workspace.userSavedAlbumId,
           trackNumber,
           isInterlude: activeDraft.isInterlude,
-          notes: activeDraft.notes,
+          notesLyrically: activeDraft.notesLyrically,
+          notesSonically: activeDraft.notesSonically,
           score,
         })
       }
 
       const normalizedDraft: SectionDraft = {
-        notes: activeDraft.notes,
+        notesLyrically: activeDraft.notesLyrically,
+        notesSonically: activeDraft.notesSonically,
         scoreInput: score === null ? '' : String(score),
         isInterlude: activeTrack ? activeDraft.isInterlude : false,
       }
@@ -898,23 +906,53 @@ function AlbumReviewPage() {
               </div>
             </div>
 
-            {activeTrack && (
-              <label className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-ink">
-                <input
-                  type="checkbox"
-                  checked={activeDraft.isInterlude}
-                  onChange={(event) => handleInterludeChange(event.target.checked)}
-                  className="h-4 w-4 rounded border-edge"
-                />
-                Mark as interlude
-              </label>
-            )}
+            <div className="mb-3 flex items-center gap-3">
+              {activeTrack && (
+                <div className="flex rounded-md border border-edge overflow-hidden text-sm font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => setActiveNotesTab('lyrically')}
+                    className={`px-3 py-1 ${activeNotesTab === 'lyrically' ? 'bg-cta text-white' : 'bg-surface text-ink hover:bg-surface-2'}`}
+                  >
+                    Lyrically
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveNotesTab('sonically')}
+                    className={`px-3 py-1 border-l border-edge ${activeNotesTab === 'sonically' ? 'bg-cta text-white' : 'bg-surface text-ink hover:bg-surface-2'}`}
+                  >
+                    Sonically
+                  </button>
+                </div>
+              )}
 
-            <textarea
-              value={activeDraft.notes}
-              onChange={(event) => handleNotesChange(event.target.value)}
-              className="min-h-0 flex-1 w-full resize-none rounded-lg border border-edge p-3 text-sm leading-relaxed text-ink"
-            />
+              {activeTrack && (
+                <label className="inline-flex items-center gap-2 text-sm font-semibold text-ink">
+                  <input
+                    type="checkbox"
+                    checked={activeDraft.isInterlude}
+                    onChange={(event) => handleInterludeChange(event.target.checked)}
+                    className="h-4 w-4 rounded border-edge"
+                  />
+                  Mark as interlude
+                </label>
+              )}
+            </div>
+
+            {activeTrack ? (
+              <textarea
+                key={`${activeSectionKey}-${activeNotesTab}`}
+                value={activeNotesTab === 'lyrically' ? activeDraft.notesLyrically : activeDraft.notesSonically}
+                onChange={(event) => handleNotesChange(activeNotesTab, event.target.value)}
+                className="min-h-0 flex-1 w-full resize-none rounded-lg border border-edge p-3 text-sm leading-relaxed text-ink"
+              />
+            ) : (
+              <textarea
+                value={activeDraft.notesLyrically}
+                onChange={(event) => handleNotesChange('lyrically', event.target.value)}
+                className="min-h-0 flex-1 w-full resize-none rounded-lg border border-edge p-3 text-sm leading-relaxed text-ink"
+              />
+            )}
 
             {activeTrack && (tagsByTrack[activeTrack.trackNumber] ?? []).length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2">

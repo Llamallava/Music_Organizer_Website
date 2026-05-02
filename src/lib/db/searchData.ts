@@ -46,7 +46,7 @@ export const listSearchSongsForCurrentUser = async (): Promise<SearchSongRecord[
   ] = await Promise.all([
     supabase
       .from('review_sections')
-      .select('user_saved_album_id, track_number, is_interlude, notes, score')
+      .select('user_saved_album_id, track_number, is_interlude, notes_lyrically, notes_sonically, score')
       .in('user_saved_album_id', savedAlbumIds)
       .eq('section_type', 'track'),
     supabase.from('album_tracks').select('album_id, track_number, title, lyrics').in('album_id', albumIds),
@@ -63,7 +63,8 @@ export const listSearchSongsForCurrentUser = async (): Promise<SearchSongRecord[
     string,
     {
       isInterlude: boolean
-      notes: string
+      notesLyrically: string
+      notesSonically: string
       score: number | null
     }
   >()
@@ -75,7 +76,8 @@ export const listSearchSongsForCurrentUser = async (): Promise<SearchSongRecord[
 
     reviewBySavedAlbumAndTrack.set(toTrackKey(row.user_saved_album_id, row.track_number), {
       isInterlude: row.is_interlude,
-      notes: row.notes,
+      notesLyrically: row.notes_lyrically,
+      notesSonically: row.notes_sonically,
       score: row.score,
     })
   }
@@ -100,7 +102,7 @@ export const listSearchSongsForCurrentUser = async (): Promise<SearchSongRecord[
       trackNumber: track.track_number,
       trackTitle: track.title,
       lyrics: allLyricsOverrides[toTagKey(album.userSavedAlbumId, track.track_number)] ?? track.lyrics,
-      reviewNotes: review?.notes ?? '',
+      reviewNotes: [review?.notesLyrically ?? '', review?.notesSonically ?? ''].join(' '),
       score: review?.score ?? null,
       isInterlude: review?.isInterlude ?? false,
       tags: allTags[toTagKey(album.userSavedAlbumId, track.track_number)] ?? [],

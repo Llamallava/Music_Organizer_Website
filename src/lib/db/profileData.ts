@@ -28,7 +28,7 @@ export const listCoversForHomeBackground = async (): Promise<string[]> => {
 
   const { data: sectionRows } = await supabase
     .from('review_sections')
-    .select('user_saved_album_id, score, notes, updated_at')
+    .select('user_saved_album_id, score, notes_lyrically, notes_sonically, updated_at')
     .in('user_saved_album_id', savedAlbumIds)
 
   type Entry = {
@@ -62,7 +62,7 @@ export const listCoversForHomeBackground = async (): Promise<string[]> => {
           ? scored.reduce((sum, s) => sum + (s.score ?? 0), 0) / scored.length
           : 0
 
-      notesLength = sections.reduce((sum, s) => sum + (s.notes?.length ?? 0), 0)
+      notesLength = sections.reduce((sum, s) => sum + (s.notes_lyrically?.length ?? 0) + (s.notes_sonically?.length ?? 0), 0)
     }
 
     entries.push({ coverUrl, latestActivity, avgScore, notesLength })

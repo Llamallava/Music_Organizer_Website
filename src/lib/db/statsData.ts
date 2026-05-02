@@ -142,7 +142,7 @@ const buildStatsFromSavedAlbums = async (savedAlbums: SavedAlbumCard[]): Promise
     await Promise.all([
       supabase
         .from('review_sections')
-        .select('user_saved_album_id, section_type, track_number, is_interlude, notes, score')
+        .select('user_saved_album_id, section_type, track_number, is_interlude, notes_lyrically, notes_sonically, score')
         .in('user_saved_album_id', savedAlbumIds),
       supabase.from('album_tracks').select('album_id, track_number, title').in('album_id', albumIds),
     ])
@@ -165,12 +165,13 @@ const buildStatsFromSavedAlbums = async (savedAlbums: SavedAlbumCard[]): Promise
   }
 
   for (const section of reviewSections ?? []) {
-    const wordsWritten = countWords(section.notes)
+    const combinedNotes = section.notes_lyrically + ' ' + section.notes_sonically
+    const wordsWritten = countWords(combinedNotes)
     if (wordsWritten > 0) {
       const currentAlbumWords = wordsBySavedAlbumId.get(section.user_saved_album_id) ?? 0
       wordsBySavedAlbumId.set(section.user_saved_album_id, currentAlbumWords + wordsWritten)
 
-      for (const token of tokenizeWords(section.notes)) {
+      for (const token of tokenizeWords(combinedNotes)) {
         const currentFrequency = wordFrequency.get(token) ?? 0
         wordFrequency.set(token, currentFrequency + 1)
       }

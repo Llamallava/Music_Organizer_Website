@@ -28,6 +28,7 @@ function FriendAlbumReviewPage() {
   const [workspace, setWorkspace] = useState<AlbumWorkspace | null>(null)
   const [friendName, setFriendName] = useState<string | null>(null)
   const [activeSectionKey, setActiveSectionKey] = useState<string>(CONCLUSION_KEY)
+  const [activeNotesTab, setActiveNotesTab] = useState<'lyrically' | 'sonically'>('lyrically')
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -163,7 +164,8 @@ function FriendAlbumReviewPage() {
   const scoreText = activeSection?.score === null || activeSection?.score === undefined
     ? 'Unscored'
     : `${activeSection.score}/10`
-  const notesText = activeSection?.notes ?? ''
+  const notesLyricallyText = activeSection?.notesLyrically ?? ''
+  const notesSonicallyText = activeSection?.notesSonically ?? ''
 
   return (
     <main className="min-h-screen px-6 py-8">
@@ -242,12 +244,41 @@ function FriendAlbumReviewPage() {
               </p>
             )}
 
-            <textarea
-              value={notesText}
-              readOnly
-              placeholder="No notes written for this section."
-              className="h-[62vh] w-full resize-none rounded-lg border border-edge bg-surface-2 p-3 text-sm leading-relaxed text-ink"
-            />
+            {activeTrack && (
+              <div className="mb-3 flex rounded-md border border-edge overflow-hidden text-sm font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setActiveNotesTab('lyrically')}
+                  className={`px-3 py-1 ${activeNotesTab === 'lyrically' ? 'bg-cta text-white' : 'bg-surface text-ink hover:bg-surface-2'}`}
+                >
+                  Lyrically
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveNotesTab('sonically')}
+                  className={`px-3 py-1 border-l border-edge ${activeNotesTab === 'sonically' ? 'bg-cta text-white' : 'bg-surface text-ink hover:bg-surface-2'}`}
+                >
+                  Sonically
+                </button>
+              </div>
+            )}
+
+            {activeTrack ? (
+              <textarea
+                key={`${activeSectionKey}-${activeNotesTab}`}
+                value={activeNotesTab === 'lyrically' ? notesLyricallyText : notesSonicallyText}
+                readOnly
+                placeholder="No notes written for this section."
+                className="h-[62vh] w-full resize-none rounded-lg border border-edge bg-surface-2 p-3 text-sm leading-relaxed text-ink"
+              />
+            ) : (
+              <textarea
+                value={notesLyricallyText}
+                readOnly
+                placeholder="No notes written for this section."
+                className="h-[62vh] w-full resize-none rounded-lg border border-edge bg-surface-2 p-3 text-sm leading-relaxed text-ink"
+              />
+            )}
           </section>
 
           <aside className="rounded-xl border border-edge bg-surface p-4">

@@ -41,7 +41,8 @@ export type ReviewSection = {
   sectionType: ReviewSectionType
   trackNumber: number | null
   isInterlude: boolean
-  notes: string
+  notesLyrically: string
+  notesSonically: string
   score: number | null
 }
 
@@ -190,7 +191,7 @@ const getAlbumWorkspaceByUserId = async (
         .order('track_number', { ascending: true }),
       supabase
         .from('review_sections')
-        .select('id, user_saved_album_id, section_type, track_number, is_interlude, notes, score')
+        .select('id, user_saved_album_id, section_type, track_number, is_interlude, notes_lyrically, notes_sonically, score')
         .eq('user_saved_album_id', userSavedAlbumId),
     ])
 
@@ -222,7 +223,8 @@ const getAlbumWorkspaceByUserId = async (
       sectionType: section.section_type,
       trackNumber: section.track_number,
       isInterlude: section.is_interlude,
-      notes: section.notes,
+      notesLyrically: section.notes_lyrically,
+      notesSonically: section.notes_sonically,
       score: section.score,
     })),
   }
@@ -341,7 +343,8 @@ export const upsertTrackReviewSectionForCurrentUser = async (params: {
   userSavedAlbumId: string
   trackNumber: number
   isInterlude: boolean
-  notes: string
+  notesLyrically: string
+  notesSonically: string
   score: number | null
 }): Promise<void> => {
   await requireAuthenticatedUserId()
@@ -355,7 +358,12 @@ export const upsertTrackReviewSectionForCurrentUser = async (params: {
   if (existing) {
     const { error } = await supabase
       .from('review_sections')
-      .update({ is_interlude: params.isInterlude, notes: params.notes, score: params.score })
+      .update({
+        is_interlude: params.isInterlude,
+        notes_lyrically: params.notesLyrically,
+        notes_sonically: params.notesSonically,
+        score: params.score,
+      })
       .eq('id', existing.id)
 
     throwIfError(error, 'Failed to update track section')
@@ -376,7 +384,8 @@ export const upsertTrackReviewSectionForCurrentUser = async (params: {
     section_type: 'track',
     track_number: params.trackNumber,
     is_interlude: params.isInterlude,
-    notes: params.notes,
+    notes_lyrically: params.notesLyrically,
+    notes_sonically: params.notesSonically,
     score: params.score,
   })
 
@@ -385,7 +394,7 @@ export const upsertTrackReviewSectionForCurrentUser = async (params: {
 
 export const upsertConclusionSectionForCurrentUser = async (params: {
   userSavedAlbumId: string
-  notes: string
+  notesLyrically: string
   score: number | null
 }): Promise<void> => {
   await requireAuthenticatedUserId()
@@ -395,7 +404,7 @@ export const upsertConclusionSectionForCurrentUser = async (params: {
   if (existing) {
     const { error } = await supabase
       .from('review_sections')
-      .update({ notes: params.notes, score: params.score })
+      .update({ notes_lyrically: params.notesLyrically, score: params.score })
       .eq('id', existing.id)
 
     throwIfError(error, 'Failed to update conclusion section')
@@ -406,7 +415,7 @@ export const upsertConclusionSectionForCurrentUser = async (params: {
     user_saved_album_id: params.userSavedAlbumId,
     section_type: 'conclusion',
     track_number: null,
-    notes: params.notes,
+    notes_lyrically: params.notesLyrically,
     score: params.score,
   })
 

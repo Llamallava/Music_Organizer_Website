@@ -408,7 +408,8 @@ export type Database = {
           section_type: 'track' | 'conclusion'
           track_number: number | null
           is_interlude: boolean
-          notes: string
+          notes_lyrically: string
+          notes_sonically: string
           score: number | null
           created_at: string
           updated_at: string
@@ -419,7 +420,8 @@ export type Database = {
           section_type: 'track' | 'conclusion'
           track_number?: number | null
           is_interlude?: boolean
-          notes?: string
+          notes_lyrically?: string
+          notes_sonically?: string
           score?: number | null
           created_at?: string
           updated_at?: string
@@ -430,7 +432,8 @@ export type Database = {
           section_type?: 'track' | 'conclusion'
           track_number?: number | null
           is_interlude?: boolean
-          notes?: string
+          notes_lyrically?: string
+          notes_sonically?: string
           score?: number | null
           created_at?: string
           updated_at?: string
