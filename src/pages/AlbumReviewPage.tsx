@@ -147,6 +147,7 @@ function AlbumReviewPage() {
   const lyricsMenuRef = useRef<HTMLDivElement | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [isSavingAll, setIsSavingAll] = useState(false)
   const [showSavedMark, setShowSavedMark] = useState(false)
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false)
   const actionsMenuRef = useRef<HTMLDivElement | null>(null)
@@ -499,6 +500,68 @@ function AlbumReviewPage() {
     }
   }
 
+  const handleSaveAllSections = async () => {
+    if (!workspace) {
+      return
+    }
+
+    setErrorMessage(null)
+    setInfoMessage(null)
+    setIsSavingAll(true)
+
+    try {
+      const results = await Promise.all(
+        workspace.tracks.map(async (track) => {
+          const key = toTrackKey(track.trackNumber)
+          const draft = draftBySection[key] ?? defaultDraft()
+          const score = parseScoreInput(draft.scoreInput)
+
+          await upsertTrackReviewSectionForCurrentUser({
+            userSavedAlbumId: workspace.userSavedAlbumId,
+            trackNumber: track.trackNumber,
+            isInterlude: draft.isInterlude,
+            notesLyrically: draft.notesLyrically,
+            notesSonically: draft.notesSonically,
+            score,
+          })
+
+          const normalizedDraft: SectionDraft = {
+            notesLyrically: draft.notesLyrically,
+            notesSonically: draft.notesSonically,
+            scoreInput: score === null ? '' : String(score),
+            isInterlude: draft.isInterlude,
+          }
+
+          return { key, normalizedDraft }
+        })
+      )
+
+      setDraftBySection((previous) => {
+        const next = { ...previous }
+        for (const { key, normalizedDraft } of results) {
+          next[key] = normalizedDraft
+        }
+        return next
+      })
+
+      setSavedBySection((previous) => {
+        const next = { ...previous }
+        for (const { key, normalizedDraft } of results) {
+          next[key] = normalizedDraft
+        }
+        return next
+      })
+
+      setShowSavedMark(true)
+      setTimeout(() => setShowSavedMark(false), 2000)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to save all sections.'
+      setErrorMessage(message)
+    } finally {
+      setIsSavingAll(false)
+    }
+  }
+
   const handleSaveLyrics = async () => {
     if (!workspace || !activeTrack) {
       return
@@ -834,10 +897,18 @@ function AlbumReviewPage() {
                 <button
                   type="button"
                   onClick={() => void handleSaveCurrentSection()}
-                  disabled={isSaving || !isDirty}
+                  disabled={isSaving || isSavingAll || !isDirty}
                   className="rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
                 >
                   {isSaving ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleSaveAllSections()}
+                  disabled={isSaving || isSavingAll}
+                  className="rounded-lg border border-edge bg-surface px-4 py-2 text-sm font-semibold text-ink hover:bg-surface-2 disabled:opacity-60"
+                >
+                  {isSavingAll ? 'Saving all...' : 'Save all'}
                 </button>
                 <div ref={actionsMenuRef} className="relative">
                   <button
