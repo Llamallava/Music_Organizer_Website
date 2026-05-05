@@ -316,6 +316,20 @@ function AlbumReviewPage() {
     }
   }, [isLyricsMenuOpen])
 
+  const handleSaveCurrentSectionRef = useRef<() => Promise<void>>(() => Promise.resolve())
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === 's') {
+        event.preventDefault()
+        handleSaveCurrentSectionRef.current()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
   const activeDraft = draftBySection[activeSectionKey] ?? defaultDraft()
   const activeSavedDraft = savedBySection[activeSectionKey] ?? defaultDraft()
   const isDirty =
@@ -499,6 +513,7 @@ function AlbumReviewPage() {
       setIsSaving(false)
     }
   }
+  handleSaveCurrentSectionRef.current = handleSaveCurrentSection
 
   const handleSaveAllSections = async () => {
     if (!workspace) {

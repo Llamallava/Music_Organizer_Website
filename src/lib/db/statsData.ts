@@ -44,6 +44,26 @@ export type MyStatsData = {
   topArtistsByScore: RankedArtistStat[]
 }
 
+export type AlbumSongRanking = {
+  userSavedAlbumId: string
+  albumId: string
+  albumTitle: string
+  coverUrl: string | null
+  songs: RankedSongStat[]
+}
+
+export type ArtistStatsData = {
+  topAlbumsByConclusionScore: RankedAlbumStat[]
+  topAlbumsByTrackAverage: RankedAlbumStat[]
+  topSongsByScore: RankedSongStat[]
+  topInterludeSongs: RankedSongStat[]
+  topAlbumsByWordsWritten: RankedAlbumStat[]
+  topSongsByWordsWritten: RankedSongStat[]
+  grandTotalWordsWritten: number
+  favoriteWords: FavoriteWordStat[]
+  albumSongRankings: AlbumSongRanking[]
+}
+
 type TrackScoreAccumulator = {
   totalScore: number
   totalCount: number
@@ -359,4 +379,227 @@ export const getMyStatsForCurrentUser = async (): Promise<MyStatsData> => {
 export const getStatsForUser = async (userId: string): Promise<MyStatsData> => {
   const savedAlbums = await listSavedAlbumsForUser(userId)
   return buildStatsFromSavedAlbums(savedAlbums)
+}
+
+const buildArtistStatsFromSavedAlbums = async (savedAlbums: SavedAlbumCard[]): Promise<ArtistStatsData> => {
+  if (savedAlbums.length === 0) {
+    return {
+      topAlbumsByConclusionScore: [],
+      topAlbumsByTrackAverage: [],
+      topSongsByScore: [],
+      topInterludeSongs: [],
+      topAlbumsByWordsWritten: [],
+      topSongsByWordsWritten: [],
+      grandTotalWordsWritten: 0,
+      favoriteWords: [],
+      albumSongRankings: [],
+    }
+  }
+
+  const savedAlbumIds = savedAlbums.map((album) => album.userSavedAlbumId)
+  const albumIds = savedAlbums.map((album) => album.albumId)
+  const savedAlbumById = new Map(savedAlbums.map((album) => [album.userSavedAlbumId, album]))
+
+  const [{ data: reviewSections, error: reviewSectionsError }, { data: trackRows, error: trackRowsError }] =
+    await Promise.all([
+      supabase
+        .from('review_sections')
+        .select('user_saved_album_id, section_type, track_number, is_interlude, notes_lyrically, notes_sonically, score')
+        .in('user_saved_album_id', savedAlbumIds),
+      supabase.from('album_tracks').select('album_id, track_number, title').in('album_id', albumIds),
+    ])
+
+  throwIfError(reviewSectionsError, 'Failed to load stats source data')
+  throwIfError(trackRowsError, 'Failed to load track metadata for stats')
+
+  const conclusionScoreBySavedAlbumId = new Map<string, number>()
+  const trackAccumulatorBySavedAlbumId = new Map<string, TrackScoreAccumulator>()
+  const trackTitleByAlbumAndNumber = new Map<string, string>()
+  const wordsBySavedAlbumId = new Map<string, number>()
+  const wordsBySavedAlbumTrackKey = new Map<string, { savedAlbumId: string; trackNumber: number; words: number }>()
+  const wordFrequency = new Map<string, number>()
+  const topSongCandidates: RankedSongStat[] = []
+  const topInterludeCandidates: RankedSongStat[] = []
+  const songsByAlbum = new Map<string, RankedSongStat[]>()
+
+  for (const track of trackRows ?? []) {
+    trackTitleByAlbumAndNumber.set(toTrackKey(track.album_id, track.track_number), track.title)
+  }
+
+  for (const section of reviewSections ?? []) {
+    const combinedNotes = section.notes_lyrically + ' ' + section.notes_sonically
+    const wordsWritten = countWords(combinedNotes)
+    if (wordsWritten > 0) {
+      const currentAlbumWords = wordsBySavedAlbumId.get(section.user_saved_album_id) ?? 0
+      wordsBySavedAlbumId.set(section.user_saved_album_id, currentAlbumWords + wordsWritten)
+
+      for (const token of tokenizeWords(combinedNotes)) {
+        const currentFrequency = wordFrequency.get(token) ?? 0
+        wordFrequency.set(token, currentFrequency + 1)
+      }
+
+      if (section.section_type === 'track' && section.track_number !== null) {
+        const trackKey = `${section.user_saved_album_id}:${section.track_number}`
+        const currentTrackWords = wordsBySavedAlbumTrackKey.get(trackKey)
+        if (currentTrackWords) {
+          currentTrackWords.words += wordsWritten
+        } else {
+          wordsBySavedAlbumTrackKey.set(trackKey, {
+            savedAlbumId: section.user_saved_album_id,
+            trackNumber: section.track_number,
+            words: wordsWritten,
+          })
+        }
+      }
+    }
+
+    const score = section.score
+    if (score === null) {
+      continue
+    }
+
+    if (section.section_type === 'conclusion') {
+      const currentMax = conclusionScoreBySavedAlbumId.get(section.user_saved_album_id)
+      if (currentMax === undefined || score > currentMax) {
+        conclusionScoreBySavedAlbumId.set(section.user_saved_album_id, score)
+      }
+      continue
+    }
+
+    const savedAlbum = savedAlbumById.get(section.user_saved_album_id)
+    if (!savedAlbum || section.track_number === null) {
+      continue
+    }
+
+    const trackTitle =
+      trackTitleByAlbumAndNumber.get(toTrackKey(savedAlbum.albumId, section.track_number)) ??
+      `Track ${section.track_number}`
+    const rankedSong = toRankedSongStat(savedAlbum, section.track_number, trackTitle, score)
+
+    // Add to per-album ranking (includes both regular songs and interludes)
+    const existingAlbumSongs = songsByAlbum.get(section.user_saved_album_id)
+    if (existingAlbumSongs) {
+      existingAlbumSongs.push(rankedSong)
+    } else {
+      songsByAlbum.set(section.user_saved_album_id, [rankedSong])
+    }
+
+    if (section.is_interlude) {
+      topInterludeCandidates.push(rankedSong)
+      continue
+    }
+
+    topSongCandidates.push(rankedSong)
+
+    const existing = trackAccumulatorBySavedAlbumId.get(section.user_saved_album_id)
+    if (existing) {
+      existing.totalScore += score
+      existing.totalCount += 1
+      continue
+    }
+
+    trackAccumulatorBySavedAlbumId.set(section.user_saved_album_id, {
+      totalScore: score,
+      totalCount: 1,
+    })
+  }
+
+  const topAlbumsByConclusionScore = Array.from(conclusionScoreBySavedAlbumId.entries())
+    .flatMap(([savedAlbumId, score]) => {
+      const album = savedAlbumById.get(savedAlbumId)
+      if (!album) return []
+      return [toRankedAlbumStat(album, score)]
+    })
+    .sort(sortByValueDescending)
+    .slice(0, 10)
+
+  const topAlbumsByTrackAverage = Array.from(trackAccumulatorBySavedAlbumId.entries())
+    .flatMap(([savedAlbumId, accumulator]) => {
+      if (accumulator.totalCount === 0) return []
+      const album = savedAlbumById.get(savedAlbumId)
+      if (!album) return []
+      const averageScore = accumulator.totalScore / accumulator.totalCount
+      return [toRankedAlbumStat(album, averageScore)]
+    })
+    .sort(sortByValueDescending)
+    .slice(0, 10)
+
+  const topSongsByScore = topSongCandidates.sort(sortSongsByValueDescending).slice(0, 10)
+
+  const topInterludeSongs = topInterludeCandidates.sort(sortSongsByValueDescending).slice(0, 10)
+
+  const topAlbumsByWordsWritten = Array.from(wordsBySavedAlbumId.entries())
+    .flatMap(([savedAlbumId, wordCount]) => {
+      const album = savedAlbumById.get(savedAlbumId)
+      if (!album) return []
+      return [toRankedAlbumStat(album, wordCount)]
+    })
+    .sort(sortByValueDescending)
+    .slice(0, 10)
+
+  const topSongsByWordsWritten = Array.from(wordsBySavedAlbumTrackKey.values())
+    .flatMap(({ savedAlbumId, trackNumber, words }) => {
+      const album = savedAlbumById.get(savedAlbumId)
+      if (!album) return []
+      const trackTitle = trackTitleByAlbumAndNumber.get(toTrackKey(album.albumId, trackNumber)) ?? `Track ${trackNumber}`
+      return [toRankedSongStat(album, trackNumber, trackTitle, words)]
+    })
+    .sort(sortSongsByValueDescending)
+    .slice(0, 10)
+
+  const grandTotalWordsWritten = Array.from(wordsBySavedAlbumId.values()).reduce(
+    (total, words) => total + words,
+    0,
+  )
+
+  const favoriteWords = Array.from(wordFrequency.entries())
+    .map(([word, count]) => ({ word, count }))
+    .sort((left, right) => {
+      if (right.count !== left.count) return right.count - left.count
+      return left.word.localeCompare(right.word)
+    })
+    .slice(0, 3)
+
+  const albumSongRankings = Array.from(songsByAlbum.entries())
+    .map(([savedAlbumId, songs]) => {
+      const album = savedAlbumById.get(savedAlbumId)!
+      return {
+        userSavedAlbumId: savedAlbumId,
+        albumId: album.albumId,
+        albumTitle: album.title,
+        coverUrl: album.coverUrl,
+        songs: [...songs].sort(sortSongsByValueDescending),
+        releaseDate: album.releaseDate,
+      }
+    })
+    .sort((a, b) => {
+      if (a.releaseDate && b.releaseDate) return b.releaseDate.localeCompare(a.releaseDate)
+      if (a.releaseDate) return -1
+      if (b.releaseDate) return 1
+      const scoreA = conclusionScoreBySavedAlbumId.get(a.userSavedAlbumId)
+      const scoreB = conclusionScoreBySavedAlbumId.get(b.userSavedAlbumId)
+      if (scoreA !== undefined && scoreB !== undefined) return scoreB - scoreA
+      if (scoreA !== undefined) return -1
+      if (scoreB !== undefined) return 1
+      return a.albumTitle.localeCompare(b.albumTitle)
+    })
+    .map(({ releaseDate: _releaseDate, ...rest }) => rest)
+
+  return {
+    topAlbumsByConclusionScore,
+    topAlbumsByTrackAverage,
+    topSongsByScore,
+    topInterludeSongs,
+    topAlbumsByWordsWritten,
+    topSongsByWordsWritten,
+    grandTotalWordsWritten,
+    favoriteWords,
+    albumSongRankings,
+  }
+}
+
+export const getArtistStatsForCurrentUser = async (artistName: string): Promise<ArtistStatsData> => {
+  const allAlbums = await listSavedAlbumsForCurrentUser()
+  const artistAlbums = allAlbums.filter((album) => album.artistNames.includes(artistName))
+  return buildArtistStatsFromSavedAlbums(artistAlbums)
 }
