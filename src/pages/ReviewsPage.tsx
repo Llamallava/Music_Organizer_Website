@@ -32,6 +32,7 @@ function ReviewsPage() {
   const [resetInput, setResetInput] = useState('')
   const [backgroundAlbumId, setBackgroundAlbumId] = useState<string | null>(null)
   const [loadedCovers, setLoadedCovers] = useState<Set<string>>(new Set())
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     let isActive = true
@@ -201,6 +202,13 @@ function ReviewsPage() {
     }
   }
 
+  const filteredAlbums = searchQuery.trim()
+    ? albums.filter((a) => {
+        const q = searchQuery.toLowerCase()
+        return a.title.toLowerCase().includes(q) || a.artistName.toLowerCase().includes(q)
+      })
+    : albums
+
   return (
     <main className="min-h-screen px-6 py-8">
       <div className="mx-auto w-full max-w-7xl">
@@ -213,6 +221,16 @@ function ReviewsPage() {
           >
             Add Album
           </button>
+        </div>
+
+        <div className="mt-4">
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search albums or artists..."
+            className="w-full rounded-lg border border-edge bg-surface px-4 py-2 text-sm text-ink placeholder:text-ink-2 focus:outline-none focus:ring-2 focus:ring-cta"
+          />
         </div>
 
         {(isLoading || (!errorMessage && albums.length > 0 && loadedCovers.size < albums.filter((a) => a.coverUrl).length)) && (
@@ -234,13 +252,19 @@ function ReviewsPage() {
           </p>
         )}
 
-        {!isLoading && !errorMessage && albums.length > 0 && (
+        {!isLoading && !errorMessage && albums.length > 0 && filteredAlbums.length === 0 && (
+          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">
+            No albums match your search.
+          </p>
+        )}
+
+        {!isLoading && !errorMessage && filteredAlbums.length > 0 && (
           <section
             className={`mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 transition-opacity duration-500 ${
               loadedCovers.size >= albums.filter((a) => a.coverUrl).length ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}
           >
-            {albums.map((album) => {
+            {filteredAlbums.map((album) => {
               const isMenuOpen = activeMenuAlbumId === album.userSavedAlbumId
 
               return (

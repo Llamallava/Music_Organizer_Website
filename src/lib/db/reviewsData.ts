@@ -123,24 +123,26 @@ const listSavedAlbumsByUserId = async (userId: string): Promise<SavedAlbumCard[]
 
   const albumById = new Map((albumRows ?? []).map((album) => [album.id, album]))
 
-  return rows.flatMap((row) => {
-    const album = albumById.get(row.album_id)
-    if (!album) {
-      return []
-    }
+  return rows
+    .flatMap((row) => {
+      const album = albumById.get(row.album_id)
+      if (!album) {
+        return []
+      }
 
-    return {
-      userSavedAlbumId: row.id,
-      albumId: album.id,
-      title: album.title,
-      artistName: album.artist_name,
-      artistNames: extractArtistNames(album.artist_name, album.metadata),
-      coverUrl: album.cover_url,
-      releaseDate: album.release_date,
-      totalTracks: album.total_tracks,
-      savedAt: row.created_at,
-    }
-  })
+      return {
+        userSavedAlbumId: row.id,
+        albumId: album.id,
+        title: album.title,
+        artistName: album.artist_name,
+        artistNames: extractArtistNames(album.artist_name, album.metadata),
+        coverUrl: album.cover_url,
+        releaseDate: album.release_date,
+        totalTracks: album.total_tracks,
+        savedAt: row.created_at,
+      }
+    })
+    .sort((a, b) => a.title.localeCompare(b.title))
 }
 
 export const listSavedAlbumsForCurrentUser = async (): Promise<SavedAlbumCard[]> => {

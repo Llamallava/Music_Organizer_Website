@@ -10,6 +10,7 @@ export type Database = {
           friend_code: string
           home_background_cover_url: string | null
           auto_background_enabled: boolean
+          background_all_covers_enabled: boolean
           created_at: string
           updated_at: string
         }
@@ -19,6 +20,7 @@ export type Database = {
           friend_code?: string
           home_background_cover_url?: string | null
           auto_background_enabled?: boolean
+          background_all_covers_enabled?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -28,6 +30,7 @@ export type Database = {
           friend_code?: string
           home_background_cover_url?: string | null
           auto_background_enabled?: boolean
+          background_all_covers_enabled?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -470,6 +473,12 @@ export type Database = {
         Returns: void
       }
       set_auto_background_enabled: {
+        Args: {
+          enabled: boolean
+        }
+        Returns: void
+      }
+      set_background_all_covers_enabled: {
         Args: {
           enabled: boolean
         }

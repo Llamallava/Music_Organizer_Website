@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import LinearBackButton from '../components/LinearBackButton'
 import {
   getAutoBackgroundEnabledForCurrentUser,
+  getBackgroundAllCoversEnabledForCurrentUser,
   setAutoBackgroundEnabledForCurrentUser,
+  setBackgroundAllCoversEnabledForCurrentUser,
 } from '../lib/db/profileData'
 
 function Toggle({
@@ -36,20 +38,26 @@ function Toggle({
 
 function CustomizePage() {
   const [autoBackground, setAutoBackground] = useState(true)
+  const [allCovers, setAllCovers] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [isSavingAllCovers, setIsSavingAllCovers] = useState(false)
 
   useEffect(() => {
     let isActive = true
 
     const load = async () => {
       try {
-        const enabled = await getAutoBackgroundEnabledForCurrentUser()
+        const [autoEnabled, allCoversEnabled] = await Promise.all([
+          getAutoBackgroundEnabledForCurrentUser(),
+          getBackgroundAllCoversEnabledForCurrentUser().catch(() => false),
+        ])
         if (isActive) {
-          setAutoBackground(enabled)
+          setAutoBackground(autoEnabled)
+          setAllCovers(allCoversEnabled)
         }
       } catch {
-        // Use default value — migration may not be applied yet
+        // Use default values — migration may not be applied yet
       } finally {
         if (isActive) {
           setIsLoading(false)
@@ -77,6 +85,19 @@ function CustomizePage() {
     }
   }
 
+  const handleAllCoversChange = async (value: boolean) => {
+    setAllCovers(value)
+    setIsSavingAllCovers(true)
+
+    try {
+      await setBackgroundAllCoversEnabledForCurrentUser(value)
+    } catch {
+      setAllCovers(!value)
+    } finally {
+      setIsSavingAllCovers(false)
+    }
+  }
+
   return (
     <main className="min-h-screen px-6 py-8">
       <div className="mx-auto w-full max-w-2xl">
@@ -101,6 +122,20 @@ function CustomizePage() {
                 checked={autoBackground}
                 onChange={(value) => void handleAutoBackgroundChange(value)}
                 disabled={isLoading || isSaving}
+              />
+            </div>
+
+            <div className="border-t border-edge flex items-center justify-between px-4 py-4">
+              <div>
+                <p className="text-sm font-semibold text-ink">Use all albums</p>
+                <p className="mt-0.5 text-xs text-ink-3">
+                  Rotate through all albums randomly
+                </p>
+              </div>
+              <Toggle
+                checked={allCovers}
+                onChange={(value) => void handleAllCoversChange(value)}
+                disabled={isLoading || isSavingAllCovers || !autoBackground}
               />
             </div>
           </div>

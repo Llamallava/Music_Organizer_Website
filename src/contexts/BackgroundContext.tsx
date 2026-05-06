@@ -2,7 +2,9 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { useAuthSession } from '../hooks/useAuthSession'
 import {
   getAutoBackgroundEnabledForCurrentUser,
+  getBackgroundAllCoversEnabledForCurrentUser,
   getHomeBackgroundForCurrentUser,
+  listAllCoversForHomeBackground,
   listCoversForHomeBackground,
 } from '../lib/db/profileData'
 
@@ -47,11 +49,15 @@ export function BackgroundProvider({ children }: { children: ReactNode }) {
 
     const load = async () => {
       try {
-        const [pinnedUrl, dynamicCovers, autoEnabled] = await Promise.all([
+        const [pinnedUrl, autoEnabled, allCoversEnabled] = await Promise.all([
           getHomeBackgroundForCurrentUser(),
-          listCoversForHomeBackground(),
           getAutoBackgroundEnabledForCurrentUser().catch(() => true),
+          getBackgroundAllCoversEnabledForCurrentUser().catch(() => false),
         ])
+
+        const dynamicCovers = await (allCoversEnabled
+          ? listAllCoversForHomeBackground()
+          : listCoversForHomeBackground())
 
         if (!isActive) return
 

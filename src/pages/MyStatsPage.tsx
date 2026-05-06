@@ -56,70 +56,93 @@ const getDisplayName = (username: string | null | undefined) => username?.trim()
 const toPossessiveName = (name: string) => (name.endsWith('s') || name.endsWith('S') ? `${name}'` : `${name}'s`)
 
 function TopTenArtistsModule({ title, items, artistImages }: Omit<TopTenArtistModuleConfig, 'id' | 'moduleType'>) {
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
   const firstArtist = items[0] ?? null
   const remainingArtists = items.slice(1)
 
+  useEffect(() => {
+    setLoadedImages(new Set())
+  }, [artistImages])
+
+  const isUrlsFetching = items.length > 0 && artistImages.size === 0
+  const imagesWithUrls = items.filter((a) => artistImages.get(a.artistName) != null)
+  const allLoaded = !isUrlsFetching && (imagesWithUrls.length === 0 || loadedImages.size >= imagesWithUrls.length)
+
+  const handleImageLoad = (artistName: string) => {
+    setLoadedImages((prev) => { const next = new Set(prev); next.add(artistName); return next })
+  }
+
   return (
-    <article className="rounded-xl border border-edge bg-surface p-4 shadow-sm">
-      <h2 className="text-lg font-bold text-ink">{title}</h2>
+    <article className="relative rounded-xl border border-edge bg-surface p-4 shadow-sm">
+      {!allLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center rounded-xl">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-surface-2 border-t-cta" />
+        </div>
+      )}
 
-      {!firstArtist && <p className="mt-4 text-sm text-ink-2">No data yet.</p>}
+      <div className={`transition-opacity duration-500 ${allLoaded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <h2 className="text-lg font-bold text-ink">{title}</h2>
 
-      {firstArtist && (
-        <>
-          <div className="mt-4 rounded-lg border border-edge bg-surface-2 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">#1</p>
+        {!firstArtist && <p className="mt-4 text-sm text-ink-2">No data yet.</p>}
 
-            <div className="mt-3 flex gap-3">
-              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-surface-3">
-                <AlbumCover
-                  src={artistImages.get(firstArtist.artistName) ?? null}
-                  alt={`${firstArtist.artistName} profile`}
-                  loading="lazy"
-                />
-              </div>
+        {firstArtist && (
+          <>
+            <div className="mt-4 rounded-lg border border-edge bg-surface-2 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">#1</p>
 
-              <div className="min-w-0">
-                <p className="truncate text-lg font-extrabold text-ink">{firstArtist.artistName}</p>
-                <p className="mt-1 text-sm font-semibold text-ink">
-                  Avg Score: {formatScoreValue(firstArtist.value)}
-                </p>
-                <p className="text-xs text-ink-3">
-                  {firstArtist.albumCount} {firstArtist.albumCount === 1 ? 'album' : 'albums'} rated
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <ol className="mt-4 space-y-2">
-            {remainingArtists.map((artist, index) => (
-              <li
-                key={artist.artistName}
-                className="flex items-center gap-3 rounded-md bg-surface-2 px-3 py-2"
-              >
-                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-surface-3">
+              <div className="mt-3 flex gap-3">
+                <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-surface-3">
                   <AlbumCover
-                    src={artistImages.get(artist.artistName) ?? null}
-                    alt={`${artist.artistName} profile`}
-                    loading="lazy"
+                    src={artistImages.get(firstArtist.artistName) ?? null}
+                    alt={`${firstArtist.artistName} profile`}
+                    loading="eager"
+                    onLoad={() => handleImageLoad(firstArtist.artistName)}
                   />
                 </div>
 
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-ink">
-                    {index + 2}. {artist.artistName}
+                <div className="min-w-0">
+                  <p className="truncate text-lg font-extrabold text-ink">{firstArtist.artistName}</p>
+                  <p className="mt-1 text-sm font-semibold text-ink">
+                    Avg Score: {formatScoreValue(firstArtist.value)}
                   </p>
                   <p className="text-xs text-ink-3">
-                    {artist.albumCount} {artist.albumCount === 1 ? 'album' : 'albums'} rated
+                    {firstArtist.albumCount} {firstArtist.albumCount === 1 ? 'album' : 'albums'} rated
                   </p>
                 </div>
+              </div>
+            </div>
 
-                <p className="shrink-0 text-sm font-semibold text-ink">{formatScoreValue(artist.value)}</p>
-              </li>
-            ))}
-          </ol>
-        </>
-      )}
+            <ol className="mt-4 space-y-2">
+              {remainingArtists.map((artist, index) => (
+                <li
+                  key={artist.artistName}
+                  className="flex items-center gap-3 rounded-md bg-surface-2 px-3 py-2"
+                >
+                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-surface-3">
+                    <AlbumCover
+                      src={artistImages.get(artist.artistName) ?? null}
+                      alt={`${artist.artistName} profile`}
+                      loading="eager"
+                      onLoad={() => handleImageLoad(artist.artistName)}
+                    />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-ink">
+                      {index + 2}. {artist.artistName}
+                    </p>
+                    <p className="text-xs text-ink-3">
+                      {artist.albumCount} {artist.albumCount === 1 ? 'album' : 'albums'} rated
+                    </p>
+                  </div>
+
+                  <p className="shrink-0 text-sm font-semibold text-ink">{formatScoreValue(artist.value)}</p>
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
+      </div>
     </article>
   )
 }

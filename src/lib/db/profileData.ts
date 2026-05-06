@@ -132,6 +132,59 @@ export const setAutoBackgroundEnabledForCurrentUser = async (enabled: boolean): 
   }
 }
 
+export const listAllCoversForHomeBackground = async (): Promise<string[]> => {
+  const { data: authData } = await supabase.auth.getUser()
+  const userId = authData.user?.id
+  if (!userId) return []
+
+  const { data: savedRows } = await supabase
+    .from('user_saved_albums')
+    .select('album_id')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+
+  if (!savedRows || savedRows.length === 0) return []
+
+  const albumIds = savedRows.map((r) => r.album_id)
+
+  const { data: albumRows } = await supabase
+    .from('albums')
+    .select('id, cover_url')
+    .in('id', albumIds)
+
+  const coverByAlbumId = new Map(
+    (albumRows ?? []).filter((a) => a.cover_url).map((a) => [a.id, a.cover_url!]),
+  )
+
+  return savedRows
+    .map((r) => coverByAlbumId.get(r.album_id))
+    .filter((url): url is string => Boolean(url))
+}
+
+export const getBackgroundAllCoversEnabledForCurrentUser = async (): Promise<boolean> => {
+  const userId = await requireAuthenticatedUserId()
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('background_all_covers_enabled')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (error) {
+    throw new Error(`Failed to load profile: ${error.message}`)
+  }
+
+  return data?.background_all_covers_enabled ?? false
+}
+
+export const setBackgroundAllCoversEnabledForCurrentUser = async (enabled: boolean): Promise<void> => {
+  const { error } = await supabase.rpc('set_background_all_covers_enabled', { enabled })
+
+  if (error) {
+    throw new Error(`Failed to update setting: ${error.message}`)
+  }
+}
+
 export const setHomeBackgroundForCurrentUser = async (coverUrl: string | null): Promise<void> => {
   const { error } = await supabase.rpc('set_home_background', { next_cover_url: coverUrl })
 
