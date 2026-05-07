@@ -127,6 +127,18 @@ function HomePage() {
             To-Listen
           </button>
 
+          <button
+            type="button"
+            onClick={() => navigate('/friends')}
+            className={
+              hasBackground
+                ? 'rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/20'
+                : 'rounded-lg bg-surface-2 px-4 py-3 text-base font-semibold text-ink hover:bg-surface-3'
+            }
+          >
+            Friends
+          </button>
+
           {/* <button
             type="button"
             onClick={() => navigate('/playlists')}
