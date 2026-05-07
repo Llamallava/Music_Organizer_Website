@@ -135,9 +135,6 @@ function FriendsPage() {
         <LinearBackButton />
 
         <h1 className="mt-5 text-3xl font-black text-ink">Friends</h1>
-        <p className="mt-2 text-sm text-ink">
-          Share your friend code to connect and track your current friend list.
-        </p>
 
         {isLoading && <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">Loading friends...</p>}
 
