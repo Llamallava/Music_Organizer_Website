@@ -145,6 +145,7 @@ function AlbumReviewPage() {
   const [isLyricsMenuOpen, setIsLyricsMenuOpen] = useState(false)
   const [isRefetchingLyrics, setIsRefetchingLyrics] = useState(false)
   const lyricsMenuRef = useRef<HTMLDivElement | null>(null)
+  const activeTextareaRef = useRef<HTMLTextAreaElement | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isSavingAll, setIsSavingAll] = useState(false)
@@ -155,6 +156,7 @@ function AlbumReviewPage() {
   const tagPopoverRef = useRef<HTMLDivElement | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [infoMessage, setInfoMessage] = useState<string | null>(null)
+  const [quoteModeEnabled, setQuoteModeEnabled] = useState(false)
 
   useEffect(() => {
     if (!userSavedAlbumId) {
@@ -350,6 +352,24 @@ function AlbumReviewPage() {
 
     return workspace.tracks.find((track) => track.trackNumber === trackNumber) ?? null
   }, [activeSectionKey, workspace])
+
+  const handleQuoteLine = (line: string) => {
+    const textarea = activeTextareaRef.current
+    if (!textarea) return
+
+    const insert = `"${line}"\n`
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const tab = activeSectionKey === CONCLUSION_KEY ? 'lyrically' : activeNotesTab
+    const currentValue = tab === 'lyrically' ? activeDraft.notesLyrically : activeDraft.notesSonically
+    const newValue = currentValue.slice(0, start) + insert + currentValue.slice(end)
+    handleNotesChange(tab, newValue)
+
+    requestAnimationFrame(() => {
+      textarea.focus()
+      textarea.setSelectionRange(start + insert.length, start + insert.length)
+    })
+  }
 
   const handleNotesChange = (tab: 'lyrically' | 'sonically', value: string) => {
     setDraftBySection((previous) => ({
@@ -1028,12 +1048,14 @@ function AlbumReviewPage() {
             {activeTrack ? (
               <textarea
                 key={`${activeSectionKey}-${activeNotesTab}`}
+                ref={activeTextareaRef}
                 value={activeNotesTab === 'lyrically' ? activeDraft.notesLyrically : activeDraft.notesSonically}
                 onChange={(event) => handleNotesChange(activeNotesTab, event.target.value)}
                 className="min-h-0 flex-1 w-full resize-none rounded-lg border border-edge p-3 text-sm leading-relaxed text-ink"
               />
             ) : (
               <textarea
+                ref={activeTextareaRef}
                 value={activeDraft.notesLyrically}
                 onChange={(event) => handleNotesChange('lyrically', event.target.value)}
                 className="min-h-0 flex-1 w-full resize-none rounded-lg border border-edge p-3 text-sm leading-relaxed text-ink"
@@ -1079,6 +1101,15 @@ function AlbumReviewPage() {
               <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">Lyrics</p>
               {activeTrack && !isEditingLyrics && (
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setQuoteModeEnabled((prev) => !prev)}
+                    title={quoteModeEnabled ? 'Click-to-quote: on' : 'Click-to-quote: off'}
+                    className={`rounded px-1.5 text-sm font-bold leading-none ${quoteModeEnabled ? 'bg-cta text-white' : 'text-ink-3 hover:text-ink'}`}
+                    aria-label={quoteModeEnabled ? 'Disable click-to-quote' : 'Enable click-to-quote'}
+                  >
+                    "
+                  </button>
                   <button
                     type="button"
                     onClick={() => {
@@ -1173,9 +1204,28 @@ function AlbumReviewPage() {
                     {hasOverride && (
                       <p className="mb-1 text-xs font-semibold text-ink-2">Edited</p>
                     )}
-                    <pre className="whitespace-pre-wrap text-sm leading-relaxed text-ink">
-                      {displayed}
-                    </pre>
+                    {quoteModeEnabled ? (
+                      <div className="text-sm leading-relaxed text-ink">
+                        {displayed.split('\n').map((line, index) =>
+                          line.trim() ? (
+                            <button
+                              key={index}
+                              type="button"
+                              onClick={() => handleQuoteLine(line)}
+                              className="block w-full rounded px-1 py-0.5 text-left hover:bg-cta/10 hover:text-cta"
+                            >
+                              {line}
+                            </button>
+                          ) : (
+                            <div key={index} className="h-3" />
+                          )
+                        )}
+                      </div>
+                    ) : (
+                      <pre className="whitespace-pre-wrap text-sm leading-relaxed text-ink">
+                        {displayed}
+                      </pre>
+                    )}
                   </div>
                 ) : (
                   <p className="text-sm text-ink-2">No lyrics stored for this track.</p>
