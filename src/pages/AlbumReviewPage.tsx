@@ -354,20 +354,18 @@ function AlbumReviewPage() {
   }, [activeSectionKey, workspace])
 
   const handleQuoteLine = (line: string) => {
-    const textarea = activeTextareaRef.current
-    if (!textarea) return
-
-    const insert = `"${line}"\n`
-    const start = textarea.selectionStart
-    const end = textarea.selectionEnd
     const tab = activeSectionKey === CONCLUSION_KEY ? 'lyrically' : activeNotesTab
     const currentValue = tab === 'lyrically' ? activeDraft.notesLyrically : activeDraft.notesSonically
-    const newValue = currentValue.slice(0, start) + insert + currentValue.slice(end)
+    const separator = currentValue && !currentValue.endsWith('\n') ? '\n' : ''
+    const newValue = currentValue + separator + `"${line}"\n`
     handleNotesChange(tab, newValue)
 
     requestAnimationFrame(() => {
+      const textarea = activeTextareaRef.current
+      if (!textarea) return
       textarea.focus()
-      textarea.setSelectionRange(start + insert.length, start + insert.length)
+      textarea.setSelectionRange(newValue.length, newValue.length)
+      textarea.scrollTop = textarea.scrollHeight
     })
   }
 
