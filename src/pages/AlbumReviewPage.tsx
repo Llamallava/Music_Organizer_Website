@@ -1266,7 +1266,7 @@ function AlbumReviewPage() {
                               key={index}
                               type="button"
                               onClick={() => handleQuoteLine(line)}
-                              className="block w-full rounded px-1 py-0.5 text-left hover:bg-cta/10 hover:text-cta"
+                              className="lyric-quote-line block w-full rounded px-1 py-0.5 text-left"
                             >
                               {line}
                             </button>

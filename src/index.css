@@ -151,6 +151,11 @@ select option {
     0 3px 12px rgba(219, 39, 119, 0.1);
 }
 
+.lyric-quote-line:hover {
+  background-color: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.12);
+  color: hsl(var(--accent-h) var(--accent-s) calc(var(--accent-l) + 10%));
+}
+
 .tag-add-btn:hover {
   border-color: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.6) !important;
   color: hsl(var(--accent-h) var(--accent-s) calc(var(--accent-l) + 8%)) !important;
