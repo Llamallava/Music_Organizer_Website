@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
 import LinearBackButton from '../components/LinearBackButton'
+import { useAlbumAccent } from '../hooks/useAlbumAccent'
 import { getFriendsOverviewForCurrentUser, type FriendProfile } from '../lib/db/friendsData'
 import {
   getAlbumWorkspaceForCurrentUser,
@@ -157,6 +158,8 @@ function AlbumReviewPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [infoMessage, setInfoMessage] = useState<string | null>(null)
   const [quoteModeEnabled, setQuoteModeEnabled] = useState(false)
+
+  const accentColor = useAlbumAccent(workspace?.album.coverUrl)
 
   useEffect(() => {
     if (!userSavedAlbumId) {
@@ -339,6 +342,18 @@ function AlbumReviewPage() {
     activeDraft.notesSonically !== activeSavedDraft.notesSonically ||
     activeDraft.scoreInput !== activeSavedDraft.scoreInput ||
     activeDraft.isInterlude !== activeSavedDraft.isInterlude
+
+  const isDirtyForSection = (key: string): boolean => {
+    const draft = draftBySection[key]
+    const saved = savedBySection[key]
+    if (!draft || !saved) return false
+    return (
+      draft.notesLyrically !== saved.notesLyrically ||
+      draft.notesSonically !== saved.notesSonically ||
+      draft.scoreInput !== saved.scoreInput ||
+      draft.isInterlude !== saved.isInterlude
+    )
+  }
 
   const activeTrack = useMemo(() => {
     if (!workspace) {
@@ -775,20 +790,28 @@ function AlbumReviewPage() {
     )
   }
 
+  const accentStyle = accentColor
+    ? ({
+        '--accent-h': accentColor.h,
+        '--accent-s': `${accentColor.s}%`,
+        '--accent-l': `${accentColor.l}%`,
+      } as React.CSSProperties)
+    : undefined
+
   return (
-    <main className="flex h-screen flex-col overflow-hidden px-6 py-4">
+    <main className="flex h-screen flex-col overflow-hidden px-6 py-4" style={accentStyle}>
       <div className="mx-auto flex min-h-0 w-full max-w-[2400px] flex-1 flex-col">
         <LinearBackButton className="self-start" />
 
         <section className="mt-4 grid min-h-0 flex-1 gap-4 lg:grid-cols-[clamp(240px,18%,500px)_minmax(0,1fr)_clamp(280px,21%,560px)]">
           <aside className="flex min-h-0 flex-col gap-4">
-            <div className="rounded-xl border border-edge bg-surface p-4">
-              <div className="aspect-square w-full overflow-hidden rounded-lg bg-surface-2">
+            <div className="rounded-xl border border-edge bg-gradient-to-b from-[#1c1630] to-[#141020] p-4">
+              <div className="aspect-square w-full overflow-hidden rounded-lg bg-surface-2 accent-art-shadow">
                 <AlbumCover src={workspace.album.coverUrl} alt={`${workspace.album.title} cover`} loading="eager" />
               </div>
               <h1 className="mt-3 text-base font-bold text-ink">{workspace.album.title}</h1>
               <div className="flex items-center justify-between gap-2">
-                <p className="text-sm text-ink">{workspace.album.artistName}</p>
+                <p className="text-sm text-[#a78bfa]">{workspace.album.artistName}</p>
                 {activeTrack && (
                   <button
                     type="button"
@@ -816,8 +839,8 @@ function AlbumReviewPage() {
               </div>
             </div>
 
-            <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-edge bg-surface p-3">
-              <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-ink-3">Tracklist</p>
+            <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-edge bg-gradient-to-b from-[#1c1630] to-[#141020] p-3">
+              <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-[#a78bfa]">Tracklist</p>
               <div className="min-h-0 flex-1 space-y-1 overflow-auto pr-1">
                 {workspace.tracks.map((track) => {
                   const key = toTrackKey(track.trackNumber)
@@ -832,106 +855,97 @@ function AlbumReviewPage() {
                         setInfoMessage(null)
                         setErrorMessage(null)
                       }}
-                      className={`w-full rounded-lg px-3 py-2 text-left text-sm ${
-                        isActive ? 'bg-cta text-white' : 'bg-surface-2 text-ink hover:bg-surface-3'
+                      className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-shadow ${
+                        isActive ? 'track-active-glow text-white' : 'bg-surface-2 text-ink hover:bg-surface-3'
                       }`}
                     >
-                      <span className="mr-2 font-semibold">{track.trackNumber}.</span>
-                      {track.title}
+                      <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-bold tabular-nums ${
+                        isActive ? 'bg-white/20 text-white' : 'bg-surface-3 text-ink-3'
+                      }`}>
+                        {track.trackNumber}
+                      </span>
+                      <span className="flex-1 truncate">{track.title}</span>
+                      {!isActive && isDirtyForSection(key) && (
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" aria-label="Unsaved changes" />
+                      )}
                     </button>
                   )
                 })}
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveSectionKey(CONCLUSION_KEY)
-                    setInfoMessage(null)
-                    setErrorMessage(null)
-                  }}
-                  className={`w-full rounded-lg px-3 py-2 text-left text-sm font-semibold ${
-                    activeSectionKey === CONCLUSION_KEY
-                      ? 'bg-cta text-white'
-                      : 'bg-surface-2 text-pink hover:bg-surface-3'
-                  }`}
-                >
-                  Conclusion
-                </button>
+                <div className="mt-1 border-t border-edge/40 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveSectionKey(CONCLUSION_KEY)
+                      setInfoMessage(null)
+                      setErrorMessage(null)
+                    }}
+                    className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold transition-shadow ${
+                      activeSectionKey === CONCLUSION_KEY
+                        ? 'conclusion-active-glow text-white'
+                        : 'bg-surface-2 text-pink hover:bg-surface-3'
+                    }`}
+                  >
+                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-bold ${
+                      activeSectionKey === CONCLUSION_KEY ? 'bg-white/20 text-white' : 'bg-surface-3 text-pink/70'
+                    }`}>
+                      ★
+                    </span>
+                    <span className="flex-1">Conclusion</span>
+                    {activeSectionKey !== CONCLUSION_KEY && isDirtyForSection(CONCLUSION_KEY) && (
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" aria-label="Unsaved changes" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </aside>
 
-          <section className="flex min-h-0 flex-col rounded-xl border border-edge bg-surface p-4">
+          <section className="flex min-h-0 flex-col rounded-xl border border-edge bg-gradient-to-b from-[#1c1630] to-[#141020] p-4">
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-lg font-bold text-ink">
+                <h2
+                  className={`border-l-2 pl-3 text-lg font-bold text-ink ${!activeTrack ? 'border-pink' : ''}`}
+                  style={activeTrack ? { borderColor: 'hsl(var(--accent-h) var(--accent-s) var(--accent-l))' } : undefined}
+                >
                   {activeTrack ? `${activeTrack.trackNumber}. ${activeTrack.title}` : 'Conclusion'}
                 </h2>
               </div>
 
-              <div className="flex items-end gap-3">
-                {showSavedMark && <span className="pb-1 text-lg text-ok">✓</span>}
-                {isDirty && !isSaving && <p className="pb-1 text-xs text-warn">Unsaved changes</p>}
-                {activeTrack && (
-                  <div ref={tagPopoverRef} className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setIsTagPopoverOpen((prev) => !prev)}
-                      className="rounded-lg border border-edge bg-surface px-3 py-2 text-sm font-semibold text-ink hover:bg-surface-2"
-                    >
-                      Add a tag
-                    </button>
-                    {isTagPopoverOpen && (
-                      <div className="absolute right-0 top-full z-20 mt-1 w-64 rounded-xl border border-edge bg-surface p-3 shadow-lg">
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={tagInput}
-                            onChange={(event) => setTagInput(event.target.value)}
-                            onKeyDown={(event) => {
-                              if (event.key === 'Enter') {
-                                event.preventDefault()
-                                void handleAddTag().then((ok) => { if (ok) setIsTagPopoverOpen(false) })
-                              }
-                            }}
-                            placeholder="Tag name..."
-                            maxLength={50}
-                            autoFocus
-                            className="flex-1 rounded-md border border-edge px-3 py-1.5 text-sm"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => void handleAddTag().then((ok) => { if (ok) setIsTagPopoverOpen(false) })}
-                            disabled={isTagSaving || !tagInput.trim()}
-                            className="rounded-lg bg-cta px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
-                          >
-                            Add
-                          </button>
-                        </div>
-                        {tagErrorMessage && (
-                          <p className="mt-2 text-xs text-err">{tagErrorMessage}</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
+              <div className="flex items-center gap-2">
+                {showSavedMark && (
+                  <span className="accent-badge rounded-full border px-2 py-0.5 text-xs font-semibold">
+                    Saved ✓
+                  </span>
                 )}
-                <label className="text-sm font-semibold text-ink">
-                  Score / 10
-                  <input
-                    type="number"
-                    min={0}
-                    max={10}
-                    step={0.1}
-                    value={activeDraft.scoreInput}
-                    onChange={(event) => handleScoreChange(event.target.value)}
-                    className="mt-1 block w-24 rounded-md border border-edge px-2 py-1 text-sm"
-                  />
-                </label>
+                {isDirty && !isSaving && (
+                  <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-400">
+                    Unsaved
+                  </span>
+                )}
+
+                <div className="flex flex-col items-center">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Score</span>
+                  <div className="flex items-baseline gap-1">
+                    <input
+                      type="number"
+                      min={0}
+                      max={10}
+                      step={0.1}
+                      value={activeDraft.scoreInput}
+                      onChange={(event) => handleScoreChange(event.target.value)}
+                      placeholder="—"
+                      className="score-input"
+                    />
+                    <span className="text-sm font-semibold text-ink-3">/10</span>
+                  </div>
+                </div>
+
                 <button
                   type="button"
                   onClick={() => void handleSaveCurrentSection()}
                   disabled={isSaving || isSavingAll || !isDirty}
-                  className="rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                  className="btn-gradient-cta rounded-lg px-4 py-2 text-sm font-semibold text-white"
                 >
                   {isSaving ? 'Saving...' : 'Save'}
                 </button>
@@ -939,7 +953,7 @@ function AlbumReviewPage() {
                   type="button"
                   onClick={() => void handleSaveAllSections()}
                   disabled={isSaving || isSavingAll}
-                  className="rounded-lg border border-edge bg-surface px-4 py-2 text-sm font-semibold text-ink hover:bg-surface-2 disabled:opacity-60"
+                  className="rounded-lg border border-edge/70 bg-transparent px-3 py-2 text-xs font-semibold text-ink-3 hover:border-edge hover:text-ink disabled:opacity-50"
                 >
                   {isSavingAll ? 'Saving all...' : 'Save all'}
                 </button>
@@ -957,7 +971,7 @@ function AlbumReviewPage() {
                     </svg>
                   </button>
                   {isActionsMenuOpen && (
-                    <div className="absolute right-0 top-full z-20 mt-1 w-56 overflow-hidden rounded-xl border border-edge bg-surface p-1 shadow-lg">
+                    <div className="absolute right-0 top-full z-20 mt-1 w-56 overflow-hidden rounded-xl border border-edge bg-gradient-to-b from-[#1c1630] to-[#141020] p-1 shadow-lg">
                       {activeTrack && (
                         <button
                           type="button"
@@ -1012,18 +1026,18 @@ function AlbumReviewPage() {
 
             <div className="mb-3 flex items-center gap-3">
               {activeTrack && (
-                <div className="flex rounded-md border border-edge overflow-hidden text-sm font-semibold">
+                <div className="flex rounded-full bg-surface-3 p-1 text-sm font-semibold">
                   <button
                     type="button"
                     onClick={() => setActiveNotesTab('lyrically')}
-                    className={`px-3 py-1 ${activeNotesTab === 'lyrically' ? 'bg-cta text-white' : 'bg-surface text-ink hover:bg-surface-2'}`}
+                    className={`rounded-full px-4 py-1 transition-all ${activeNotesTab === 'lyrically' ? 'tab-btn-active accent-tab-glow text-white' : 'text-ink-2 hover:text-ink'}`}
                   >
                     Lyrically
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveNotesTab('sonically')}
-                    className={`px-3 py-1 border-l border-edge ${activeNotesTab === 'sonically' ? 'bg-cta text-white' : 'bg-surface text-ink hover:bg-surface-2'}`}
+                    className={`rounded-full px-4 py-1 transition-all ${activeNotesTab === 'sonically' ? 'tab-btn-active accent-tab-glow text-white' : 'text-ink-2 hover:text-ink'}`}
                   >
                     Sonically
                   </button>
@@ -1049,35 +1063,77 @@ function AlbumReviewPage() {
                 ref={activeTextareaRef}
                 value={activeNotesTab === 'lyrically' ? activeDraft.notesLyrically : activeDraft.notesSonically}
                 onChange={(event) => handleNotesChange(activeNotesTab, event.target.value)}
-                className="min-h-0 flex-1 w-full resize-none rounded-lg border border-edge p-3 text-sm leading-relaxed text-ink"
+                style={{ borderLeftColor: 'hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.5)' }}
+                className="min-h-0 flex-1 w-full resize-none rounded-lg border border-edge border-l-2 p-3 text-sm leading-relaxed text-ink"
               />
             ) : (
               <textarea
                 ref={activeTextareaRef}
                 value={activeDraft.notesLyrically}
                 onChange={(event) => handleNotesChange('lyrically', event.target.value)}
-                className="min-h-0 flex-1 w-full resize-none rounded-lg border border-edge p-3 text-sm leading-relaxed text-ink"
+                className="min-h-0 flex-1 w-full resize-none rounded-lg border border-edge border-l-2 border-l-pink/50 p-3 text-sm leading-relaxed text-ink"
               />
             )}
 
-            {activeTrack && (tagsByTrack[activeTrack.trackNumber] ?? []).length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-2">
+            {activeTrack && (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 {(tagsByTrack[activeTrack.trackNumber] ?? []).map((tag) => (
                   <span
                     key={tag}
-                    className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-3 py-1 text-xs font-semibold text-ink-2"
+                    className="inline-flex items-center gap-1 rounded-full tag-pill px-3 py-1 text-xs font-semibold"
                   >
                     {tag}
                     <button
                       type="button"
                       onClick={() => void handleRemoveTag(tag)}
-                      className="ml-1 text-ink-3 hover:text-ink"
+                      className="ml-1 text-ink-3 hover:text-[#6ee7b7]"
                       aria-label={`Remove tag ${tag}`}
                     >
                       ×
                     </button>
                   </span>
                 ))}
+                <div ref={tagPopoverRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsTagPopoverOpen((prev) => !prev)}
+                    className="tag-add-btn inline-flex items-center gap-1 rounded-full border border-dashed border-edge px-3 py-1 text-xs font-semibold text-ink-3 transition-colors"
+                  >
+                    + Tag
+                  </button>
+                  {isTagPopoverOpen && (
+                    <div className="absolute left-0 top-full z-20 mt-1 w-64 rounded-xl border border-edge bg-gradient-to-b from-[#1c1630] to-[#141020] p-3 shadow-lg">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={tagInput}
+                          onChange={(event) => setTagInput(event.target.value)}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter') {
+                              event.preventDefault()
+                              void handleAddTag().then((ok) => { if (ok) setIsTagPopoverOpen(false) })
+                            }
+                          }}
+                          placeholder="Tag name..."
+                          maxLength={50}
+                          autoFocus
+                          className="flex-1 rounded-md border border-edge px-3 py-1.5 text-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => void handleAddTag().then((ok) => { if (ok) setIsTagPopoverOpen(false) })}
+                          disabled={isTagSaving || !tagInput.trim()}
+                          className="btn-gradient-cta rounded-lg px-3 py-1.5 text-sm font-semibold text-white"
+                        >
+                          Add
+                        </button>
+                      </div>
+                      {tagErrorMessage && (
+                        <p className="mt-2 text-xs text-err">{tagErrorMessage}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -1094,16 +1150,16 @@ function AlbumReviewPage() {
             )}
           </section>
 
-          <aside className="flex min-h-0 flex-col rounded-xl border border-edge bg-surface p-4">
+          <aside className="flex min-h-0 flex-col rounded-xl border border-edge bg-gradient-to-b from-[#1c1630] to-[#141020] p-4">
             <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">Lyrics</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#a78bfa]">Lyrics</p>
               {activeTrack && !isEditingLyrics && (
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setQuoteModeEnabled((prev) => !prev)}
                     title={quoteModeEnabled ? 'Click-to-quote: on' : 'Click-to-quote: off'}
-                    className={`rounded px-1.5 text-sm font-bold leading-none ${quoteModeEnabled ? 'bg-cta text-white' : 'text-ink-3 hover:text-ink'}`}
+                    className={`rounded px-1.5 text-sm font-bold leading-none transition-all ${quoteModeEnabled ? 'quote-active' : 'text-ink-3 hover:text-ink'}`}
                     aria-label={quoteModeEnabled ? 'Disable click-to-quote' : 'Enable click-to-quote'}
                   >
                     "
@@ -1139,7 +1195,7 @@ function AlbumReviewPage() {
                       )}
                     </button>
                     {isLyricsMenuOpen && (
-                      <div className="absolute right-0 top-full z-20 mt-1 min-w-[140px] rounded-lg border border-edge bg-surface shadow-lg">
+                      <div className="absolute right-0 top-full z-20 mt-1 min-w-[140px] rounded-lg border border-edge bg-gradient-to-b from-[#1c1630] to-[#141020] shadow-lg">
                         <button
                           type="button"
                           onClick={() => void handleRefetchLyrics()}
@@ -1170,7 +1226,7 @@ function AlbumReviewPage() {
                       type="button"
                       onClick={() => void handleSaveLyrics()}
                       disabled={isSavingLyrics}
-                      className="rounded-lg bg-cta px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
+                      className="btn-gradient-cta rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
                     >
                       {isSavingLyrics ? 'Saving...' : 'Save'}
                     </button>
@@ -1249,7 +1305,7 @@ function AlbumReviewPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="recommend-track-title"
-            className="w-full max-w-md rounded-xl border border-edge bg-surface p-5 shadow-xl"
+            className="w-full max-w-md rounded-xl border border-edge bg-gradient-to-b from-[#1c1630] to-[#141020] p-5 shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
             <h2 id="recommend-track-title" className="text-lg font-bold text-ink">
@@ -1306,7 +1362,7 @@ function AlbumReviewPage() {
                 type="button"
                 onClick={() => void handleSendRecommendation()}
                 disabled={isRecommendationSubmitting || friends.length === 0}
-                className="rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                className="btn-gradient-cta rounded-lg px-4 py-2 text-sm font-semibold text-white"
               >
                 {isRecommendationSubmitting ? 'Sending...' : 'Send Recommendation'}
               </button>
@@ -1328,7 +1384,7 @@ function AlbumReviewPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="add-to-playlist-title"
-            className="w-full max-w-md rounded-xl border border-edge bg-surface p-5 shadow-xl"
+            className="w-full max-w-md rounded-xl border border-edge bg-gradient-to-b from-[#1c1630] to-[#141020] p-5 shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
             <h2 id="add-to-playlist-title" className="text-lg font-bold text-ink">

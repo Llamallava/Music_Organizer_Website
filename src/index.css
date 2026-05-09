@@ -37,6 +37,11 @@
     radial-gradient(ellipse at 15% 30%, rgba(124, 58, 237, 0.2) 0%, transparent 55%),
     radial-gradient(ellipse at 85% 75%, rgba(219, 39, 119, 0.12) 0%, transparent 50%),
     #0c0a15;
+
+  /* Album accent — defaults to emerald green; overridden per-page via JS */
+  --accent-h: 160;
+  --accent-s: 75%;
+  --accent-l: 55%;
 }
 
 * {
@@ -68,4 +73,119 @@ textarea::placeholder {
 select option {
   background-color: #1c1630;
   color: #ede9fe;
+}
+
+/* === Decorative UI — driven by --accent-h, --accent-s, --accent-l ===
+   All lightness values are expressed as offsets from --accent-l so the
+   actual color from the album art is used, not a predetermined shade. */
+
+.btn-gradient-cta {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--accent-h) var(--accent-s) calc(var(--accent-l) - 18%)) 0%,
+    hsl(var(--accent-h) var(--accent-s) var(--accent-l)) 55%,
+    hsl(var(--accent-h) var(--accent-s) calc(var(--accent-l) + 12%)) 100%
+  );
+  box-shadow: 0 0 14px hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.4);
+  transition: box-shadow 0.2s ease, opacity 0.15s ease;
+}
+.btn-gradient-cta:hover:not(:disabled) {
+  box-shadow: 0 0 22px hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.65);
+}
+.btn-gradient-cta:disabled {
+  opacity: 0.45;
+}
+
+.track-active-glow {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--accent-h) var(--accent-s) calc(var(--accent-l) - 28%)) 0%,
+    hsl(var(--accent-h) var(--accent-s) calc(var(--accent-l) - 12%)) 45%,
+    hsl(var(--accent-h) var(--accent-s) var(--accent-l)) 100%
+  );
+  box-shadow: 0 0 10px hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.conclusion-active-glow {
+  background: linear-gradient(135deg, #be185d 0%, #db2777 55%, #f472b6 100%);
+  box-shadow: 0 0 10px rgba(219, 39, 119, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.tab-btn-active {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--accent-h) var(--accent-s) calc(var(--accent-l) - 18%)) 0%,
+    hsl(var(--accent-h) var(--accent-s) var(--accent-l)) 100%
+  );
+}
+
+.accent-tab-glow {
+  box-shadow: 0 0 10px hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.35);
+}
+
+.tag-pill {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.14) 0%,
+    hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.07) 100%
+  );
+  border: 1px solid hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.28);
+  color: hsl(var(--accent-h) var(--accent-s) calc(var(--accent-l) + 10%));
+}
+
+.quote-active {
+  background: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.14);
+  color: hsl(var(--accent-h) var(--accent-s) calc(var(--accent-l) + 10%));
+  box-shadow: 0 0 8px hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.35);
+}
+
+.accent-badge {
+  color: hsl(var(--accent-h) var(--accent-s) calc(var(--accent-l) + 8%));
+  border-color: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.3);
+  background-color: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.1);
+}
+
+.accent-art-shadow {
+  box-shadow: 0 8px 30px hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.22),
+    0 3px 12px rgba(219, 39, 119, 0.1);
+}
+
+.tag-add-btn:hover {
+  border-color: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.6) !important;
+  color: hsl(var(--accent-h) var(--accent-s) calc(var(--accent-l) + 8%)) !important;
+}
+
+/* Score display — borderless large number */
+.score-input {
+  background: transparent;
+  border: none;
+  color: hsl(var(--accent-h) var(--accent-s) calc(var(--accent-l) + 8%));
+  text-shadow: 0 0 12px hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.4);
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+  text-align: right;
+  width: 3.5rem;
+  -moz-appearance: textfield;
+  appearance: textfield;
+  padding: 0;
+}
+.score-input::-webkit-outer-spin-button,
+.score-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+input.score-input:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+
+textarea:focus,
+input[type='number']:focus,
+input[type='text']:focus {
+  outline: none;
+  border-color: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.5) !important;
+  box-shadow: 0 0 0 2px hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.1),
+    0 0 14px hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.06) !important;
 }
