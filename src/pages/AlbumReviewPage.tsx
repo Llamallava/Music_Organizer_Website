@@ -804,13 +804,13 @@ function AlbumReviewPage() {
         <LinearBackButton className="self-start" />
 
         <section className="mt-4 grid min-h-0 flex-1 gap-4 lg:grid-cols-[clamp(240px,18%,500px)_minmax(0,1fr)_clamp(280px,21%,560px)]">
-          <aside className="flex min-h-0 flex-col gap-4">
-            <div className="rounded-xl border border-edge bg-gradient-to-b from-[#1c1630] to-[#141020] p-4">
-              <div className="aspect-square w-full overflow-hidden rounded-lg bg-surface-2 accent-art-shadow">
+          <aside className="flex min-h-0 flex-col gap-3">
+            <div className="pb-1">
+              <div className="aspect-square w-full overflow-hidden rounded-xl bg-surface-2 accent-art-shadow">
                 <AlbumCover src={workspace.album.coverUrl} alt={`${workspace.album.title} cover`} loading="eager" />
               </div>
-              <h1 className="mt-3 text-base font-bold text-ink">{workspace.album.title}</h1>
-              <div className="flex items-center justify-between gap-2">
+              <h1 className="mt-3 px-1 text-base font-bold text-ink">{workspace.album.title}</h1>
+              <div className="flex items-center justify-between gap-2 px-1">
                 <p className="text-sm text-[#a78bfa]">{workspace.album.artistName}</p>
                 {activeTrack && (
                   <button
@@ -839,9 +839,9 @@ function AlbumReviewPage() {
               </div>
             </div>
 
-            <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-edge bg-gradient-to-b from-[#1c1630] to-[#141020] p-3">
-              <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-[#a78bfa]">Tracklist</p>
-              <div className="min-h-0 flex-1 space-y-1 overflow-auto pr-1">
+            <div className="flex min-h-0 flex-1 flex-col">
+              <p className="pb-2 pl-1 text-xs font-semibold uppercase tracking-wide text-[#a78bfa]">Tracklist</p>
+              <div className="min-h-0 flex-1 overflow-auto pr-1">
                 {workspace.tracks.map((track) => {
                   const key = toTrackKey(track.trackNumber)
                   const isActive = key === activeSectionKey
@@ -855,12 +855,13 @@ function AlbumReviewPage() {
                         setInfoMessage(null)
                         setErrorMessage(null)
                       }}
-                      className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-shadow ${
-                        isActive ? 'track-active-glow text-white' : 'bg-surface-2 text-ink hover:bg-surface-3'
+                      style={isActive ? { borderLeftColor: 'hsl(var(--accent-h) var(--accent-s) var(--accent-l))' } : undefined}
+                      className={`flex w-full items-center gap-2.5 border-l-2 py-1.5 pl-2 pr-2 text-left text-sm transition-all ${
+                        isActive ? 'track-item-active text-white' : 'border-l-transparent text-ink-2 hover:border-l-edge hover:text-ink'
                       }`}
                     >
-                      <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-bold tabular-nums ${
-                        isActive ? 'bg-white/20 text-white' : 'bg-surface-3 text-ink-3'
+                      <span className={`w-5 shrink-0 text-right text-[11px] font-bold tabular-nums leading-none ${
+                        isActive ? 'text-white/70' : 'text-ink-3'
                       }`}>
                         {track.trackNumber}
                       </span>
@@ -872,7 +873,7 @@ function AlbumReviewPage() {
                   )
                 })}
 
-                <div className="mt-1 border-t border-edge/40 pt-1">
+                <div className="mt-1 border-t border-edge/30 pt-1">
                   <button
                     type="button"
                     onClick={() => {
@@ -880,14 +881,14 @@ function AlbumReviewPage() {
                       setInfoMessage(null)
                       setErrorMessage(null)
                     }}
-                    className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold transition-shadow ${
+                    className={`flex w-full items-center gap-2.5 border-l-2 py-1.5 pl-2 pr-2 text-left text-sm font-semibold transition-all ${
                       activeSectionKey === CONCLUSION_KEY
-                        ? 'conclusion-active-glow text-white'
-                        : 'bg-surface-2 text-pink hover:bg-surface-3'
+                        ? 'border-l-pink text-white'
+                        : 'border-l-transparent text-pink hover:border-l-pink/50 hover:text-pink'
                     }`}
                   >
-                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-bold ${
-                      activeSectionKey === CONCLUSION_KEY ? 'bg-white/20 text-white' : 'bg-surface-3 text-pink/70'
+                    <span className={`shrink-0 text-[11px] font-bold leading-none ${
+                      activeSectionKey === CONCLUSION_KEY ? 'text-white/70' : 'text-pink/70'
                     }`}>
                       ★
                     </span>
@@ -901,18 +902,26 @@ function AlbumReviewPage() {
             </div>
           </aside>
 
-          <section className="flex min-h-0 flex-col rounded-xl border border-edge bg-gradient-to-b from-[#1c1630] to-[#141020] p-4">
-            <div className="mb-3 flex items-start justify-between gap-3">
-              <div>
-                <h2
-                  className={`border-l-2 pl-3 text-lg font-bold text-ink ${!activeTrack ? 'border-pink' : ''}`}
-                  style={activeTrack ? { borderColor: 'hsl(var(--accent-h) var(--accent-s) var(--accent-l))' } : undefined}
-                >
-                  {activeTrack ? `${activeTrack.trackNumber}. ${activeTrack.title}` : 'Conclusion'}
+          <section className="writing-panel flex min-h-0 flex-col rounded-xl border border-edge p-4">
+            <div className="mb-3">
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <h2 className="text-2xl font-bold leading-tight text-ink">
+                  {activeTrack ? (
+                    <>
+                      <span
+                        className="mr-1.5 text-sm font-semibold tabular-nums"
+                        style={{ color: 'hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.7)' }}
+                      >
+                        {activeTrack.trackNumber}.
+                      </span>
+                      {activeTrack.title}
+                    </>
+                  ) : (
+                    'Conclusion'
+                  )}
                 </h2>
-              </div>
 
-              <div className="flex items-center gap-2">
+                <div className="flex shrink-0 items-center gap-2">
                 {showSavedMark && (
                   <span className="accent-badge rounded-full border px-2 py-0.5 text-xs font-semibold">
                     Saved ✓
@@ -971,7 +980,7 @@ function AlbumReviewPage() {
                     </svg>
                   </button>
                   {isActionsMenuOpen && (
-                    <div className="absolute right-0 top-full z-20 mt-1 w-56 overflow-hidden rounded-xl border border-edge bg-gradient-to-b from-[#1c1630] to-[#141020] p-1 shadow-lg">
+                    <div className="absolute right-0 top-full z-20 mt-1 w-56 overflow-hidden rounded-xl border border-edge bg-gradient-to-b from-[#141028] to-[#0e0c1c] p-1 shadow-lg">
                       {activeTrack && (
                         <button
                           type="button"
@@ -1022,6 +1031,15 @@ function AlbumReviewPage() {
                   )}
                 </div>
               </div>
+            </div>
+            <div
+              className="h-[2px] rounded-full"
+              style={{
+                background: activeTrack
+                  ? 'linear-gradient(to right, hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.7), hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.12) 65%, transparent)'
+                  : 'linear-gradient(to right, rgba(219, 39, 119, 0.7), rgba(219, 39, 119, 0.12) 65%, transparent)',
+              }}
+            />
             </div>
 
             <div className="mb-3 flex items-center gap-3">
@@ -1102,7 +1120,7 @@ function AlbumReviewPage() {
                     + Tag
                   </button>
                   {isTagPopoverOpen && (
-                    <div className="absolute left-0 top-full z-20 mt-1 w-64 rounded-xl border border-edge bg-gradient-to-b from-[#1c1630] to-[#141020] p-3 shadow-lg">
+                    <div className="absolute left-0 top-full z-20 mt-1 w-64 rounded-xl border border-edge bg-gradient-to-b from-[#141028] to-[#0e0c1c] p-3 shadow-lg">
                       <div className="flex gap-2">
                         <input
                           type="text"
@@ -1150,7 +1168,7 @@ function AlbumReviewPage() {
             )}
           </section>
 
-          <aside className="flex min-h-0 flex-col rounded-xl border border-edge bg-gradient-to-b from-[#1c1630] to-[#141020] p-4">
+          <aside className="flex min-h-0 flex-col rounded-xl border border-edge/60 bg-gradient-to-b from-[#0e0c1c] to-[#090710] p-4">
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-[#a78bfa]">Lyrics</p>
               {activeTrack && !isEditingLyrics && (
@@ -1195,7 +1213,7 @@ function AlbumReviewPage() {
                       )}
                     </button>
                     {isLyricsMenuOpen && (
-                      <div className="absolute right-0 top-full z-20 mt-1 min-w-[140px] rounded-lg border border-edge bg-gradient-to-b from-[#1c1630] to-[#141020] shadow-lg">
+                      <div className="absolute right-0 top-full z-20 mt-1 min-w-[140px] rounded-lg border border-edge bg-gradient-to-b from-[#141028] to-[#0e0c1c] shadow-lg">
                         <button
                           type="button"
                           onClick={() => void handleRefetchLyrics()}
@@ -1305,7 +1323,7 @@ function AlbumReviewPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="recommend-track-title"
-            className="w-full max-w-md rounded-xl border border-edge bg-gradient-to-b from-[#1c1630] to-[#141020] p-5 shadow-xl"
+            className="w-full max-w-md rounded-xl border border-edge bg-gradient-to-b from-[#141028] to-[#0e0c1c] p-5 shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
             <h2 id="recommend-track-title" className="text-lg font-bold text-ink">
@@ -1384,7 +1402,7 @@ function AlbumReviewPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="add-to-playlist-title"
-            className="w-full max-w-md rounded-xl border border-edge bg-gradient-to-b from-[#1c1630] to-[#141020] p-5 shadow-xl"
+            className="w-full max-w-md rounded-xl border border-edge bg-gradient-to-b from-[#141028] to-[#0e0c1c] p-5 shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
             <h2 id="add-to-playlist-title" className="text-lg font-bold text-ink">

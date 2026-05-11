@@ -2,10 +2,10 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-surface: #141020;
-  --color-surface-2: #1c1630;
-  --color-surface-3: #252040;
-  --color-edge: #2a2150;
+  --color-surface: #0e0c1c;
+  --color-surface-2: #141028;
+  --color-surface-3: #1c1836;
+  --color-edge: #221e45;
   --color-cta: #7c3aed;
   --color-pink: #db2777;
   --color-mint: #86efac;
@@ -36,7 +36,7 @@
   background:
     radial-gradient(ellipse at 15% 30%, rgba(124, 58, 237, 0.2) 0%, transparent 55%),
     radial-gradient(ellipse at 85% 75%, rgba(219, 39, 119, 0.12) 0%, transparent 50%),
-    #0c0a15;
+    #07050f;
 
   /* Album accent — defaults to emerald green; overridden per-page via JS */
   --accent-h: 160;
@@ -61,7 +61,7 @@ body {
 input,
 textarea,
 select {
-  background-color: #1c1630;
+  background-color: #141028;
   color: #ede9fe;
 }
 
@@ -71,7 +71,7 @@ textarea::placeholder {
 }
 
 select option {
-  background-color: #1c1630;
+  background-color: #141028;
   color: #ede9fe;
 }
 
@@ -147,8 +147,14 @@ select option {
 }
 
 .accent-art-shadow {
-  box-shadow: 0 8px 30px hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.22),
-    0 3px 12px rgba(219, 39, 119, 0.1);
+  box-shadow:
+    0 16px 60px hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.45),
+    0 4px 20px rgba(219, 39, 119, 0.12),
+    0 0 120px hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.22);
+}
+
+.track-item-active {
+  border-left-color: hsl(var(--accent-h) var(--accent-s) var(--accent-l));
 }
 
 .lyric-quote-line:hover {
@@ -159,6 +165,13 @@ select option {
 .tag-add-btn:hover {
   border-color: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.6) !important;
   color: hsl(var(--accent-h) var(--accent-s) calc(var(--accent-l) + 8%)) !important;
+}
+
+/* Center writing panel — accent ambient glow from top */
+.writing-panel {
+  background:
+    radial-gradient(ellipse at 50% -15%, hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.1) 0%, transparent 52%),
+    linear-gradient(to bottom, #141028, #0e0c1c);
 }
 
 /* Score display — borderless large number */
