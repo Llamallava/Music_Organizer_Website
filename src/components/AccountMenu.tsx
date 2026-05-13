@@ -292,7 +292,7 @@ function AccountMenu() {
   }
 
   return (
-    <div ref={containerRef} className="fixed right-4 top-4 z-50 flex items-center gap-1.5">
+    <div ref={containerRef} className="flex items-center gap-1.5">
 
       {/* Notification bell */}
       <div className="relative">

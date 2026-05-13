@@ -1,7 +1,6 @@
 import type { FormEvent } from 'react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import LinearBackButton from '../components/LinearBackButton'
 import { useAuthSession } from '../hooks/useAuthSession'
 import { supabase } from '../lib/supabaseClient'
 
@@ -79,19 +78,29 @@ function AuthPage() {
     }
   }
 
-  return (
-    <main className="flex min-h-screen items-center justify-center px-6">
-      <div className="w-full max-w-md rounded-xl border border-edge bg-surface p-6">
-        <LinearBackButton className="mb-4" />
+  const inputStyle: React.CSSProperties = {
+    display: 'block',
+    width: '100%',
+    borderRadius: 6,
+    border: '1px solid #2a2548',
+    padding: '8px 12px',
+    fontSize: 13,
+    marginTop: 6,
+  }
 
-        <h1 className="text-2xl font-bold text-ink">
+  return (
+    <main style={{ display: 'flex', minHeight: 'calc(100vh - var(--nav-h))', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
+      <div className="vco-panel" style={{ width: '100%', maxWidth: 420, padding: '28px 28px 24px' }}>
+        <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, color: '#ede9fe', marginBottom: 4 }}>
           {mode === 'sign-in' ? 'Sign In' : 'Create Account'}
         </h1>
-        <p className="mt-2 text-sm text-ink">Use your email and password to continue.</p>
+        <p style={{ fontSize: 12, color: '#7c6fad', fontFamily: "'JetBrains Mono', monospace", marginBottom: 20 }}>
+          Use your email and password to continue.
+        </p>
 
-        <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-3">
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {mode === 'sign-up' && (
-            <label className="text-sm font-semibold text-ink">
+            <label style={{ fontSize: 12, fontWeight: 600, color: '#c4b5fd' }}>
               Username
               <input
                 type="text"
@@ -101,12 +110,12 @@ function AuthPage() {
                 required
                 minLength={3}
                 maxLength={32}
-                className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
+                style={inputStyle}
               />
             </label>
           )}
 
-          <label className="text-sm font-semibold text-ink">
+          <label style={{ fontSize: 12, fontWeight: 600, color: '#c4b5fd' }}>
             Email
             <input
               type="email"
@@ -114,11 +123,11 @@ function AuthPage() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
-              className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
+              style={inputStyle}
             />
           </label>
 
-          <label className="text-sm font-semibold text-ink">
+          <label style={{ fontSize: 12, fontWeight: 600, color: '#c4b5fd' }}>
             Password
             <input
               type="password"
@@ -127,26 +136,23 @@ function AuthPage() {
               onChange={(event) => setPassword(event.target.value)}
               required
               minLength={8}
-              className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
+              style={inputStyle}
             />
           </label>
 
           {errorMessage && (
-            <div className="rounded-lg border border-err-edge bg-err-bg p-3 text-sm text-err">
-              {errorMessage}
-            </div>
+            <div className="vco-msg-err">{errorMessage}</div>
           )}
 
           {infoMessage && (
-            <div className="rounded-lg border border-ok-edge bg-ok-bg p-3 text-sm text-ok">
-              {infoMessage}
-            </div>
+            <div className="vco-msg-ok">{infoMessage}</div>
           )}
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            className="vco-tbtn primary"
+            style={{ width: '100%' }}
           >
             {isSubmitting
               ? 'Please wait...'
@@ -166,7 +172,7 @@ function AuthPage() {
               setUsername('')
             }
           }}
-          className="mt-4 text-sm font-semibold text-ink-2 underline"
+          style={{ marginTop: 16, fontSize: 12, color: '#7c6fad', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
           {mode === 'sign-in'
             ? "Don't have an account? Create one"

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
-import LinearBackButton from '../components/LinearBackButton'
 import { getFriendsOverviewForCurrentUser, type FriendProfile } from '../lib/db/friendsData'
 import {
   listSavedAlbumsForCurrentUser,
@@ -36,70 +35,43 @@ function ReviewsPage() {
 
   useEffect(() => {
     let isActive = true
-
     const load = async () => {
       setIsLoading(true)
       setErrorMessage(null)
-
       try {
         const [savedAlbums, friendsOverview, currentBackground] = await Promise.all([
           listSavedAlbumsForCurrentUser(),
           getFriendsOverviewForCurrentUser(),
           getHomeBackgroundForCurrentUser(),
         ])
-
-        if (!isActive) {
-          return
-        }
-
+        if (!isActive) return
         setAlbums(savedAlbums)
         setFriends(friendsOverview.friends)
         setSelectedFriendUserId(friendsOverview.friends[0]?.userId ?? '')
-
         const matchingAlbum = savedAlbums.find((a) => a.coverUrl === currentBackground)
         setBackgroundAlbumId(matchingAlbum?.userSavedAlbumId ?? null)
       } catch (error) {
-        if (!isActive) {
-          return
-        }
+        if (!isActive) return
         setErrorMessage(error instanceof Error ? error.message : 'Failed to load albums.')
       } finally {
-        if (isActive) {
-          setIsLoading(false)
-        }
+        if (isActive) setIsLoading(false)
       }
     }
-
     void load()
-
-    return () => {
-      isActive = false
-    }
+    return () => { isActive = false }
   }, [])
 
   useEffect(() => {
-    if (!activeMenuAlbumId) {
-      return
-    }
-
+    if (!activeMenuAlbumId) return
     const handlePointerDown = (event: PointerEvent) => {
-      if (!(event.target instanceof Node)) {
-        return
-      }
-      if (!menuRef.current?.contains(event.target)) {
-        setActiveMenuAlbumId(null)
-      }
+      if (!(event.target instanceof Node)) return
+      if (!menuRef.current?.contains(event.target)) setActiveMenuAlbumId(null)
     }
-
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setActiveMenuAlbumId(null)
-      }
+      if (event.key === 'Escape') setActiveMenuAlbumId(null)
     }
-
     document.addEventListener('pointerdown', handlePointerDown)
     document.addEventListener('keydown', handleKeyDown)
-
     return () => {
       document.removeEventListener('pointerdown', handlePointerDown)
       document.removeEventListener('keydown', handleKeyDown)
@@ -114,25 +86,17 @@ function ReviewsPage() {
   }
 
   const closeModal = () => {
-    if (isSubmitting) {
-      return
-    }
+    if (isSubmitting) return
     setPendingAction(null)
     setModalError(null)
     setResetInput('')
   }
 
   const handleRemove = async () => {
-    if (!pendingAction || pendingAction.type !== 'remove') {
-      return
-    }
-    if (resetInput !== pendingAction.album.title) {
-      return
-    }
-
+    if (!pendingAction || pendingAction.type !== 'remove') return
+    if (resetInput !== pendingAction.album.title) return
     setIsSubmitting(true)
     setModalError(null)
-
     try {
       await removeAlbumForCurrentUser(pendingAction.album.userSavedAlbumId)
       setAlbums((prev) => prev.filter((a) => a.userSavedAlbumId !== pendingAction.album.userSavedAlbumId))
@@ -145,13 +109,9 @@ function ReviewsPage() {
   }
 
   const handleRecommend = async () => {
-    if (!pendingAction || pendingAction.type !== 'recommend') {
-      return
-    }
-
+    if (!pendingAction || pendingAction.type !== 'recommend') return
     setIsSubmitting(true)
     setModalError(null)
-
     try {
       await sendRecommendationForCurrentUser({
         friendUserId: selectedFriendUserId,
@@ -168,16 +128,10 @@ function ReviewsPage() {
   }
 
   const handleReset = async () => {
-    if (!pendingAction || pendingAction.type !== 'reset') {
-      return
-    }
-    if (resetInput !== pendingAction.album.title) {
-      return
-    }
-
+    if (!pendingAction || pendingAction.type !== 'reset') return
+    if (resetInput !== pendingAction.album.title) return
     setIsSubmitting(true)
     setModalError(null)
-
     try {
       await resetAlbumDataForCurrentUser(pendingAction.album.userSavedAlbumId)
       setPendingAction(null)
@@ -190,10 +144,8 @@ function ReviewsPage() {
 
   const handleSetBackground = async (album: SavedAlbumCard) => {
     setActiveMenuAlbumId(null)
-
     const isAlreadyBackground = backgroundAlbumId === album.userSavedAlbumId
     const nextCoverUrl = isAlreadyBackground ? null : (album.coverUrl ?? null)
-
     try {
       await setHomeBackgroundForCurrentUser(nextCoverUrl)
       setBackgroundAlbumId(isAlreadyBackground ? null : album.userSavedAlbumId)
@@ -210,16 +162,15 @@ function ReviewsPage() {
     : albums
 
   return (
-    <main className="min-h-screen px-6 py-8">
+    <main className="min-h-screen px-6 py-6">
       <div className="mx-auto w-full max-w-7xl">
         <div className="flex items-center gap-3">
-          <LinearBackButton />
           <button
             type="button"
             onClick={() => navigate('/reviews/add')}
-            className="rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white"
+            className="vco-tbtn primary"
           >
-            Add Album
+            + Add Album
           </button>
         </div>
 
@@ -229,33 +180,30 @@ function ReviewsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search albums or artists..."
-            className="w-full rounded-lg border border-edge bg-surface px-4 py-2 text-sm text-ink placeholder:text-ink-2 focus:outline-none focus:ring-2 focus:ring-cta"
+            className="w-full rounded border border-[#2a2548] bg-[#100d22] px-4 py-2 text-sm text-ink placeholder:text-ink-3 focus:outline-none"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
           />
         </div>
 
         {(isLoading || (!errorMessage && albums.length > 0 && loadedCovers.size < albums.filter((a) => a.coverUrl).length)) && (
           <div className="mt-12 flex justify-center">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-surface-2 border-t-cta" />
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#2a2548] border-t-ink-2" />
           </div>
         )}
 
         {!isLoading && errorMessage && (
-          <div className="mt-6 rounded-lg border border-err-edge bg-err-bg p-4 text-sm text-err">
+          <div className="vco-msg-err" style={{ marginTop: 20 }}>
             <p>Could not load albums.</p>
-            <p className="mt-1">{errorMessage}</p>
+            <p style={{ marginTop: 4 }}>{errorMessage}</p>
           </div>
         )}
 
         {!isLoading && !errorMessage && albums.length === 0 && (
-          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">
-            No albums saved yet. Use `Add Album` to add your first album.
-          </p>
+          <p className="vco-empty">No albums saved yet. Use "Add Album" to add your first album.</p>
         )}
 
         {!isLoading && !errorMessage && albums.length > 0 && filteredAlbums.length === 0 && (
-          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">
-            No albums match your search.
-          </p>
+          <p className="vco-empty">No albums match your search.</p>
         )}
 
         {!isLoading && !errorMessage && filteredAlbums.length > 0 && (
@@ -266,7 +214,6 @@ function ReviewsPage() {
           >
             {filteredAlbums.map((album) => {
               const isMenuOpen = activeMenuAlbumId === album.userSavedAlbumId
-
               return (
                 <div
                   key={album.userSavedAlbumId}
@@ -281,29 +228,22 @@ function ReviewsPage() {
                       aria-label={`Open ${album.title}`}
                     >
                       <AlbumCover
-                          src={album.coverUrl}
-                          alt={`${album.title} cover`}
-                          loading="eager"
-                          onLoad={() => setLoadedCovers((prev) => { const next = new Set(prev); next.add(album.userSavedAlbumId); return next })}
-                        />
+                        src={album.coverUrl}
+                        alt={`${album.title} cover`}
+                        loading="eager"
+                        onLoad={() => setLoadedCovers((prev) => { const next = new Set(prev); next.add(album.userSavedAlbumId); return next })}
+                      />
                     </button>
-
                     <button
                       type="button"
                       onClick={(event) => {
                         event.stopPropagation()
                         setActiveMenuAlbumId(isMenuOpen ? null : album.userSavedAlbumId)
                       }}
-                      className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
+                      className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
                       aria-label="Album options"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        className="h-3.5 w-3.5"
-                        aria-hidden="true"
-                      >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5" aria-hidden="true">
                         <circle cx="12" cy="5" r="1.5" />
                         <circle cx="12" cy="12" r="1.5" />
                         <circle cx="12" cy="19" r="1.5" />
@@ -317,45 +257,44 @@ function ReviewsPage() {
                     className="mt-2 block w-full text-left"
                   >
                     <p className="truncate text-sm font-semibold text-ink">{album.title}</p>
-                    <p className="truncate text-xs text-ink-2">{album.artistName}</p>
+                    <p className="truncate text-xs text-ink-3" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{album.artistName}</p>
                   </button>
 
                   {backgroundAlbumId === album.userSavedAlbumId && (
-                    <div className="pointer-events-none absolute inset-0 rounded-lg ring-2 ring-cta ring-offset-1" />
+                    <div className="pointer-events-none absolute inset-0 rounded-lg ring-2 ring-[#7c3aed] ring-offset-1 ring-offset-[#0e0c1c]" />
                   )}
 
                   {isMenuOpen && (
-                    <div className="absolute left-0 top-0 z-10 w-52 overflow-hidden rounded-xl border border-edge bg-surface p-1 shadow-lg">
+                    <div className="vco-actions-menu" style={{ top: 0, left: 0, bottom: 'auto', position: 'absolute', minWidth: 200 }}>
                       <button
                         type="button"
                         onClick={() => void handleSetBackground(album)}
-                        className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-ink hover:bg-surface-2"
+                        className="vco-actions-item"
                       >
-                        {backgroundAlbumId === album.userSavedAlbumId
-                          ? 'Remove home background'
-                          : 'Set as home background'}
+                        {backgroundAlbumId === album.userSavedAlbumId ? 'Remove home background' : 'Set as home background'}
                       </button>
-                      <div className="my-1 border-t border-edge" />
-                      <button
-                        type="button"
-                        onClick={() => openAction({ type: 'remove', album })}
-                        className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-err hover:bg-err-bg"
-                      >
-                        Remove this album
-                      </button>
+                      <div style={{ borderTop: '1px solid #2a2548', margin: '2px 0' }} />
                       <button
                         type="button"
                         onClick={() => openAction({ type: 'recommend', album })}
-                        className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-ink hover:bg-surface-2"
+                        className="vco-actions-item"
                       >
                         Recommend this album
                       </button>
                       <button
                         type="button"
                         onClick={() => openAction({ type: 'reset', album })}
-                        className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-ink hover:bg-surface-2"
+                        className="vco-actions-item"
                       >
                         Reset album data
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openAction({ type: 'remove', album })}
+                        className="vco-actions-item"
+                        style={{ color: '#fca5a5' }}
+                      >
+                        Remove this album
                       </button>
                     </div>
                   )}
@@ -374,50 +313,39 @@ function ReviewsPage() {
           <div
             role="dialog"
             aria-modal="true"
-            className="w-full max-w-md rounded-xl border border-edge bg-surface p-5 shadow-xl"
+            className="vco-modal"
             onClick={(event) => event.stopPropagation()}
           >
             {pendingAction.type === 'remove' && (
               <>
-                <h2 className="text-lg font-bold text-ink">Remove album?</h2>
-                <div className="mt-3 rounded-lg border border-warn-edge bg-warn-bg p-3 text-sm text-warn">
+                <h2 className="vco-modal-title">Remove album?</h2>
+                <div className="vco-msg-err" style={{ margin: '0 0 14px' }}>
                   This will permanently remove{' '}
-                  <span className="font-semibold">{pendingAction.album.title}</span> from your
-                  library. All review data will also be deleted.
+                  <span style={{ fontWeight: 700 }}>{pendingAction.album.title}</span> and all its review data.
                 </div>
-                <label className="mt-4 block text-sm font-semibold text-ink">
+                <label className="vco-modal-label">
                   Type the album title to confirm
                   <input
                     type="text"
                     value={resetInput}
                     onChange={(event) => setResetInput(event.target.value)}
                     onKeyDown={(event) => {
-                      if (event.key === 'Enter' && resetInput === pendingAction.album.title) {
-                        void handleRemove()
-                      }
+                      if (event.key === 'Enter' && resetInput === pendingAction.album.title) void handleRemove()
                     }}
                     placeholder={pendingAction.album.title}
                     autoFocus
-                    className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
+                    className="vco-modal-select"
+                    style={{ marginTop: 6, padding: '6px 10px', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}
                   />
                 </label>
-                {modalError && (
-                  <p className="mt-3 text-sm text-err">{modalError}</p>
-                )}
-                <div className="mt-4 flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    disabled={isSubmitting}
-                    className="rounded-lg border border-edge px-4 py-2 text-sm font-semibold text-ink disabled:opacity-60"
-                  >
-                    Cancel
-                  </button>
+                {modalError && <div className="vco-msg-err" style={{ marginTop: 10 }}>{modalError}</div>}
+                <div className="vco-modal-actions">
+                  <button type="button" onClick={closeModal} disabled={isSubmitting} className="vco-tbtn">Cancel</button>
                   <button
                     type="button"
                     onClick={() => void handleRemove()}
                     disabled={isSubmitting || resetInput !== pendingAction.album.title}
-                    className="rounded-lg bg-err-edge px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                    className="vco-tbtn vco-tbtn-danger"
                   >
                     {isSubmitting ? 'Removing...' : 'Remove'}
                   </button>
@@ -427,18 +355,18 @@ function ReviewsPage() {
 
             {pendingAction.type === 'recommend' && (
               <>
-                <h2 className="text-lg font-bold text-ink">Recommend this album</h2>
-                <div className="mt-3 rounded-lg border border-edge bg-surface-2 px-4 py-3">
-                  <p className="text-sm font-semibold text-ink">{pendingAction.album.title}</p>
-                  <p className="mt-1 text-sm text-ink">{pendingAction.album.artistName}</p>
+                <h2 className="vco-modal-title">Recommend this album</h2>
+                <div className="vco-modal-info">
+                  <p className="vco-modal-item-title">{pendingAction.album.title}</p>
+                  <p className="vco-modal-item-artist">{pendingAction.album.artistName}</p>
                 </div>
-                <label className="mt-4 block text-sm font-semibold text-ink">
+                <label className="vco-modal-label">
                   Send To
                   <select
                     value={selectedFriendUserId}
                     onChange={(event) => setSelectedFriendUserId(event.target.value)}
                     disabled={friends.length === 0 || isSubmitting}
-                    className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
+                    className="vco-modal-select"
                   >
                     {friends.length === 0 ? (
                       <option value="">No friends yet</option>
@@ -451,23 +379,14 @@ function ReviewsPage() {
                     )}
                   </select>
                 </label>
-                {modalError && (
-                  <p className="mt-3 text-sm text-err">{modalError}</p>
-                )}
-                <div className="mt-4 flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    disabled={isSubmitting}
-                    className="rounded-lg border border-edge px-4 py-2 text-sm font-semibold text-ink disabled:opacity-60"
-                  >
-                    Cancel
-                  </button>
+                {modalError && <div className="vco-msg-err" style={{ marginTop: 10 }}>{modalError}</div>}
+                <div className="vco-modal-actions">
+                  <button type="button" onClick={closeModal} disabled={isSubmitting} className="vco-tbtn">Cancel</button>
                   <button
                     type="button"
                     onClick={() => void handleRecommend()}
                     disabled={isSubmitting || !selectedFriendUserId}
-                    className="rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                    className="vco-tbtn primary"
                   >
                     {isSubmitting ? 'Sending...' : 'Send'}
                   </button>
@@ -477,45 +396,34 @@ function ReviewsPage() {
 
             {pendingAction.type === 'reset' && (
               <>
-                <h2 className="text-lg font-bold text-ink">Reset album data?</h2>
-                <div className="mt-3 rounded-lg border border-warn-edge bg-warn-bg p-3 text-sm text-warn">
-                  This will permanently delete all notes, scores, tags, and lyrics edits for{' '}
-                  <span className="font-semibold">{pendingAction.album.title}</span>. The album
-                  will remain in your library but all review data will be gone.
+                <h2 className="vco-modal-title">Reset album data?</h2>
+                <div className="vco-msg-err" style={{ margin: '0 0 14px' }}>
+                  This will permanently delete all notes, scores, and lyrics edits for{' '}
+                  <span style={{ fontWeight: 700 }}>{pendingAction.album.title}</span>. The album stays in your library.
                 </div>
-                <label className="mt-4 block text-sm font-semibold text-ink">
+                <label className="vco-modal-label">
                   Type the album title to confirm
                   <input
                     type="text"
                     value={resetInput}
                     onChange={(event) => setResetInput(event.target.value)}
                     onKeyDown={(event) => {
-                      if (event.key === 'Enter' && resetInput === pendingAction.album.title) {
-                        void handleReset()
-                      }
+                      if (event.key === 'Enter' && resetInput === pendingAction.album.title) void handleReset()
                     }}
                     placeholder={pendingAction.album.title}
                     autoFocus
-                    className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
+                    className="vco-modal-select"
+                    style={{ marginTop: 6, padding: '6px 10px', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}
                   />
                 </label>
-                {modalError && (
-                  <p className="mt-3 text-sm text-err">{modalError}</p>
-                )}
-                <div className="mt-4 flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    disabled={isSubmitting}
-                    className="rounded-lg border border-edge px-4 py-2 text-sm font-semibold text-ink disabled:opacity-60"
-                  >
-                    Cancel
-                  </button>
+                {modalError && <div className="vco-msg-err" style={{ marginTop: 10 }}>{modalError}</div>}
+                <div className="vco-modal-actions">
+                  <button type="button" onClick={closeModal} disabled={isSubmitting} className="vco-tbtn">Cancel</button>
                   <button
                     type="button"
                     onClick={() => void handleReset()}
                     disabled={isSubmitting || resetInput !== pendingAction.album.title}
-                    className="rounded-lg bg-err-edge px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                    className="vco-tbtn vco-tbtn-danger"
                   >
                     {isSubmitting ? 'Resetting...' : 'Reset'}
                   </button>

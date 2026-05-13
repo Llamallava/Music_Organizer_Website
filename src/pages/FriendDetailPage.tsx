@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import LinearBackButton from '../components/LinearBackButton'
 import {
   getFriendsOverviewForCurrentUser,
   removeFriendForCurrentUser,
@@ -18,6 +17,14 @@ const toPossessiveName = (name: string) => {
   }
 
   return `${name}'s`
+}
+
+const BACKDROP: React.CSSProperties = {
+  position: 'fixed', inset: 0, zIndex: 50,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  padding: '0 16px',
+  background: 'rgba(8,6,18,0.8)',
+  backdropFilter: 'blur(4px)',
 }
 
 function FriendDetailPage() {
@@ -95,66 +102,65 @@ function FriendDetailPage() {
   }
 
   return (
-    <main className="min-h-screen px-6 py-8">
-      <div className="mx-auto w-full max-w-3xl">
-        <LinearBackButton />
+    <main className="page-wrap">
+      <div style={{ maxWidth: 640, margin: '0 auto' }}>
+        <h1 className="page-title">Friend Profile</h1>
 
-        <h1 className="mt-5 text-3xl font-black text-ink">Friend Profile</h1>
-
-        {isLoading && <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">Loading friend...</p>}
+        {isLoading && <p className="vco-loading">Loading friend...</p>}
 
         {!isLoading && errorMessage && (
-          <div className="mt-6 rounded-lg border border-err-edge bg-err-bg p-4 text-sm text-err">
-            <p>Could not load friend.</p>
-            <p className="mt-1">{errorMessage}</p>
+          <div className="vco-msg-err" style={{ marginTop: 20 }}>
+            {errorMessage}
           </div>
         )}
 
         {!isLoading && !errorMessage && !friend && (
-          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">
-            This friend is not in your current list.
-          </p>
+          <p className="vco-empty">This friend is not in your current list.</p>
         )}
 
         {!isLoading && !errorMessage && friend && (
-          <section className="mt-6 rounded-xl border border-edge bg-surface p-6 shadow-sm">
-            <p className="text-3xl font-black text-ink">{displayName}</p>
-            <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-ink-2">
+          <section className="vco-panel" style={{ marginTop: 20, padding: '20px 24px' }}>
+            <p style={{ fontSize: 26, fontWeight: 800, color: '#ede9fe', fontFamily: "'Sora', sans-serif" }}>
+              {displayName}
+            </p>
+            <p className="vco-label" style={{ marginTop: 6 }}>
               Friend Code: {friend.friendCode}
             </p>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <div style={{ marginTop: 20, display: 'grid', gap: 10, gridTemplateColumns: '1fr 1fr' }}>
               <button
                 type="button"
-                className="rounded-md bg-cta px-4 py-3 text-sm font-semibold text-white"
+                className="vco-tbtn primary"
                 onClick={() => navigate(`/friends/${friend.userId}/reviews`)}
               >
-                Read {toPossessiveName(displayName)} Reviews
+                {toPossessiveName(displayName)} Reviews
               </button>
               <button
                 type="button"
-                className="rounded-md border border-edge bg-surface-2 px-4 py-3 text-sm font-semibold text-ink hover:bg-surface-3"
+                className="vco-tbtn"
                 onClick={() => navigate(`/friends/${friend.userId}/stats`)}
               >
-                See {toPossessiveName(displayName)} Stats
+                {toPossessiveName(displayName)} Stats
               </button>
             </div>
 
-            <div className="mt-4">
+            <div style={{ marginTop: 12 }}>
               <button
                 type="button"
                 onClick={() => {
                   setRemoveErrorMessage(null)
                   setIsRemoveDialogOpen(true)
                 }}
-                className="rounded-md border border-err-edge bg-err-bg px-4 py-3 text-sm font-semibold text-err transition hover:bg-err-bg/80"
+                className="vco-tbtn vco-tbtn-danger"
               >
                 Remove Friend
               </button>
             </div>
 
             {removeErrorMessage && (
-              <p className="mt-3 text-sm text-err">{removeErrorMessage}</p>
+              <div className="vco-msg-err" style={{ marginTop: 12 }}>
+                {removeErrorMessage}
+              </div>
             )}
           </section>
         )}
@@ -162,7 +168,7 @@ function FriendDetailPage() {
 
       {isRemoveDialogOpen && friend && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
+          style={BACKDROP}
           onClick={() => {
             if (!isRemoving) {
               setIsRemoveDialogOpen(false)
@@ -173,37 +179,35 @@ function FriendDetailPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="confirm-remove-friend-title"
-            className="w-full max-w-sm rounded-xl border border-edge bg-surface p-5 shadow-xl"
+            className="vco-modal"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2 id="confirm-remove-friend-title" className="text-lg font-bold text-ink">
+            <h2 id="confirm-remove-friend-title" className="vco-modal-title">
               Remove this friend?
             </h2>
-            <p className="mt-2 text-sm text-ink">
+            <p style={{ fontSize: 13, color: '#c4b5fd', marginBottom: 14 }}>
               You can always add them again later with their friend code.
             </p>
 
-            <div className="mt-4 rounded-lg border border-edge bg-surface-2 px-4 py-3">
-              <p className="text-sm font-semibold text-ink">{displayName}</p>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-ink-2">
-                {friend.friendCode}
-              </p>
+            <div className="vco-modal-info">
+              <p className="vco-modal-item-title">{displayName}</p>
+              <p className="vco-modal-item-type">{friend.friendCode}</p>
             </div>
 
-            <div className="mt-5 flex justify-end gap-2">
+            <div className="vco-modal-actions">
               <button
                 type="button"
                 onClick={() => setIsRemoveDialogOpen(false)}
                 disabled={isRemoving}
-                className="rounded-lg border border-edge px-4 py-2 text-sm font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-60"
+                className="vco-tbtn"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={handleConfirmRemoveFriend}
+                onClick={() => void handleConfirmRemoveFriend()}
                 disabled={isRemoving}
-                className="rounded-lg bg-err-edge px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="vco-tbtn vco-tbtn-danger"
               >
                 {isRemoving ? 'Removing...' : 'Confirm Remove'}
               </button>

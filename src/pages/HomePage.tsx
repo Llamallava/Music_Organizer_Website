@@ -71,7 +71,7 @@ function HomePage() {
   })
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-12">
+    <main className="relative flex items-center justify-center overflow-hidden px-12" style={{ minHeight: 'calc(100vh - var(--nav-h))' }}>
       <div ref={layer0Ref} className="absolute inset-0" style={backgroundLayerStyle(0)} />
       <div ref={layer1Ref} className="absolute inset-0" style={backgroundLayerStyle(1)} />
 
@@ -79,77 +79,63 @@ function HomePage() {
 
       <div className="relative z-10 flex w-full max-w-5xl items-center gap-16">
         <div className="flex flex-1 flex-col gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/reviews')}
-            className={
-              hasBackground
-                ? 'rounded-lg border border-white/20 bg-white/15 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/25'
-                : 'rounded-lg bg-cta px-4 py-3 text-base font-semibold text-white'
-            }
-          >
-            My Reviews
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate('/search')}
-            className={
-              hasBackground
-                ? 'rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/20'
-                : 'rounded-lg bg-surface-2 px-4 py-3 text-base font-semibold text-ink hover:bg-surface-3'
-            }
-          >
-            Search
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate('/stats')}
-            className={
-              hasBackground
-                ? 'rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/20'
-                : 'rounded-lg bg-surface-2 px-4 py-3 text-base font-semibold text-ink hover:bg-surface-3'
-            }
-          >
-            My Stats
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate('/to-listen')}
-            className={
-              hasBackground
-                ? 'rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/20'
-                : 'rounded-lg bg-surface-2 px-4 py-3 text-base font-semibold text-ink hover:bg-surface-3'
-            }
-          >
-            To-Listen
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate('/friends')}
-            className={
-              hasBackground
-                ? 'rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/20'
-                : 'rounded-lg bg-surface-2 px-4 py-3 text-base font-semibold text-ink hover:bg-surface-3'
-            }
-          >
-            Friends
-          </button>
-
-          {/* <button
-            type="button"
-            onClick={() => navigate('/playlists')}
-            className={
-              hasBackground
-                ? 'rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/20'
-                : 'rounded-lg bg-surface-2 px-4 py-3 text-base font-semibold text-ink hover:bg-surface-3'
-            }
-          >
-            Playlists
-          </button> */}
+          {hasBackground ? (
+            <>
+              <button
+                type="button"
+                onClick={() => navigate('/reviews')}
+                className="rounded-lg border border-white/20 bg-white/15 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/25"
+              >
+                My Reviews
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/search')}
+                className="rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/20"
+              >
+                Search
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/stats')}
+                className="rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/20"
+              >
+                My Stats
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/to-listen')}
+                className="rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/20"
+              >
+                To-Listen
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/friends')}
+                className="rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/20"
+              >
+                Friends
+              </button>
+            </>
+          ) : (
+            <>
+              <button type="button" onClick={() => navigate('/reviews')} className="vco-tbtn primary" style={{ padding: '12px 16px', fontSize: 15 }}>
+                My Reviews
+              </button>
+              <button type="button" onClick={() => navigate('/search')} className="vco-tbtn" style={{ padding: '12px 16px', fontSize: 15 }}>
+                Search
+              </button>
+              <button type="button" onClick={() => navigate('/stats')} className="vco-tbtn" style={{ padding: '12px 16px', fontSize: 15 }}>
+                My Stats
+              </button>
+              <button type="button" onClick={() => navigate('/to-listen')} className="vco-tbtn" style={{ padding: '12px 16px', fontSize: 15 }}>
+                To-Listen
+              </button>
+              <button type="button" onClick={() => navigate('/friends')} className="vco-tbtn" style={{ padding: '12px 16px', fontSize: 15 }}>
+                Friends
+              </button>
+            </>
+          )}
         </div>
 
         <div className="flex flex-1 items-center justify-center">

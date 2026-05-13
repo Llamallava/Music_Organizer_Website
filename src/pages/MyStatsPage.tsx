@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
-import LinearBackButton from '../components/LinearBackButton'
 import { formatScoreValue, GrandTotalWordsModule, TopTenAlbumsModule, TopTenSongsModule } from '../components/StatsModules'
 import { getFriendsOverviewForCurrentUser } from '../lib/db/friendsData'
 import {
@@ -73,25 +72,28 @@ function TopTenArtistsModule({ title, items, artistImages }: Omit<TopTenArtistMo
   }
 
   return (
-    <article className="relative rounded-xl border border-edge bg-surface p-4 shadow-sm">
+    <article className="vco-panel" style={{ position: 'relative', padding: 16 }}>
       {!allLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center rounded-xl">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-surface-2 border-t-cta" />
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
+          <div
+            className="animate-spin"
+            style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid #2a2548', borderTopColor: '#c4b5fd' }}
+          />
         </div>
       )}
 
-      <div className={`transition-opacity duration-500 ${allLoaded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        <h2 className="text-lg font-bold text-ink">{title}</h2>
+      <div style={{ opacity: allLoaded ? 1 : 0, pointerEvents: allLoaded ? 'auto' : 'none', transition: 'opacity 0.5s' }}>
+        <h2 style={{ fontSize: 15, fontWeight: 700, color: '#ede9fe', fontFamily: "'Sora', sans-serif" }}>{title}</h2>
 
-        {!firstArtist && <p className="mt-4 text-sm text-ink-2">No data yet.</p>}
+        {!firstArtist && <p style={{ marginTop: 16, fontSize: 13, color: '#7c6fad' }}>No data yet.</p>}
 
         {firstArtist && (
           <>
-            <div className="mt-4 rounded-lg border border-edge bg-surface-2 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">#1</p>
+            <div style={{ marginTop: 16, borderRadius: 6, border: '1px solid #2a2548', background: '#1c1836', padding: '10px 14px' }}>
+              <p className="vco-label">#1</p>
 
-              <div className="mt-3 flex gap-3">
-                <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-surface-3">
+              <div style={{ marginTop: 10, display: 'flex', gap: 12 }}>
+                <div style={{ width: 80, height: 80, flexShrink: 0, overflow: 'hidden', borderRadius: 6, background: '#141028' }}>
                   <AlbumCover
                     src={artistImages.get(firstArtist.artistName) ?? null}
                     alt={`${firstArtist.artistName} profile`}
@@ -100,25 +102,27 @@ function TopTenArtistsModule({ title, items, artistImages }: Omit<TopTenArtistMo
                   />
                 </div>
 
-                <div className="min-w-0">
-                  <p className="truncate text-lg font-extrabold text-ink">{firstArtist.artistName}</p>
-                  <p className="mt-1 text-sm font-semibold text-ink">
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: 15, fontWeight: 800, color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {firstArtist.artistName}
+                  </p>
+                  <p style={{ marginTop: 4, fontSize: 13, fontWeight: 600, color: '#c4b5fd' }}>
                     Avg Score: {formatScoreValue(firstArtist.value)}
                   </p>
-                  <p className="text-xs text-ink-3">
+                  <p style={{ fontSize: 11, color: '#7c6fad' }}>
                     {firstArtist.albumCount} {firstArtist.albumCount === 1 ? 'album' : 'albums'} rated
                   </p>
                 </div>
               </div>
             </div>
 
-            <ol className="mt-4 space-y-2">
+            <ol style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
               {remainingArtists.map((artist, index) => (
                 <li
                   key={artist.artistName}
-                  className="flex items-center gap-3 rounded-md bg-surface-2 px-3 py-2"
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, borderRadius: 4, background: '#1c1836', padding: '8px 10px' }}
                 >
-                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-surface-3">
+                  <div style={{ width: 36, height: 36, flexShrink: 0, overflow: 'hidden', borderRadius: 4, background: '#141028' }}>
                     <AlbumCover
                       src={artistImages.get(artist.artistName) ?? null}
                       alt={`${artist.artistName} profile`}
@@ -127,16 +131,18 @@ function TopTenArtistsModule({ title, items, artistImages }: Omit<TopTenArtistMo
                     />
                   </div>
 
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-ink">
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {index + 2}. {artist.artistName}
                     </p>
-                    <p className="text-xs text-ink-3">
+                    <p style={{ fontSize: 11, color: '#7c6fad' }}>
                       {artist.albumCount} {artist.albumCount === 1 ? 'album' : 'albums'} rated
                     </p>
                   </div>
 
-                  <p className="shrink-0 text-sm font-semibold text-ink">{formatScoreValue(artist.value)}</p>
+                  <p style={{ flexShrink: 0, fontSize: 13, fontWeight: 600, color: '#c4b5fd' }}>
+                    {formatScoreValue(artist.value)}
+                  </p>
                 </li>
               ))}
             </ol>
@@ -303,75 +309,67 @@ function MyStatsPage() {
   }, [statsData, artistImages])
 
   return (
-    <main className="min-h-screen px-6 py-8">
-      <div className="mx-auto w-full max-w-7xl">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <LinearBackButton />
-
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => navigate('/artists')}
-              className="rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white"
-            >
-              Your Artists
-            </button>
-
-          </div>
-        </div>
-
-        <h1 className={`mt-5 font-black text-ink ${isFriendView ? 'text-5xl tracking-tight' : 'text-3xl'}`}>
+    <main className="page-wrap">
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <h1 className="page-title" style={isFriendView ? { fontSize: 36, letterSpacing: '-0.02em' } : {}}>
           {isFriendView ? `${toPossessiveName(friendName ?? 'Friend')} Stats` : 'My Stats'}
         </h1>
 
-        {isLoading && <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">Loading stats...</p>}
-
-        {!isLoading && errorMessage && (
-          <div className="mt-6 rounded-lg border border-err-edge bg-err-bg p-4 text-sm text-err">
-            <p>Could not load stats.</p>
-            <p className="mt-1">{errorMessage}</p>
-          </div>
-        )}
-
-        {!isLoading && !errorMessage && (
-          <section className="mt-6 grid grid-cols-2 gap-4">
-            {modules.map((module) => (
-              module.moduleType === 'album' ? (
-                <TopTenAlbumsModule
-                  key={module.id}
-                  title={module.title}
-                  valueLabel={module.valueLabel}
-                  valueType={module.valueType}
-                  items={module.items}
-                />
-              ) : module.moduleType === 'song' ? (
-                <TopTenSongsModule
-                  key={module.id}
-                  title={module.title}
-                  valueLabel={module.valueLabel}
-                  valueType={module.valueType}
-                  items={module.items}
-                />
-              ) : module.moduleType === 'artist' ? (
-                <TopTenArtistsModule
-                  key={module.id}
-                  title={module.title}
-                  items={module.items}
-                  artistImages={module.artistImages}
-                />
-              ) : (
-                <GrandTotalWordsModule
-                  key={module.id}
-                  title={module.title}
-                  valueLabel={module.valueLabel}
-                  totalWords={module.totalWords}
-                  favoriteWords={module.favoriteWords}
-                />
-              )
-            ))}
-          </section>
-        )}
+        <button
+          type="button"
+          onClick={() => navigate('/artists')}
+          className="vco-tbtn"
+        >
+          Your Artists
+        </button>
       </div>
+
+      {isLoading && <p className="vco-loading">Loading stats...</p>}
+
+      {!isLoading && errorMessage && (
+        <div className="vco-msg-err" style={{ marginTop: 20 }}>
+          Could not load stats. {errorMessage}
+        </div>
+      )}
+
+      {!isLoading && !errorMessage && (
+        <section className="mt-6 grid grid-cols-2 gap-4">
+          {modules.map((module) => (
+            module.moduleType === 'album' ? (
+              <TopTenAlbumsModule
+                key={module.id}
+                title={module.title}
+                valueLabel={module.valueLabel}
+                valueType={module.valueType}
+                items={module.items}
+              />
+            ) : module.moduleType === 'song' ? (
+              <TopTenSongsModule
+                key={module.id}
+                title={module.title}
+                valueLabel={module.valueLabel}
+                valueType={module.valueType}
+                items={module.items}
+              />
+            ) : module.moduleType === 'artist' ? (
+              <TopTenArtistsModule
+                key={module.id}
+                title={module.title}
+                items={module.items}
+                artistImages={module.artistImages}
+              />
+            ) : (
+              <GrandTotalWordsModule
+                key={module.id}
+                title={module.title}
+                valueLabel={module.valueLabel}
+                totalWords={module.totalWords}
+                favoriteWords={module.favoriteWords}
+              />
+            )
+          ))}
+        </section>
+      )}
     </main>
   )
 }

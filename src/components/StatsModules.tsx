@@ -5,6 +5,41 @@ export const formatScoreValue = (score: number) => score.toFixed(1).replace(/\.0
 export const formatValue = (value: number, valueType: 'score' | 'words') =>
   valueType === 'words' ? Math.round(value).toLocaleString() : formatScoreValue(value)
 
+const rankLabel: React.CSSProperties = {
+  fontFamily: "'JetBrains Mono', monospace",
+  fontSize: 9,
+  letterSpacing: 2,
+  textTransform: 'uppercase',
+  color: '#7c6fad',
+  marginBottom: 8,
+}
+
+const moduleTitle: React.CSSProperties = {
+  fontFamily: "'Sora', sans-serif",
+  fontSize: 15,
+  fontWeight: 700,
+  color: '#ede9fe',
+  marginBottom: 4,
+}
+
+const innerCard: React.CSSProperties = {
+  marginTop: 14,
+  borderRadius: 6,
+  border: '1px solid #2a2548',
+  background: '#1c1836',
+  padding: '10px 14px',
+}
+
+const listItem: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 10,
+  borderRadius: 4,
+  background: '#1c1836',
+  padding: '8px 10px',
+}
+
 export function TopTenAlbumsModule({
   title,
   valueLabel,
@@ -20,45 +55,48 @@ export function TopTenAlbumsModule({
   const remainingAlbums = items.slice(1)
 
   return (
-    <article className="rounded-xl border border-edge bg-surface p-4 shadow-sm">
-      <h2 className="text-lg font-bold text-ink">{title}</h2>
+    <article className="vco-panel" style={{ padding: 16 }}>
+      <h2 style={moduleTitle}>{title}</h2>
 
-      {!firstAlbum && <p className="mt-4 text-sm text-ink-2">No data yet.</p>}
+      {!firstAlbum && <p style={{ marginTop: 16, fontSize: 13, color: '#7c6fad' }}>No data yet.</p>}
 
       {firstAlbum && (
         <>
-          <div className="mt-4 rounded-lg border border-edge bg-surface-2 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">#1</p>
+          <div style={innerCard}>
+            <p style={rankLabel}>#1</p>
 
-            <div className="mt-3 flex gap-3">
-              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-surface-3">
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ width: 80, height: 80, flexShrink: 0, overflow: 'hidden', borderRadius: 6, background: '#141028' }}>
                 <AlbumCover src={firstAlbum.coverUrl} alt={`${firstAlbum.title} cover`} loading="lazy" />
               </div>
 
-              <div className="min-w-0">
-                <p className="truncate text-lg font-extrabold text-ink">{firstAlbum.title}</p>
-                <p className="truncate text-base font-semibold text-ink">{firstAlbum.artistName}</p>
-                <p className="mt-1 text-sm font-semibold text-ink">
+              <div style={{ minWidth: 0 }}>
+                <p style={{ fontSize: 15, fontWeight: 800, color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {firstAlbum.title}
+                </p>
+                <p style={{ fontSize: 13, fontWeight: 600, color: '#c4b5fd', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {firstAlbum.artistName}
+                </p>
+                <p style={{ marginTop: 4, fontSize: 12, fontWeight: 600, color: '#ede9fe' }}>
                   {valueLabel}: {formatValue(firstAlbum.value, valueType)}
                 </p>
               </div>
             </div>
           </div>
 
-          <ol className="mt-4 space-y-2">
+          <ol style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
             {remainingAlbums.map((album, index) => (
-              <li
-                key={album.userSavedAlbumId}
-                className="flex items-center justify-between gap-3 rounded-md bg-surface-2 px-3 py-2"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-ink">
+              <li key={album.userSavedAlbumId} style={listItem}>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {index + 2}. {album.title}
                   </p>
-                  <p className="truncate text-xs text-ink-2">{album.artistName}</p>
+                  <p style={{ fontSize: 11, color: '#7c6fad', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {album.artistName}
+                  </p>
                 </div>
 
-                <p className="shrink-0 text-sm font-semibold text-ink">
+                <p style={{ flexShrink: 0, fontSize: 13, fontWeight: 600, color: '#c4b5fd' }}>
                   {formatValue(album.value, valueType)}
                 </p>
               </li>
@@ -87,50 +125,53 @@ export function TopTenSongsModule({
   const remainingSongs = items.slice(1)
 
   return (
-    <article className="rounded-xl border border-edge bg-surface p-4 shadow-sm">
-      <h2 className="text-lg font-bold text-ink">{title}</h2>
+    <article className="vco-panel" style={{ padding: 16 }}>
+      <h2 style={moduleTitle}>{title}</h2>
 
-      {!firstSong && <p className="mt-4 text-sm text-ink-2">No data yet.</p>}
+      {!firstSong && <p style={{ marginTop: 16, fontSize: 13, color: '#7c6fad' }}>No data yet.</p>}
 
       {firstSong && (
         <>
-          <div className="mt-4 rounded-lg border border-edge bg-surface-2 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">#1</p>
+          <div style={innerCard}>
+            <p style={rankLabel}>#1</p>
 
-            <div className="mt-3 flex gap-3">
-              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-surface-3">
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ width: 80, height: 80, flexShrink: 0, overflow: 'hidden', borderRadius: 6, background: '#141028' }}>
                 <AlbumCover src={firstSong.coverUrl} alt={`${firstSong.albumTitle} cover`} loading="lazy" />
               </div>
 
-              <div className="min-w-0">
-                <p className="truncate text-lg font-extrabold text-ink">{firstSong.trackTitle}</p>
+              <div style={{ minWidth: 0 }}>
+                <p style={{ fontSize: 15, fontWeight: 800, color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {firstSong.trackTitle}
+                </p>
                 {showArtistName && (
-                  <p className="truncate text-base font-semibold text-ink">{firstSong.artistName}</p>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#c4b5fd', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {firstSong.artistName}
+                  </p>
                 )}
-                <p className="truncate text-sm text-ink-2">{firstSong.albumTitle}</p>
-                <p className="mt-1 text-sm font-semibold text-ink">
+                <p style={{ fontSize: 12, color: '#7c6fad', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {firstSong.albumTitle}
+                </p>
+                <p style={{ marginTop: 4, fontSize: 12, fontWeight: 600, color: '#ede9fe' }}>
                   {valueLabel}: {formatValue(firstSong.value, valueType)}
                 </p>
               </div>
             </div>
           </div>
 
-          <ol className="mt-4 space-y-2">
+          <ol style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
             {remainingSongs.map((song, index) => (
-              <li
-                key={`${song.userSavedAlbumId}:${song.trackNumber}`}
-                className="flex items-center justify-between gap-3 rounded-md bg-surface-2 px-3 py-2"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-ink">
+              <li key={`${song.userSavedAlbumId}:${song.trackNumber}`} style={listItem}>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {index + 2}. {song.trackTitle}
                   </p>
-                  <p className="truncate text-xs text-ink-2">
+                  <p style={{ fontSize: 11, color: '#7c6fad', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {showArtistName ? `${song.artistName} - ${song.albumTitle}` : song.albumTitle}
                   </p>
                 </div>
 
-                <p className="shrink-0 text-sm font-semibold text-ink">
+                <p style={{ flexShrink: 0, fontSize: 13, fontWeight: 600, color: '#c4b5fd' }}>
                   {formatValue(song.value, valueType)}
                 </p>
               </li>
@@ -156,35 +197,37 @@ export function GrandTotalWordsModule({
   subtitle?: string
 }) {
   return (
-    <article className="col-span-2 rounded-xl border border-edge bg-surface p-5 shadow-sm">
+    <article className="vco-panel col-span-2" style={{ padding: 20 }}>
       <div className="grid gap-5 md:grid-cols-2">
         <div>
-          <h2 className="text-lg font-bold text-ink">{title}</h2>
-          <p className="mt-1 text-sm text-ink-2">{subtitle}</p>
-          <p className="mt-4 text-4xl font-black tracking-tight text-ink">
+          <h2 style={moduleTitle}>{title}</h2>
+          <p style={{ fontSize: 12, color: '#7c6fad', marginBottom: 16 }}>{subtitle}</p>
+          <p style={{ fontSize: 36, fontWeight: 900, color: '#ede9fe', letterSpacing: '-0.02em', fontFamily: "'Sora', sans-serif" }}>
             {formatValue(totalWords, 'words')}
           </p>
-          <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-ink-3">{valueLabel}</p>
+          <p style={{ marginTop: 4, fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: '#7c6fad' }}>
+            {valueLabel}
+          </p>
         </div>
 
         <div>
-          <p className="text-sm font-semibold text-ink">Your favorite words:</p>
+          <p style={{ fontSize: 13, fontWeight: 600, color: '#ede9fe' }}>Your favorite words:</p>
           {favoriteWords.length > 0 ? (
-            <ul className="mt-3 space-y-2">
+            <ul style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
               {favoriteWords.map((item, index) => (
                 <li
                   key={item.word}
-                  className="flex items-center justify-between rounded-md bg-surface-2 px-3 py-2 text-sm"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: 4, background: '#1c1836', padding: '6px 10px', fontSize: 13 }}
                 >
-                  <span className="font-semibold text-ink">
+                  <span style={{ fontWeight: 600, color: '#ede9fe' }}>
                     {index + 1}. {item.word}
                   </span>
-                  <span className="text-ink-2">{item.count.toLocaleString()}</span>
+                  <span style={{ color: '#7c6fad' }}>{item.count.toLocaleString()}</span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="mt-2 text-sm text-ink-2">No words yet.</p>
+            <p style={{ marginTop: 8, fontSize: 13, color: '#7c6fad' }}>No words yet.</p>
           )}
         </div>
       </div>

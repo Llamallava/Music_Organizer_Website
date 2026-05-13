@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
-import LinearBackButton from '../components/LinearBackButton'
 import { listSearchSongsForCurrentUser, type SearchSongRecord } from '../lib/db/searchData'
 
 type ScoreMinOperator = 'gte' | 'gt'
@@ -75,6 +74,35 @@ const scoreBoundsConflict = (
   }
 
   return minOperator === 'gt' || maxOperator === 'lt'
+}
+
+const fieldInputStyle: React.CSSProperties = {
+  display: 'block',
+  width: '100%',
+  marginTop: 6,
+  borderRadius: 6,
+  border: '1px solid #2a2548',
+  padding: '7px 10px',
+  fontSize: 12,
+}
+
+const fieldSelectStyle: React.CSSProperties = {
+  display: 'block',
+  width: '100%',
+  marginTop: 6,
+  borderRadius: 6,
+  border: '1px solid #2a2548',
+  padding: '7px 10px',
+  fontSize: 12,
+}
+
+const fieldLabelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: 11,
+  fontFamily: "'JetBrains Mono', monospace",
+  letterSpacing: '1.5px',
+  textTransform: 'uppercase' as const,
+  color: '#7c6fad',
 }
 
 function SearchPage() {
@@ -341,277 +369,196 @@ function SearchPage() {
   }
 
   return (
-    <main className="min-h-screen px-6 py-8">
-      <div className="mx-auto w-full max-w-7xl">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <LinearBackButton />
+    <main className="page-wrap">
+      <h1 className="page-title">Search Songs</h1>
+      <p style={{ marginTop: 6, fontSize: 13, color: '#7c6fad', fontFamily: "'JetBrains Mono', monospace" }}>
+        Combine filters to answer questions like lyrics keyword matches or artist + score ranges.
+      </p>
 
+      <section className="vco-panel" style={{ marginTop: 20, padding: '16px 20px' }}>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <label style={fieldLabelStyle}>
+            Artist contains
+            <input type="text" value={artistQuery} onChange={(event) => setArtistQuery(event.target.value)} style={fieldInputStyle} />
+          </label>
+
+          <label style={fieldLabelStyle}>
+            Album contains
+            <input type="text" value={albumQuery} onChange={(event) => setAlbumQuery(event.target.value)} style={fieldInputStyle} />
+          </label>
+
+          <label style={fieldLabelStyle}>
+            Song contains
+            <input type="text" value={trackQuery} onChange={(event) => setTrackQuery(event.target.value)} style={fieldInputStyle} />
+          </label>
+
+          <label style={fieldLabelStyle}>
+            Lyrics contain
+            <input type="text" value={lyricsQuery} onChange={(event) => setLyricsQuery(event.target.value)} style={fieldInputStyle} />
+          </label>
+
+          <label style={fieldLabelStyle}>
+            Notes contain
+            <input type="text" value={notesQuery} onChange={(event) => setNotesQuery(event.target.value)} style={fieldInputStyle} />
+          </label>
+
+          <label style={fieldLabelStyle}>
+            Tag contains
+            <input type="text" value={tagQuery} onChange={(event) => setTagQuery(event.target.value)} placeholder="e.g. rainy day" style={fieldInputStyle} />
+          </label>
         </div>
 
-        <h1 className="mt-5 text-3xl font-black text-ink">Search Songs</h1>
-        <p className="mt-2 text-sm text-ink">
-          Combine filters to answer questions like lyrics keyword matches or artist + score ranges.
-        </p>
+        <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <label style={fieldLabelStyle}>
+            Score mode
+            <select value={scoreMode} onChange={(event) => setScoreMode(event.target.value as ScoreMode)} style={fieldSelectStyle}>
+              <option value="any">Any</option>
+              <option value="scored">Scored only</option>
+              <option value="unscored">Unscored only</option>
+            </select>
+          </label>
 
-        <section className="mt-6 rounded-xl border border-edge bg-surface p-4 shadow-sm">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-            <label className="text-sm text-ink">
-              Artist contains
-              <input
-                type="text"
-                value={artistQuery}
-                onChange={(event) => setArtistQuery(event.target.value)}
-                className="mt-1 w-full rounded-md border border-edge px-3 py-2 text-sm"
-              />
-            </label>
+          <label style={fieldLabelStyle}>
+            Interludes
+            <select value={interludeMode} onChange={(event) => setInterludeMode(event.target.value as InterludeMode)} style={fieldSelectStyle}>
+              <option value="any">Any</option>
+              <option value="only">Interludes only</option>
+              <option value="exclude">Exclude interludes</option>
+            </select>
+          </label>
 
-            <label className="text-sm text-ink">
-              Album contains
-              <input
-                type="text"
-                value={albumQuery}
-                onChange={(event) => setAlbumQuery(event.target.value)}
-                className="mt-1 w-full rounded-md border border-edge px-3 py-2 text-sm"
-              />
-            </label>
-
-            <label className="text-sm text-ink">
-              Song contains
-              <input
-                type="text"
-                value={trackQuery}
-                onChange={(event) => setTrackQuery(event.target.value)}
-                className="mt-1 w-full rounded-md border border-edge px-3 py-2 text-sm"
-              />
-            </label>
-
-            <label className="text-sm text-ink">
-              Lyrics contain
-              <input
-                type="text"
-                value={lyricsQuery}
-                onChange={(event) => setLyricsQuery(event.target.value)}
-                className="mt-1 w-full rounded-md border border-edge px-3 py-2 text-sm"
-              />
-            </label>
-
-            <label className="text-sm text-ink">
-              Notes contain
-              <input
-                type="text"
-                value={notesQuery}
-                onChange={(event) => setNotesQuery(event.target.value)}
-                className="mt-1 w-full rounded-md border border-edge px-3 py-2 text-sm"
-              />
-            </label>
-
-            <label className="text-sm text-slate-700">
-              Tag contains
-              <input
-                type="text"
-                value={tagQuery}
-                onChange={(event) => setTagQuery(event.target.value)}
-                placeholder="e.g. rainy day"
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-              />
-            </label>
-          </div>
-
-          <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-            <label className="text-sm text-ink">
-              Score mode
+          <label style={fieldLabelStyle}>
+            Min score
+            <div style={{ marginTop: 6, display: 'flex', gap: 8 }}>
               <select
-                value={scoreMode}
-                onChange={(event) => setScoreMode(event.target.value as ScoreMode)}
-                className="mt-1 w-full rounded-md border border-edge px-3 py-2 text-sm"
+                value={minScoreOperator}
+                onChange={(event) => setMinScoreOperator(event.target.value as ScoreMinOperator)}
+                style={{ ...fieldSelectStyle, marginTop: 0, width: 72, flexShrink: 0 }}
               >
-                <option value="any">Any</option>
-                <option value="scored">Scored only</option>
-                <option value="unscored">Unscored only</option>
+                <option value="gte">&gt;=</option>
+                <option value="gt">&gt;</option>
               </select>
-            </label>
-
-            <label className="text-sm text-ink">
-              Interludes
-              <select
-                value={interludeMode}
-                onChange={(event) => setInterludeMode(event.target.value as InterludeMode)}
-                className="mt-1 w-full rounded-md border border-edge px-3 py-2 text-sm"
-              >
-                <option value="any">Any</option>
-                <option value="only">Interludes only</option>
-                <option value="exclude">Exclude interludes</option>
-              </select>
-            </label>
-
-            <label className="text-sm text-ink">
-              Min score
-              <div className="mt-1 flex gap-2">
-                <select
-                  value={minScoreOperator}
-                  onChange={(event) => setMinScoreOperator(event.target.value as ScoreMinOperator)}
-                  className="w-20 rounded-md border border-edge px-2 py-2 text-sm"
-                >
-                  <option value="gte">&gt;=</option>
-                  <option value="gt">&gt;</option>
-                </select>
-                <input
-                  type="text"
-                  value={minScoreInput}
-                  onChange={(event) => setMinScoreInput(event.target.value)}
-                  className="w-full rounded-md border border-edge px-3 py-2 text-sm"
-                />
-              </div>
-            </label>
-
-            <label className="text-sm text-ink">
-              Max score
-              <div className="mt-1 flex gap-2">
-                <select
-                  value={maxScoreOperator}
-                  onChange={(event) => setMaxScoreOperator(event.target.value as ScoreMaxOperator)}
-                  className="w-20 rounded-md border border-edge px-2 py-2 text-sm"
-                >
-                  <option value="lte">&lt;=</option>
-                  <option value="lt">&lt;</option>
-                </select>
-                <input
-                  type="text"
-                  value={maxScoreInput}
-                  onChange={(event) => setMaxScoreInput(event.target.value)}
-                  className="w-full rounded-md border border-edge px-3 py-2 text-sm"
-                />
-              </div>
-            </label>
-
-            <label className="text-sm text-ink">
-              Sort
-              <select
-                value={sortOrder}
-                onChange={(event) => setSortOrder(event.target.value as SortOrder)}
-                className="mt-1 w-full rounded-md border border-edge px-3 py-2 text-sm"
-              >
-                <option value="artist">Artist / Album / Track</option>
-                <option value="score-desc">Score high to low</option>
-                <option value="score-asc">Score low to high</option>
-                <option value="recent">Recently added albums</option>
-              </select>
-            </label>
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-edge pt-3">
-            {hasSearched ? (
-              <p className="text-sm text-ink">
-                Results: <span className="font-semibold text-ink">{filteredSongs.length}</span>
-              </p>
-            ) : (
-              <span />
-            )}
-
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="rounded-lg bg-surface-2 px-3 py-2 text-sm font-semibold text-ink hover:bg-surface-3"
-              >
-                Clear Filters
-              </button>
-              <button
-                type="button"
-                onClick={() => setHasSearched(true)}
-                className="rounded-lg bg-cta px-3 py-2 text-sm font-semibold text-white"
-              >
-                Search
-              </button>
+              <input type="text" value={minScoreInput} onChange={(event) => setMinScoreInput(event.target.value)} style={{ ...fieldInputStyle, marginTop: 0, flex: 1 }} />
             </div>
-          </div>
+          </label>
 
-          {validationMessage && (
-            <div className="mt-3 rounded-lg border border-err-edge bg-err-bg p-3 text-sm text-err">
-              {validationMessage}
+          <label style={fieldLabelStyle}>
+            Max score
+            <div style={{ marginTop: 6, display: 'flex', gap: 8 }}>
+              <select
+                value={maxScoreOperator}
+                onChange={(event) => setMaxScoreOperator(event.target.value as ScoreMaxOperator)}
+                style={{ ...fieldSelectStyle, marginTop: 0, width: 72, flexShrink: 0 }}
+              >
+                <option value="lte">&lt;=</option>
+                <option value="lt">&lt;</option>
+              </select>
+              <input type="text" value={maxScoreInput} onChange={(event) => setMaxScoreInput(event.target.value)} style={{ ...fieldInputStyle, marginTop: 0, flex: 1 }} />
             </div>
+          </label>
+
+          <label style={fieldLabelStyle}>
+            Sort
+            <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value as SortOrder)} style={fieldSelectStyle}>
+              <option value="artist">Artist / Album / Track</option>
+              <option value="score-desc">Score high to low</option>
+              <option value="score-asc">Score low to high</option>
+              <option value="recent">Recently added albums</option>
+            </select>
+          </label>
+        </div>
+
+        <div style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10, borderTop: '1px solid #2a2548', paddingTop: 12 }}>
+          {hasSearched ? (
+            <p className="vco-label">
+              Results: <span style={{ color: '#c4b5fd' }}>{filteredSongs.length}</span>
+            </p>
+          ) : (
+            <span />
           )}
-        </section>
 
-        {hasSearched && isLoading && <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">Loading songs...</p>}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" onClick={clearFilters} className="vco-tbtn">
+              Clear Filters
+            </button>
+            <button type="button" onClick={() => setHasSearched(true)} className="vco-tbtn primary">
+              Search
+            </button>
+          </div>
+        </div>
 
-        {hasSearched && !isLoading && errorMessage && (
-          <div className="mt-6 rounded-lg border border-err-edge bg-err-bg p-4 text-sm text-err">
-            <p>Could not load searchable songs.</p>
-            <p className="mt-1">{errorMessage}</p>
+        {validationMessage && (
+          <div className="vco-msg-err" style={{ marginTop: 10 }}>
+            {validationMessage}
           </div>
         )}
+      </section>
 
-        {hasSearched && !isLoading && !errorMessage && songs.length === 0 && (
-          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">
-            No songs found yet. Add and review albums to start searching.
-          </p>
-        )}
+      {hasSearched && isLoading && <p className="vco-loading">Loading songs...</p>}
 
-        {hasSearched && !isLoading && !errorMessage && songs.length > 0 && filteredSongs.length === 0 && !validationMessage && (
-          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">
-            No songs matched the current filters.
-          </p>
-        )}
+      {hasSearched && !isLoading && errorMessage && (
+        <div className="vco-msg-err" style={{ marginTop: 20 }}>
+          Could not load searchable songs. {errorMessage}
+        </div>
+      )}
 
-        {hasSearched && !isLoading && !errorMessage && filteredSongs.length > 0 && (
-          <section className="mt-6 space-y-3">
-            {filteredSongs.map((song) => (
-              <article
-                key={`${song.userSavedAlbumId}:${song.trackNumber}`}
-                className="rounded-xl border border-edge bg-surface p-4 shadow-sm"
-              >
-                <div className="flex flex-col gap-3 md:flex-row md:items-start">
-                  <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-surface-2">
-                    <AlbumCover src={song.coverUrl} alt={`${song.albumTitle} cover`} loading="lazy" />
-                  </div>
+      {hasSearched && !isLoading && !errorMessage && songs.length === 0 && (
+        <p className="vco-empty">No songs found yet. Add and review albums to start searching.</p>
+      )}
 
-                  <div className="min-w-0 flex-1">
-                    <p className="text-lg font-bold text-ink">
-                      {song.trackNumber}. {song.trackTitle}
-                    </p>
-                    <p className="text-sm font-semibold text-ink">{song.artistName}</p>
-                    <p className="text-sm text-ink-2">{song.albumTitle}</p>
+      {hasSearched && !isLoading && !errorMessage && songs.length > 0 && filteredSongs.length === 0 && !validationMessage && (
+        <p className="vco-empty">No songs matched the current filters.</p>
+      )}
 
-                    <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                      <span className="rounded-full bg-surface-2 px-2 py-1 font-semibold text-ink-2">
-                        Score: {formatScore(song.score)}
-                      </span>
-                      <span className="rounded-full bg-surface-2 px-2 py-1 font-semibold text-ink-2">
-                        {song.isInterlude ? 'Interlude' : 'Track'}
-                      </span>
-                      {song.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="rounded-full bg-indigo-100 px-2 py-1 font-semibold text-indigo-700"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-
-                    
-
-                    {song.reviewNotes.trim() && (
-                      <p className="mt-2 text-sm text-ink-2">
-                        <span className="font-semibold text-ink">Notes:</span> {song.reviewNotes}
-                      </p>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/reviews/${song.userSavedAlbumId}`)}
-                    className="rounded-lg bg-cta px-3 py-2 text-sm font-semibold text-white"
-                  >
-                    Open Review
-                  </button>
+      {hasSearched && !isLoading && !errorMessage && filteredSongs.length > 0 && (
+        <section style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {filteredSongs.map((song) => (
+            <article
+              key={`${song.userSavedAlbumId}:${song.trackNumber}`}
+              className="vco-panel"
+              style={{ padding: '14px 16px' }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
+                <div style={{ width: 72, height: 72, flexShrink: 0, overflow: 'hidden', borderRadius: 6, background: '#141028' }}>
+                  <AlbumCover src={song.coverUrl} alt={`${song.albumTitle} cover`} loading="lazy" />
                 </div>
-              </article>
-            ))}
-          </section>
-        )}
-      </div>
+
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: '#ede9fe' }}>
+                    {song.trackNumber}. {song.trackTitle}
+                  </p>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#c4b5fd' }}>{song.artistName}</p>
+                  <p style={{ fontSize: 12, color: '#7c6fad' }}>{song.albumTitle}</p>
+
+                  <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    <span style={{ borderRadius: 4, border: '1px solid #2a2548', background: '#1c1836', padding: '2px 8px', fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: '#c4b5fd' }}>
+                      Score: {formatScore(song.score)}
+                    </span>
+                    <span style={{ borderRadius: 4, border: '1px solid #2a2548', background: '#1c1836', padding: '2px 8px', fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: '#7c6fad' }}>
+                      {song.isInterlude ? 'Interlude' : 'Track'}
+                    </span>
+                  </div>
+
+                  {song.reviewNotes.trim() && (
+                    <p style={{ marginTop: 8, fontSize: 12, color: '#c4b5fd' }}>
+                      <span style={{ fontWeight: 600, color: '#ede9fe' }}>Notes:</span> {song.reviewNotes}
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => navigate(`/reviews/${song.userSavedAlbumId}`)}
+                  className="vco-tbtn primary"
+                  style={{ flexShrink: 0 }}
+                >
+                  Open Review
+                </button>
+              </div>
+            </article>
+          ))}
+        </section>
+      )}
     </main>
   )
 }

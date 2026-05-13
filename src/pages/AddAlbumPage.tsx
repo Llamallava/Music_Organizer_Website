@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
-import LinearBackButton from '../components/LinearBackButton'
 import { saveAlbumForCurrentUser } from '../lib/db/reviewsData'
 import {
   type AlbumSearchResult,
@@ -104,132 +103,157 @@ function AddAlbumPage() {
   }
 
   return (
-    <main className="min-h-screen px-6 py-8">
+    <main className="page-wrap">
       {isSaving && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30">
-          <div className="flex flex-col items-center gap-4 rounded-xl border border-edge bg-surface px-10 py-8 shadow-xl text-center max-w-sm mx-4">
-            <div className="h-10 w-10 rounded-full border-4 border-edge border-t-mint animate-spin" />
-            <p className="text-sm font-medium text-ink">
-              We are adding <span className="font-semibold">{selectedAlbum?.title}</span> by <span className="font-semibold">{selectedAlbum?.artistName}</span> to your library. This may take a while, please be patient.
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(8,6,18,0.75)', backdropFilter: 'blur(4px)' }}>
+          <div className="vco-panel flex flex-col items-center gap-4 px-10 py-8 text-center" style={{ maxWidth: 360 }}>
+            <div
+              className="h-10 w-10 rounded-full animate-spin"
+              style={{ border: '3px solid #2a2548', borderTopColor: '#c4b5fd' }}
+            />
+            <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: '#ede9fe', lineHeight: 1.6 }}>
+              Adding <span style={{ color: '#c4b5fd' }}>{selectedAlbum?.title}</span> by <span style={{ color: '#c4b5fd' }}>{selectedAlbum?.artistName}</span> to your library. This may take a while.
             </p>
           </div>
         </div>
       )}
-      <div className="mx-auto w-full max-w-7xl">
-        <LinearBackButton />
 
-        <section className="mt-6 rounded-xl border border-edge bg-surface p-6">
-          <h1 className="text-2xl font-bold text-ink">Add Album</h1>
+      <h1 className="page-title">Add Album</h1>
 
-          <form onSubmit={handleSearch} className="mt-4 flex flex-col gap-3">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <input
-                type="text"
-                value={artistNameQuery}
-                onChange={(event) => setArtistNameQuery(event.target.value)}
-                placeholder="Artist Name"
-                className="w-full rounded-lg border border-edge px-3 py-2 text-sm text-ink"
-              />
-              <input
-                type="text"
-                value={albumTitleQuery}
-                onChange={(event) => setAlbumTitleQuery(event.target.value)}
-                placeholder="Album or Song Title"
-                className="w-full rounded-lg border border-edge px-3 py-2 text-sm text-ink"
-              />
-            </div>
-            <div>
-              <button
-                type="submit"
-                disabled={isSearching || isSaving}
-                className="rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-              >
-                {isSearching ? 'Searching...' : 'Search'}
-              </button>
-            </div>
-          </form>
+      <section className="vco-panel" style={{ marginTop: 20, padding: '20px 24px' }}>
+        <form onSubmit={handleSearch} className="flex flex-col gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <input
+              type="text"
+              value={artistNameQuery}
+              onChange={(event) => setArtistNameQuery(event.target.value)}
+              placeholder="Artist Name"
+              style={{
+                background: '#100d22',
+                border: '1px solid #2a2548',
+                borderRadius: 6,
+                padding: '8px 12px',
+                fontSize: 13,
+                color: '#ede9fe',
+                fontFamily: "'JetBrains Mono', monospace",
+                width: '100%',
+              }}
+            />
+            <input
+              type="text"
+              value={albumTitleQuery}
+              onChange={(event) => setAlbumTitleQuery(event.target.value)}
+              placeholder="Album or Song Title"
+              style={{
+                background: '#100d22',
+                border: '1px solid #2a2548',
+                borderRadius: 6,
+                padding: '8px 12px',
+                fontSize: 13,
+                color: '#ede9fe',
+                fontFamily: "'JetBrains Mono', monospace",
+                width: '100%',
+              }}
+            />
+          </div>
+          <div>
+            <button
+              type="submit"
+              disabled={isSearching || isSaving}
+              className="vco-tbtn primary"
+            >
+              {isSearching ? 'Searching...' : 'Search'}
+            </button>
+          </div>
+        </form>
 
-          {errorMessage && (
-            <div className="mt-4 rounded-lg border border-err-edge bg-err-bg p-3 text-sm text-err">
-              {errorMessage}
-            </div>
-          )}
+        {errorMessage && (
+          <div className="vco-msg-err" style={{ marginTop: 16 }}>
+            {errorMessage}
+          </div>
+        )}
 
-          {infoMessage && (
-            <div className="mt-4 rounded-lg border border-info-edge bg-info-bg p-3 text-sm text-info">
-              {infoMessage}
-            </div>
-          )}
+        {infoMessage && (
+          <p className="vco-empty" style={{ marginTop: 16 }}>
+            {infoMessage}
+          </p>
+        )}
 
-          {results.length > 0 && (
-            <div className="mt-6 flex flex-wrap gap-3">
-              <button
-                type="button"
-                disabled={!selectedAlbum || isSaving || isSearching}
-                onClick={() => void handleSave()}
-                className="rounded-lg bg-mint px-4 py-2 text-sm font-semibold text-zinc-900 disabled:opacity-60"
-              >
-                {isSaving ? 'Saving...' : 'Save'}
-              </button>
-            </div>
-          )}
+        {results.length > 0 && (
+          <div style={{ marginTop: 20, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <button
+              type="button"
+              disabled={!selectedAlbum || isSaving || isSearching}
+              onClick={() => void handleSave()}
+              className="vco-tbtn primary"
+            >
+              {isSaving ? 'Saving...' : 'Save Selected'}
+            </button>
+          </div>
+        )}
 
-          {results.length > 0 && (
-            <div className="mt-4">
-              <div className="mb-3 text-xs text-ink-2">
-                Showing {Math.min(visibleResultsCount, results.length)} of {results.length} results
-              </div>
+        {results.length > 0 && (
+          <div style={{ marginTop: 20 }}>
+            <p className="vco-label" style={{ marginBottom: 12 }}>
+              Showing {Math.min(visibleResultsCount, results.length)} of {results.length} results
+            </p>
 
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {results.slice(0, visibleResultsCount).map((album) => {
-                  const isSelected = album.sourceAlbumId === selectedAlbumId
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {results.slice(0, visibleResultsCount).map((album) => {
+                const isSelected = album.sourceAlbumId === selectedAlbumId
 
-                  return (
+                return (
                   <button
                     key={album.sourceAlbumId}
                     type="button"
                     onClick={() => setSelectedAlbumId(album.sourceAlbumId)}
-                    className={`rounded-lg border p-3 text-left transition-opacity duration-300 ${
-                      isSelected
-                        ? 'border-cta bg-surface-2'
-                        : 'border-edge bg-surface hover:border-ink-3'
-                    } ${loadedCovers.has(album.sourceAlbumId) || !album.coverUrl ? 'opacity-100' : 'opacity-0'}`}
+                    style={{
+                      borderRadius: 8,
+                      border: `1px solid ${isSelected ? '#7c3aed' : '#2a2548'}`,
+                      background: isSelected ? '#1a1535' : '#141028',
+                      padding: 12,
+                      textAlign: 'left',
+                      transition: 'opacity 0.3s, border-color 0.15s',
+                      opacity: loadedCovers.has(album.sourceAlbumId) || !album.coverUrl ? 1 : 0,
+                    }}
                   >
-                    <div className="aspect-square w-full overflow-hidden rounded-md bg-surface-2">
+                    <div style={{ aspectRatio: '1', width: '100%', overflow: 'hidden', borderRadius: 6, background: '#0e0c1c' }}>
                       <AlbumCover
-                          src={album.coverUrl}
-                          alt={`${album.title} cover`}
-                          loading="lazy"
-                          onLoad={() => setLoadedCovers((prev) => { const next = new Set(prev); next.add(album.sourceAlbumId); return next })}
-                        />
+                        src={album.coverUrl}
+                        alt={`${album.title} cover`}
+                        loading="lazy"
+                        onLoad={() => setLoadedCovers((prev) => { const next = new Set(prev); next.add(album.sourceAlbumId); return next })}
+                      />
                     </div>
 
-                    <p className="mt-2 truncate text-sm font-semibold text-ink">{album.title}</p>
-                    <p className="truncate text-xs text-ink-2">{album.artistName}</p>
-                    <p className="mt-1 text-xs text-ink-3">
+                    <p style={{ marginTop: 8, fontSize: 13, fontWeight: 600, color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {album.title}
+                    </p>
+                    <p style={{ fontSize: 11, color: '#7c6fad', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {album.artistName}
+                    </p>
+                    <p style={{ marginTop: 4, fontSize: 11, color: '#4a4570' }}>
                       {album.totalTracks > 0 ? `${album.totalTracks} tracks` : 'Track count unknown'}
                     </p>
                   </button>
                 )
               })}
-              </div>
-
-              {visibleResultsCount < results.length && (
-                <div className="mt-4">
-                  <button
-                    type="button"
-                    onClick={() => setVisibleResultsCount((previous) => previous + RESULTS_STEP)}
-                    className="rounded-lg bg-surface-2 px-4 py-2 text-sm font-semibold text-ink hover:bg-surface-3"
-                  >
-                    Show More Results
-                  </button>
-                </div>
-              )}
             </div>
-          )}
 
-        </section>
-      </div>
+            {visibleResultsCount < results.length && (
+              <div style={{ marginTop: 16 }}>
+                <button
+                  type="button"
+                  onClick={() => setVisibleResultsCount((previous) => previous + RESULTS_STEP)}
+                  className="vco-tbtn"
+                >
+                  Show More Results
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
     </main>
   )
 }

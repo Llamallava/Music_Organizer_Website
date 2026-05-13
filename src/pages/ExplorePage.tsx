@@ -68,37 +68,39 @@ function ExplorePage() {
   }, [])
 
   return (
-    <main className="min-h-screen px-6 py-8">
-      <div className="mx-auto w-full max-w-3xl">
-        <h1 className="text-3xl font-black text-ink">Explore</h1>
-        <p className="mt-2 text-sm text-ink">Notifications and activity updates.</p>
+    <main className="page-wrap">
+      <div style={{ maxWidth: 760, margin: '0 auto' }}>
+        <h1 className="page-title">Explore</h1>
+        <p style={{ marginTop: 6, fontSize: 13, color: '#7c6fad', fontFamily: "'JetBrains Mono', monospace" }}>
+          Notifications and activity updates.
+        </p>
 
-        {isLoading && (
-          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">Loading notifications...</p>
-        )}
+        {isLoading && <p className="vco-loading">Loading notifications...</p>}
 
         {!isLoading && errorMessage && (
-          <div className="mt-6 rounded-lg border border-err-edge bg-err-bg p-4 text-sm text-err">
-            <p>Could not load notifications.</p>
-            <p className="mt-1">{errorMessage}</p>
+          <div className="vco-msg-err" style={{ marginTop: 20 }}>
+            Could not load notifications. {errorMessage}
           </div>
         )}
 
         {!isLoading && !errorMessage && notifications.length === 0 && (
-          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">
-            No notifications yet.
-          </p>
+          <p className="vco-empty">No notifications yet.</p>
         )}
 
         {!isLoading && !errorMessage && notifications.length > 0 && (
-          <section className="mt-6 space-y-3">
+          <section style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {notifications.map((notification) => (
               <article
                 key={notification.id}
-                className="rounded-xl border border-edge bg-surface p-4 shadow-sm"
+                className="vco-panel"
+                style={{ padding: '14px 16px' }}
               >
-                <p className="text-sm font-semibold text-ink">{renderNotificationText(notification)}</p>
-                <p className="mt-2 text-xs text-ink-3">{formatNotificationTime(notification.createdAt)}</p>
+                <p style={{ fontSize: 13, fontWeight: 600, color: '#ede9fe' }}>
+                  {renderNotificationText(notification)}
+                </p>
+                <p style={{ marginTop: 6, fontSize: 11, color: '#7c6fad', fontFamily: "'JetBrains Mono', monospace" }}>
+                  {formatNotificationTime(notification.createdAt)}
+                </p>
               </article>
             ))}
           </section>

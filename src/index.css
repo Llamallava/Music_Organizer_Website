@@ -42,6 +42,9 @@
   --accent-h: 160;
   --accent-s: 75%;
   --accent-l: 55%;
+
+  /* Nav bar height — referenced by vco-page and body padding */
+  --nav-h: 40px;
 }
 
 * {
@@ -52,6 +55,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  padding-top: var(--nav-h);
 }
 
 #root {
@@ -209,6 +213,132 @@ input[type='text']:focus {
 }
 
 /* ============================================================
+   APP NAV BAR — fixed top bar present on all pages
+   ============================================================ */
+
+.app-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-h);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  background: linear-gradient(180deg, #141028 0%, #0e0c1c 100%);
+  border-bottom: 1px solid #2a2548;
+  z-index: 41;
+  flex-shrink: 0;
+}
+
+.app-nav-brand {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #7c6fad;
+  white-space: nowrap;
+  padding: 0 4px;
+}
+
+.app-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 4px;
+}
+
+.app-nav-link {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  background: none;
+  border: none;
+  color: #7c6fad;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.12s, background 0.12s;
+}
+
+.app-nav-link:hover {
+  color: #c4b5fd;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.app-nav-link.active {
+  color: #ede9fe;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid #2a2548;
+}
+
+/* ============================================================
+   SHARED VCO UTILITY CLASSES — used across all pages
+   ============================================================ */
+
+/* Standard panel / card */
+.vco-panel {
+  border-radius: 8px;
+  border: 1px solid #2a2548;
+  background: linear-gradient(180deg, #141028 0%, #0e0c1c 80%);
+}
+
+/* Uppercase monospace label */
+.vco-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #7c6fad;
+}
+
+/* Loading state text */
+.vco-loading {
+  margin-top: 20px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  border: 1px solid #2a2548;
+  background: #141028;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #7c6fad;
+}
+
+/* Empty / placeholder state text */
+.vco-empty {
+  margin-top: 20px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  border: 1px dashed #2a2548;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #7c6fad;
+}
+
+/* Standard page wrapper for scrollable pages */
+.page-wrap {
+  min-height: calc(100vh - var(--nav-h));
+  padding: 20px 24px 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Page title */
+.page-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: #ede9fe;
+  line-height: 1.2;
+  margin-top: 16px;
+}
+
+/* ============================================================
    VCO CONSOLE — AlbumReviewPage mixing-desk layout
    All colors use the existing @theme palette + --accent-h/s/l
    ============================================================ */
@@ -216,7 +346,7 @@ input[type='text']:focus {
 .vco-page {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: calc(100vh - var(--nav-h));
   overflow: hidden;
   padding: 10px 14px 8px;
   font-family: 'Sora', 'Segoe UI', sans-serif;

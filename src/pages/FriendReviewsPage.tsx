@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
-import LinearBackButton from '../components/LinearBackButton'
 import { getFriendsOverviewForCurrentUser } from '../lib/db/friendsData'
 import { listSavedAlbumsForUser, type SavedAlbumCard } from '../lib/db/reviewsData'
 
@@ -72,51 +71,42 @@ function FriendReviewsPage() {
   }, [friendUserId])
 
   return (
-    <main className="min-h-screen px-6 py-8">
-      <div className="mx-auto w-full max-w-7xl">
-        <LinearBackButton />
+    <main className="page-wrap">
+      <h1 className="page-title">
+        {toPossessiveName(friendName ?? 'Friend')} Reviews
+      </h1>
 
-        <h1 className="mt-5 text-5xl font-black tracking-tight text-ink">
-          {toPossessiveName(friendName ?? 'Friend')} Reviews
-        </h1>
+      {isLoading && <p className="vco-loading">Loading albums...</p>}
 
-        {isLoading && (
-          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">Loading albums...</p>
-        )}
+      {!isLoading && errorMessage && (
+        <div className="vco-msg-err" style={{ marginTop: 20 }}>
+          {errorMessage}
+        </div>
+      )}
 
-        {!isLoading && errorMessage && (
-          <div className="mt-6 rounded-lg border border-err-edge bg-err-bg p-4 text-sm text-err">
-            <p>Could not load albums.</p>
-            <p className="mt-1">{errorMessage}</p>
-          </div>
-        )}
+      {!isLoading && !errorMessage && albums.length === 0 && (
+        <p className="vco-empty">{toPossessiveName(friendName ?? 'Friend')} review list is currently empty.</p>
+      )}
 
-        {!isLoading && !errorMessage && albums.length === 0 && (
-          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">
-            {toPossessiveName(friendName ?? 'Friend')} review list is currently empty.
-          </p>
-        )}
+      {!isLoading && !errorMessage && albums.length > 0 && friendUserId && (
+        <section className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+          {albums.map((album) => (
+            <button
+              key={album.userSavedAlbumId}
+              type="button"
+              onClick={() => navigate(`/friends/${friendUserId}/reviews/${album.userSavedAlbumId}`)}
+              className="text-left"
+            >
+              <div className="aspect-square w-full overflow-hidden rounded-lg bg-surface-2">
+                <AlbumCover src={album.coverUrl} alt={`${album.title} cover`} loading="lazy" />
+              </div>
 
-        {!isLoading && !errorMessage && albums.length > 0 && friendUserId && (
-          <section className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-            {albums.map((album) => (
-              <button
-                key={album.userSavedAlbumId}
-                type="button"
-                onClick={() => navigate(`/friends/${friendUserId}/reviews/${album.userSavedAlbumId}`)}
-                className="text-left"
-              >
-                <div className="aspect-square w-full overflow-hidden rounded-lg bg-surface-2">
-                  <AlbumCover src={album.coverUrl} alt={`${album.title} cover`} loading="lazy" />
-                </div>
-
-                <p className="mt-2 truncate text-sm font-semibold text-ink">{album.title}</p>
-                <p className="truncate text-xs text-ink-2">{album.artistName}</p>
-              </button>
-            ))}
-          </section>
-        )}
-      </div>
+              <p className="mt-2 truncate text-sm font-semibold text-ink">{album.title}</p>
+              <p className="truncate text-xs text-ink-2">{album.artistName}</p>
+            </button>
+          ))}
+        </section>
+      )}
     </main>
   )
 }

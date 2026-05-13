@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
-import LinearBackButton from '../components/LinearBackButton'
 import { useAlbumAccent } from '../hooks/useAlbumAccent'
 import { getFriendsOverviewForCurrentUser, type FriendProfile } from '../lib/db/friendsData'
 import {
@@ -587,10 +586,7 @@ function AlbumReviewPage() {
     return (
       <main className="min-h-screen px-6 py-8">
         <div className="mx-auto w-full max-w-6xl">
-          <LinearBackButton />
-          <p className="mt-6 rounded-lg bg-surface px-4 py-3 text-sm text-ink">
-            Loading review workspace...
-          </p>
+          <p className="vco-loading">Loading review workspace...</p>
         </div>
       </main>
     )
@@ -600,8 +596,7 @@ function AlbumReviewPage() {
     return (
       <main className="min-h-screen px-6 py-8">
         <div className="mx-auto w-full max-w-6xl">
-          <LinearBackButton />
-          <div className="mt-6 rounded-lg border border-err-edge bg-err-bg p-4 text-sm text-err">
+          <div className="vco-msg-err" style={{ marginTop: 20 }}>
             {errorMessage ?? 'Could not load this album review.'}
           </div>
         </div>
@@ -662,11 +657,6 @@ function AlbumReviewPage() {
 
   return (
     <main className="vco-page" style={accentStyle}>
-      {/* Top bar */}
-      <div className="vco-topbar">
-        <LinearBackButton variant="console" />
-      </div>
-
       {/* Console case */}
       <div className="vco-case">
         <div className="vco-body">

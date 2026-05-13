@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
-import LinearBackButton from '../components/LinearBackButton'
 import { getFriendsOverviewForCurrentUser } from '../lib/db/friendsData'
 import { getAlbumWorkspaceForUser, type AlbumWorkspace, type ReviewSection } from '../lib/db/reviewsData'
 
@@ -11,16 +10,18 @@ const getDisplayName = (username: string | null | undefined) => username?.trim()
 const toPossessiveName = (name: string) => (name.endsWith('s') || name.endsWith('S') ? `${name}'` : `${name}'s`)
 
 const parseTrackNumberFromKey = (key: string): number | null => {
-  if (!key.startsWith('track:')) {
-    return null
-  }
-
+  if (!key.startsWith('track:')) return null
   const trackNumber = Number(key.replace('track:', ''))
-  if (!Number.isInteger(trackNumber) || trackNumber <= 0) {
-    return null
-  }
-
+  if (!Number.isInteger(trackNumber) || trackNumber <= 0) return null
   return trackNumber
+}
+
+const formatDuration = (secs: number | null): string => {
+  if (!secs || secs <= 0) return ''
+  const total = Math.round(secs)
+  const m = Math.floor(total / 60)
+  const s = total % 60
+  return `${m}:${String(s).padStart(2, '0')}`
 }
 
 function FriendAlbumReviewPage() {
@@ -51,9 +52,7 @@ function FriendAlbumReviewPage() {
           getAlbumWorkspaceForUser(friendUserId, userSavedAlbumId),
         ])
 
-        if (!isActive) {
-          return
-        }
+        if (!isActive) return
 
         const friend = overview.friends.find((entry) => entry.userId === friendUserId)
         if (!friend) {
@@ -75,227 +74,251 @@ function FriendAlbumReviewPage() {
         setFriendName(getDisplayName(friend.username))
         setActiveSectionKey(firstTrack ? toTrackKey(firstTrack.trackNumber) : CONCLUSION_KEY)
       } catch (error) {
-        if (!isActive) {
-          return
-        }
-
+        if (!isActive) return
         const message = error instanceof Error ? error.message : 'Failed to load friend review workspace.'
         setErrorMessage(message)
       } finally {
-        if (isActive) {
-          setIsLoading(false)
-        }
+        if (isActive) setIsLoading(false)
       }
     }
 
     void loadWorkspace()
-
-    return () => {
-      isActive = false
-    }
+    return () => { isActive = false }
   }, [friendUserId, userSavedAlbumId])
 
   const activeTrack = useMemo(() => {
-    if (!workspace) {
-      return null
-    }
-
+    if (!workspace) return null
     const trackNumber = parseTrackNumberFromKey(activeSectionKey)
-    if (!trackNumber) {
-      return null
-    }
-
+    if (!trackNumber) return null
     return workspace.tracks.find((track) => track.trackNumber === trackNumber) ?? null
   }, [activeSectionKey, workspace])
 
   const activeSection = useMemo<ReviewSection | null>(() => {
-    if (!workspace) {
-      return null
-    }
-
+    if (!workspace) return null
     if (activeSectionKey === CONCLUSION_KEY) {
       return workspace.sections.find((section) => section.sectionType === 'conclusion') ?? null
     }
-
     const trackNumber = parseTrackNumberFromKey(activeSectionKey)
-    if (!trackNumber) {
-      return null
-    }
-
-    return (
-      workspace.sections.find(
-        (section) => section.sectionType === 'track' && section.trackNumber === trackNumber,
-      ) ?? null
-    )
+    if (!trackNumber) return null
+    return workspace.sections.find(
+      (section) => section.sectionType === 'track' && section.trackNumber === trackNumber,
+    ) ?? null
   }, [activeSectionKey, workspace])
 
   if (isLoading) {
-    return (
-      <main className="min-h-screen px-6 py-8">
-        <div className="mx-auto w-full max-w-6xl">
-          <LinearBackButton />
-          <p className="mt-6 rounded-lg bg-surface px-4 py-3 text-sm text-ink">
-            Loading review workspace...
-          </p>
-        </div>
-      </main>
-    )
+    return <main className="min-h-screen px-6 py-8"><p className="vco-loading">Loading review workspace...</p></main>
   }
 
   if (!workspace) {
     return (
       <main className="min-h-screen px-6 py-8">
-        <div className="mx-auto w-full max-w-6xl">
-          <LinearBackButton />
-
-          <h1 className="mt-5 text-5xl font-black tracking-tight text-ink">
-            {toPossessiveName(friendName ?? 'Friend')} Reviews
-          </h1>
-
-          <div className="mt-6 rounded-lg border border-err-edge bg-err-bg p-4 text-sm text-err">
-            {errorMessage ?? 'Could not load this album review.'}
-          </div>
+        <div className="vco-msg-err" style={{ marginTop: 20 }}>
+          {errorMessage ?? 'Could not load this album review.'}
         </div>
       </main>
     )
   }
 
   const displayName = friendName ?? 'Friend'
-  const scoreText = activeSection?.score === null || activeSection?.score === undefined
-    ? 'Unscored'
-    : `${activeSection.score}/10`
+  const totalSeconds = workspace.tracks.reduce((sum, t) => sum + (t.durationSeconds ?? 0), 0)
+  const totalRuntime = formatDuration(totalSeconds)
+  const releaseYear = workspace.album.releaseDate ? workspace.album.releaseDate.slice(0, 4) : ''
+  const activeChNum = activeTrack ? String(activeTrack.trackNumber).padStart(2, '0') : '—'
+  const trackList = workspace.tracks
+  const isLastSection = activeSectionKey === CONCLUSION_KEY
+
+  const scoreText =
+    activeSection?.score === null || activeSection?.score === undefined
+      ? '—'
+      : activeSection.score.toFixed(1)
+
   const notesLyricallyText = activeSection?.notesLyrically ?? ''
   const notesSonicallyText = activeSection?.notesSonically ?? ''
 
+  const navigate = (key: string) => setActiveSectionKey(key)
+
   return (
-    <main className="min-h-screen px-6 py-8">
-      <div className="mx-auto w-full max-w-[2400px]">
-        <LinearBackButton />
+    <main className="vco-page">
+      <div className="vco-case">
+        <div className="vco-body">
 
-        <h1 className="mt-5 text-5xl font-black tracking-tight text-ink">
-          {toPossessiveName(displayName)} Reviews
-        </h1>
-        <p className="mt-1 text-sm text-ink-2">Read-only view.</p>
-
-        <section className="mt-6 grid gap-4 lg:grid-cols-[clamp(240px,18%,500px)_minmax(0,1fr)_clamp(280px,21%,560px)]">
-          <aside className="space-y-4">
-            <div className="rounded-xl border border-edge bg-surface p-4">
-              <div className="aspect-square w-full overflow-hidden rounded-lg bg-surface-2">
-                <AlbumCover src={workspace.album.coverUrl} alt={`${workspace.album.title} cover`} loading="eager" />
-              </div>
-              <h2 className="mt-3 text-base font-bold text-ink">{workspace.album.title}</h2>
-              <p className="text-sm text-ink">{workspace.album.artistName}</p>
+          {/* LEFT: Album info + tracklist */}
+          <aside className="vco-left">
+            <div className="vco-cover-wrap">
+              <AlbumCover
+                src={workspace.album.coverUrl}
+                alt={`${workspace.album.title} cover`}
+                loading="eager"
+              />
             </div>
-
-            <div className="rounded-xl border border-edge bg-surface p-3">
-              <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-ink-3">Tracklist</p>
-              <div className="max-h-[60vh] space-y-1 overflow-auto pr-1">
-                {workspace.tracks.map((track) => {
-                  const key = toTrackKey(track.trackNumber)
-                  const isActive = key === activeSectionKey
-
-                  return (
-                    <button
-                      key={track.id}
-                      type="button"
-                      onClick={() => setActiveSectionKey(key)}
-                      className={`w-full rounded-lg px-3 py-2 text-left text-sm ${
-                        isActive ? 'bg-cta text-white' : 'bg-surface-2 text-ink hover:bg-surface-3'
-                      }`}
-                    >
-                      <span className="mr-2 font-semibold">{track.trackNumber}.</span>
-                      {track.title}
-                    </button>
-                  )
-                })}
-
-                <button
-                  type="button"
-                  onClick={() => setActiveSectionKey(CONCLUSION_KEY)}
-                  className={`w-full rounded-lg px-3 py-2 text-left text-sm font-semibold ${
-                    activeSectionKey === CONCLUSION_KEY
-                      ? 'bg-cta text-white'
-                      : 'bg-surface-2 text-pink hover:bg-surface-3'
-                  }`}
-                >
-                  Conclusion
-                </button>
+            <div className="vco-album-meta">
+              <div className="vco-album-title">{workspace.album.title}</div>
+              <div className="vco-album-artist">{workspace.album.artistName}</div>
+              <div className="vco-album-info">
+                {[releaseYear, `${workspace.album.totalTracks} tracks`, totalRuntime]
+                  .filter(Boolean)
+                  .join(' · ')}
               </div>
             </div>
+
+            <div className="vco-timeline">
+              {workspace.tracks.map((track) => {
+                const key = toTrackKey(track.trackNumber)
+                const isActive = key === activeSectionKey
+                const widthPct = totalSeconds > 0 && track.durationSeconds
+                  ? (track.durationSeconds / totalSeconds) * 100
+                  : 100 / trackList.length
+                return (
+                  <button
+                    key={track.id}
+                    type="button"
+                    className={`vco-tl-seg${isActive ? ' active' : ''}`}
+                    style={{ width: `${widthPct}%` }}
+                    onClick={() => navigate(key)}
+                    title={`${String(track.trackNumber).padStart(2, '0')} ${track.title}`}
+                    aria-label={track.title}
+                  />
+                )
+              })}
+            </div>
+
+            <nav className="vco-tracklist">
+              {workspace.tracks.map((track) => {
+                const key = toTrackKey(track.trackNumber)
+                const isActive = key === activeSectionKey
+                const section = workspace.sections.find(
+                  (s) => s.sectionType === 'track' && s.trackNumber === track.trackNumber,
+                )
+                const scoreDisp = section?.score !== null && section?.score !== undefined
+                  ? section.score.toFixed(1)
+                  : ''
+                return (
+                  <button
+                    key={track.id}
+                    type="button"
+                    className={`vco-tl-item${isActive ? ' active' : ''}`}
+                    onClick={() => navigate(key)}
+                  >
+                    <span className="vco-tl-num">{String(track.trackNumber).padStart(2, '0')}</span>
+                    <span className="vco-tl-title">{track.title}</span>
+                    {scoreDisp && <span className="vco-tl-score">{scoreDisp}</span>}
+                  </button>
+                )
+              })}
+              <button
+                type="button"
+                className={`vco-tl-item vco-tl-conc${isLastSection ? ' active' : ''}`}
+                onClick={() => navigate(CONCLUSION_KEY)}
+              >
+                <span className="vco-tl-num">★</span>
+                <span className="vco-tl-title">Conclusion</span>
+                {(() => {
+                  const s = workspace.sections.find((sec) => sec.sectionType === 'conclusion')
+                  return s?.score !== null && s?.score !== undefined
+                    ? <span className="vco-tl-score">{s.score.toFixed(1)}</span>
+                    : null
+                })()}
+              </button>
+            </nav>
           </aside>
 
-          <section className="rounded-xl border border-edge bg-surface p-4">
-            <div className="mb-3 flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">Review Section</p>
-                <h2 className="text-lg font-bold text-ink">
-                  {activeTrack ? `${activeTrack.trackNumber}. ${activeTrack.title}` : 'Conclusion'}
-                </h2>
+          {/* CENTER: Read-only notes */}
+          <section className="vco-center">
+            <header className="vco-track-bar">
+              <div className="vco-track-info">
+                <span className="tn">{activeTrack ? `${activeChNum}.` : '★'}</span>
+                <span className="tt">{activeTrack ? activeTrack.title : 'Conclusion'}</span>
+                {activeTrack?.durationSeconds ? (
+                  <span className="rt">{formatDuration(activeTrack.durationSeconds)}</span>
+                ) : null}
               </div>
+              <div className="vco-toggles">
+                {activeTrack && (
+                  <>
+                    <button
+                      type="button"
+                      className={`vco-toggle${activeNotesTab === 'lyrically' ? ' on' : ''}`}
+                      onClick={() => setActiveNotesTab('lyrically')}
+                    >
+                      Lyrically
+                    </button>
+                    <button
+                      type="button"
+                      className={`vco-toggle${activeNotesTab === 'sonically' ? ' on' : ''}`}
+                      onClick={() => setActiveNotesTab('sonically')}
+                    >
+                      Sonically
+                    </button>
+                  </>
+                )}
+              </div>
+            </header>
 
-              <p className="rounded-md bg-surface-2 px-3 py-1 text-sm font-semibold text-ink">
-                Score: {scoreText}
-              </p>
+            <div className="vco-text-wrap">
+              {activeTrack ? (
+                <textarea
+                  key={`${activeSectionKey}-${activeNotesTab}`}
+                  className="vco-text-panel"
+                  value={activeNotesTab === 'lyrically' ? notesLyricallyText : notesSonicallyText}
+                  readOnly
+                  placeholder="No notes written for this section."
+                  style={{ borderLeftColor: 'hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.5)' }}
+                />
+              ) : (
+                <textarea
+                  className="vco-text-panel"
+                  value={notesLyricallyText}
+                  readOnly
+                  placeholder="No notes written for this section."
+                  style={{ borderLeftColor: 'rgba(219,39,119,0.5)' }}
+                />
+              )}
             </div>
 
-            {activeTrack && activeSection?.isInterlude && (
-              <p className="mb-3 inline-flex rounded-md bg-warn-bg px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-warn">
-                Interlude
-              </p>
-            )}
-
-            {activeTrack && (
-              <div className="mb-3 flex rounded-md border border-edge overflow-hidden text-sm font-semibold">
-                <button
-                  type="button"
-                  onClick={() => setActiveNotesTab('lyrically')}
-                  className={`px-3 py-1 ${activeNotesTab === 'lyrically' ? 'bg-cta text-white' : 'bg-surface text-ink hover:bg-surface-2'}`}
-                >
-                  Lyrically
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveNotesTab('sonically')}
-                  className={`px-3 py-1 border-l border-edge ${activeNotesTab === 'sonically' ? 'bg-cta text-white' : 'bg-surface text-ink hover:bg-surface-2'}`}
-                >
-                  Sonically
-                </button>
-              </div>
-            )}
-
-            {activeTrack ? (
-              <textarea
-                key={`${activeSectionKey}-${activeNotesTab}`}
-                value={activeNotesTab === 'lyrically' ? notesLyricallyText : notesSonicallyText}
-                readOnly
-                placeholder="No notes written for this section."
-                className="h-[62vh] w-full resize-none rounded-lg border border-edge bg-surface-2 p-3 text-sm leading-relaxed text-ink"
-              />
-            ) : (
-              <textarea
-                value={notesLyricallyText}
-                readOnly
-                placeholder="No notes written for this section."
-                className="h-[62vh] w-full resize-none rounded-lg border border-edge bg-surface-2 p-3 text-sm leading-relaxed text-ink"
-              />
-            )}
+            <footer className="vco-transport">
+              <span
+                className="vco-meta"
+                style={{ fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' }}
+              >
+                {toPossessiveName(displayName)} reviews · read-only
+              </span>
+              <span className="vco-timecode">
+                {activeTrack ? activeChNum : '★'} / {trackList.length}
+              </span>
+            </footer>
           </section>
 
-          <aside className="rounded-xl border border-edge bg-surface p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">Lyrics</p>
-            {activeTrack ? (
-              activeTrack.lyrics.trim() ? (
-                <pre className="mt-2 max-h-[72vh] overflow-auto whitespace-pre-wrap text-sm leading-relaxed text-ink">
-                  {activeTrack.lyrics}
-                </pre>
-              ) : (
-                <p className="mt-2 text-sm text-ink-2">No lyrics stored for this track.</p>
-              )
-            ) : (
-              <p className="mt-2 text-sm text-ink-2">Conclusion has no lyrics.</p>
-            )}
+          {/* RIGHT: Score + lyrics */}
+          <aside className="vco-right">
+            <div className="vco-dial-wrap">
+              <div className="vco-dial" role="presentation">
+                <div className="vco-dial-inner">{scoreText}</div>
+              </div>
+              <div className="vco-dial-info">
+                <div className="lab">Score</div>
+                <div className="val">
+                  {scoreText}<span>/10</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="vco-lyr-panel">
+              <header className="vco-lyr-head">
+                <span>{activeTrack ? `Lyrics · ${activeChNum}` : 'Lyrics'}</span>
+              </header>
+              <div className="vco-lyr-body">
+                {!activeTrack ? (
+                  <p className="vco-lyr-empty">Conclusion has no lyrics.</p>
+                ) : activeTrack.lyrics.trim() ? (
+                  <pre className="vco-lyr-pre">{activeTrack.lyrics}</pre>
+                ) : (
+                  <p className="vco-lyr-empty">No lyrics stored for this track.</p>
+                )}
+              </div>
+            </div>
           </aside>
-        </section>
+
+        </div>
       </div>
     </main>
   )

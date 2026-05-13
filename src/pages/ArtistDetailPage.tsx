@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
-import LinearBackButton from '../components/LinearBackButton'
 import {
   formatScoreValue,
   GrandTotalWordsModule,
@@ -19,41 +18,45 @@ function AlbumSongRankingModule({ albumTitle, coverUrl, songs }: AlbumSongRankin
   const remainingSongs = songs.slice(1)
 
   return (
-    <article className="rounded-xl border border-edge bg-surface p-4 shadow-sm">
-      <h2 className="text-lg font-bold text-ink">{albumTitle}</h2>
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">Song Rankings by Score</p>
+    <article className="vco-panel" style={{ padding: 16 }}>
+      <h2 style={{ fontSize: 15, fontWeight: 700, color: '#ede9fe', fontFamily: "'Sora', sans-serif", marginBottom: 4 }}>
+        {albumTitle}
+      </h2>
+      <p className="vco-label">Song Rankings by Score</p>
 
-      {!firstSong && <p className="mt-4 text-sm text-ink-2">No scored tracks yet.</p>}
+      {!firstSong && <p style={{ marginTop: 16, fontSize: 13, color: '#7c6fad' }}>No scored tracks yet.</p>}
 
       {firstSong && (
         <>
-          <div className="mt-4 rounded-lg border border-edge bg-surface-2 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">#1</p>
+          <div style={{ marginTop: 16, borderRadius: 6, border: '1px solid #2a2548', background: '#1c1836', padding: '10px 14px' }}>
+            <p className="vco-label">#1</p>
 
-            <div className="mt-3 flex gap-3">
-              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-surface-3">
+            <div style={{ marginTop: 10, display: 'flex', gap: 12 }}>
+              <div style={{ width: 80, height: 80, flexShrink: 0, overflow: 'hidden', borderRadius: 6, background: '#141028' }}>
                 <AlbumCover src={coverUrl} alt={`${albumTitle} cover`} loading="lazy" />
               </div>
 
-              <div className="min-w-0">
-                <p className="truncate text-lg font-extrabold text-ink">{firstSong.trackTitle}</p>
-                <p className="mt-1 text-sm font-semibold text-ink">
+              <div style={{ minWidth: 0 }}>
+                <p style={{ fontSize: 15, fontWeight: 800, color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {firstSong.trackTitle}
+                </p>
+                <p style={{ marginTop: 4, fontSize: 13, fontWeight: 600, color: '#c4b5fd' }}>
                   Score: {formatScoreValue(firstSong.value)}
                 </p>
               </div>
             </div>
           </div>
 
-          <ol className="mt-4 space-y-2">
+          <ol style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
             {remainingSongs.map((song, index) => (
               <li
                 key={`${song.userSavedAlbumId}:${song.trackNumber}`}
-                className="flex items-center justify-between gap-3 rounded-md bg-surface-2 px-3 py-2"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderRadius: 4, background: '#1c1836', padding: '8px 12px' }}
               >
-                <p className="truncate text-sm font-semibold text-ink">
+                <p style={{ fontSize: 13, fontWeight: 600, color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {index + 2}. {song.trackTitle}
                 </p>
-                <p className="shrink-0 text-sm font-semibold text-ink">
+                <p style={{ flexShrink: 0, fontSize: 13, fontWeight: 600, color: '#c4b5fd' }}>
                   {formatScoreValue(song.value)}
                 </p>
               </li>
@@ -101,75 +104,70 @@ function ArtistDetailPage() {
   }, [decodedName])
 
   return (
-    <main className="min-h-screen px-6 py-8">
-      <div className="mx-auto w-full max-w-7xl">
-        <LinearBackButton />
+    <main className="page-wrap">
+      <h1 className="page-title" style={{ fontSize: 40, letterSpacing: '-0.02em' }}>{decodedName}</h1>
 
-        <h1 className="mt-5 text-5xl font-black tracking-tight text-ink">{decodedName}</h1>
+      {isLoading && <p className="vco-loading">Loading stats...</p>}
 
-        {isLoading && <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">Loading stats...</p>}
+      {!isLoading && errorMessage && (
+        <div className="vco-msg-err" style={{ marginTop: 20 }}>
+          Could not load stats. {errorMessage}
+        </div>
+      )}
 
-        {!isLoading && errorMessage && (
-          <div className="mt-6 rounded-lg border border-err-edge bg-err-bg p-4 text-sm text-err">
-            <p>Could not load stats.</p>
-            <p className="mt-1">{errorMessage}</p>
-          </div>
-        )}
-
-        {!isLoading && !errorMessage && (
-          <section className="mt-6 grid grid-cols-2 gap-4">
-            <TopTenAlbumsModule
-              title="Top 10 Albums by Score"
-              valueLabel="Score"
-              valueType="score"
-              items={statsData?.topAlbumsByConclusionScore ?? []}
-            />
-            <TopTenAlbumsModule
-              title="Top 10 Albums by Average"
-              valueLabel="Average"
-              valueType="score"
-              items={statsData?.topAlbumsByTrackAverage ?? []}
-            />
-            <TopTenSongsModule
-              title="Top 10 Songs by Score"
-              valueLabel="Score"
-              valueType="score"
-              items={statsData?.topSongsByScore ?? []}
-              showArtistName={false}
-            />
-            <TopTenSongsModule
-              title="Top 10 Interlude Songs"
-              valueLabel="Score"
-              valueType="score"
-              items={statsData?.topInterludeSongs ?? []}
-              showArtistName={false}
-            />
-            <TopTenAlbumsModule
-              title="Top 10 Albums by Words Written"
-              valueLabel="Words"
-              valueType="words"
-              items={statsData?.topAlbumsByWordsWritten ?? []}
-            />
-            <TopTenSongsModule
-              title="Top 10 Songs by Words Written"
-              valueLabel="Words"
-              valueType="words"
-              items={statsData?.topSongsByWordsWritten ?? []}
-              showArtistName={false}
-            />
-            <GrandTotalWordsModule
-              title="Grand Total of Words Written"
-              valueLabel="Total Words Written"
-              totalWords={statsData?.grandTotalWordsWritten ?? 0}
-              favoriteWords={statsData?.favoriteWords ?? []}
-              subtitle={`Combined across all ${decodedName} reviews on this account.`}
-            />
-            {(statsData?.albumSongRankings ?? []).map((ranking) => (
-              <AlbumSongRankingModule key={ranking.userSavedAlbumId} {...ranking} />
-            ))}
-          </section>
-        )}
-      </div>
+      {!isLoading && !errorMessage && (
+        <section className="mt-6 grid grid-cols-2 gap-4">
+          <TopTenAlbumsModule
+            title="Top 10 Albums by Score"
+            valueLabel="Score"
+            valueType="score"
+            items={statsData?.topAlbumsByConclusionScore ?? []}
+          />
+          <TopTenAlbumsModule
+            title="Top 10 Albums by Average"
+            valueLabel="Average"
+            valueType="score"
+            items={statsData?.topAlbumsByTrackAverage ?? []}
+          />
+          <TopTenSongsModule
+            title="Top 10 Songs by Score"
+            valueLabel="Score"
+            valueType="score"
+            items={statsData?.topSongsByScore ?? []}
+            showArtistName={false}
+          />
+          <TopTenSongsModule
+            title="Top 10 Interlude Songs"
+            valueLabel="Score"
+            valueType="score"
+            items={statsData?.topInterludeSongs ?? []}
+            showArtistName={false}
+          />
+          <TopTenAlbumsModule
+            title="Top 10 Albums by Words Written"
+            valueLabel="Words"
+            valueType="words"
+            items={statsData?.topAlbumsByWordsWritten ?? []}
+          />
+          <TopTenSongsModule
+            title="Top 10 Songs by Words Written"
+            valueLabel="Words"
+            valueType="words"
+            items={statsData?.topSongsByWordsWritten ?? []}
+            showArtistName={false}
+          />
+          <GrandTotalWordsModule
+            title="Grand Total of Words Written"
+            valueLabel="Total Words Written"
+            totalWords={statsData?.grandTotalWordsWritten ?? 0}
+            favoriteWords={statsData?.favoriteWords ?? []}
+            subtitle={`Combined across all ${decodedName} reviews on this account.`}
+          />
+          {(statsData?.albumSongRankings ?? []).map((ranking) => (
+            <AlbumSongRankingModule key={ranking.userSavedAlbumId} {...ranking} />
+          ))}
+        </section>
+      )}
     </main>
   )
 }

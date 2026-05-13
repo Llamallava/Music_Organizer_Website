@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import AccountMenu from './components/AccountMenu'
+import NavBar from './components/NavBar'
 import ProtectedRoute from './components/ProtectedRoute'
 import HomePage from './pages/HomePage'
 import AddAlbumPage from './pages/AddAlbumPage'
@@ -24,7 +24,7 @@ import ToListenPage from './pages/ToListenPage'
 function App() {
   return (
     <BackgroundProvider>
-      <AccountMenu />
+      <NavBar />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/auth" element={<AuthPage />} />

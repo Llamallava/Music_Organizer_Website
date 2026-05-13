@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import LinearBackButton from '../components/LinearBackButton'
 import {
   getAutoBackgroundEnabledForCurrentUser,
   getBackgroundAllCoversEnabledForCurrentUser,
@@ -99,22 +98,18 @@ function CustomizePage() {
   }
 
   return (
-    <main className="min-h-screen px-6 py-8">
-      <div className="mx-auto w-full max-w-2xl">
-        <LinearBackButton />
+    <main className="page-wrap">
+      <div style={{ maxWidth: 640, margin: '0 auto' }}>
+        <h1 className="page-title">Customize</h1>
 
-        <h1 className="mt-6 text-3xl font-black text-ink">Customize</h1>
+        <section style={{ marginTop: 28 }}>
+          <p className="vco-label">Backgrounds</p>
 
-        <section className="mt-8">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-3">
-            Backgrounds
-          </h2>
-
-          <div className="mt-3 overflow-hidden rounded-xl border border-edge bg-surface">
-            <div className="flex items-center justify-between px-4 py-4">
+          <div className="vco-panel" style={{ marginTop: 10, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px' }}>
               <div>
-                <p className="text-sm font-semibold text-ink">Automatic background</p>
-                <p className="mt-0.5 text-xs text-ink-3">
+                <p style={{ fontSize: 13, fontWeight: 600, color: '#ede9fe' }}>Automatic background</p>
+                <p style={{ marginTop: 2, fontSize: 12, color: '#7c6fad' }}>
                   Cycle through album covers from your recent activity on the home page.
                 </p>
               </div>
@@ -125,10 +120,10 @@ function CustomizePage() {
               />
             </div>
 
-            <div className="border-t border-edge flex items-center justify-between px-4 py-4">
+            <div style={{ borderTop: '1px solid #2a2548', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px' }}>
               <div>
-                <p className="text-sm font-semibold text-ink">Use all albums</p>
-                <p className="mt-0.5 text-xs text-ink-3">
+                <p style={{ fontSize: 13, fontWeight: 600, color: '#ede9fe' }}>Use all albums</p>
+                <p style={{ marginTop: 2, fontSize: 12, color: '#7c6fad' }}>
                   Rotate through all albums randomly
                 </p>
               </div>

@@ -1,6 +1,5 @@
 import type { FormEvent } from 'react'
 import { useEffect, useState } from 'react'
-import LinearBackButton from '../components/LinearBackButton'
 import { getFriendsOverviewForCurrentUser, type FriendProfile } from '../lib/db/friendsData'
 import {
   addToListenSongForCurrentUser,
@@ -21,6 +20,23 @@ const getFriendDisplayName = (username: string | null | undefined, friendCode: s
   const trimmedName = username?.trim()
   if (trimmedName) return trimmedName
   return friendCode ?? 'Unknown User'
+}
+
+const BACKDROP: React.CSSProperties = {
+  position: 'fixed', inset: 0, zIndex: 50,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  padding: '0 16px',
+  background: 'rgba(8,6,18,0.8)',
+  backdropFilter: 'blur(4px)',
+}
+
+const inputStyle: React.CSSProperties = {
+  display: 'block',
+  width: '100%',
+  borderRadius: 6,
+  border: '1px solid #2a2548',
+  padding: '8px 12px',
+  fontSize: 13,
 }
 
 function ToListenPage() {
@@ -160,147 +176,54 @@ function ToListenPage() {
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
   return (
-    <main className="min-h-screen px-6 py-8">
-      <div className="mx-auto w-full max-w-3xl">
-        <LinearBackButton />
-
-        <h1 className="mt-5 text-3xl font-black text-ink">To-Listen</h1>
+    <main className="page-wrap">
+      <div style={{ maxWidth: 720, margin: '0 auto' }}>
+        <h1 className="page-title">To-Listen</h1>
 
         {errorMessage && (
-          <div className="mt-4 rounded-lg border border-err-edge bg-err-bg p-3 text-sm text-err">
+          <div className="vco-msg-err" style={{ marginTop: 16 }}>
             {errorMessage}
           </div>
         )}
 
-        <div className="mt-6">
+        <div style={{ marginTop: 20 }}>
           <button
             type="button"
             onClick={() => setIsAddModalOpen(true)}
-            className="rounded-lg bg-cta px-3 py-1.5 text-sm font-semibold text-white"
+            className="vco-tbtn primary"
           >
             + Add
           </button>
         </div>
 
-        {/* Add song modal */}
-        {isAddModalOpen && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-            onClick={closeAddModal}
-          >
-            <div
-              className="w-full max-w-sm rounded-xl border border-edge bg-surface p-6 shadow-lg"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h2 className="mb-4 text-base font-bold text-ink">Add Song</h2>
-              <form onSubmit={handleAddToList} className="space-y-3">
-                <input
-                  type="text"
-                  placeholder="Song title"
-                  value={songName}
-                  onChange={(e) => setSongName(e.target.value)}
-                  required
-                  className="w-full rounded-lg border border-edge px-3 py-2 text-sm"
-                />
-                <input
-                  type="text"
-                  placeholder="Artist"
-                  value={artistName}
-                  onChange={(e) => setArtistName(e.target.value)}
-                  required
-                  className="w-full rounded-lg border border-edge px-3 py-2 text-sm"
-                />
-                <button
-                  type="submit"
-                  disabled={isSubmittingAdd}
-                  className="w-full rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-                >
-                  {isSubmittingAdd ? 'Adding...' : 'Add to list'}
-                </button>
-                <button
-                  type="button"
-                  disabled={!songName.trim() || !artistName.trim() || friends.length === 0}
-                  onClick={handleOpenFriendSelect}
-                  className="w-full rounded-lg border border-cta px-4 py-2 text-sm font-semibold text-cta disabled:opacity-40"
-                >
-                  Send to friend
-                </button>
-                {friends.length === 0 && (
-                  <p className="text-center text-xs text-ink-3">Add friends to send recommendations.</p>
-                )}
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Friend select modal */}
-        {isFriendSelectModalOpen && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-            onClick={() => { setIsFriendSelectModalOpen(false); setSongName(''); setArtistName('') }}
-          >
-            <div
-              className="w-full max-w-sm rounded-xl border border-edge bg-surface p-6 shadow-lg"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h2 className="mb-4 text-base font-bold text-ink">Send to Friend</h2>
-              <div className="space-y-2">
-                {friends.map((friend) => (
-                  <button
-                    key={friend.userId}
-                    type="button"
-                    onClick={() => setSelectedFriendUserId(friend.userId)}
-                    className={`w-full rounded-lg border px-3 py-2 text-left text-sm font-semibold transition-colors ${
-                      selectedFriendUserId === friend.userId
-                        ? 'border-cta bg-cta text-white'
-                        : 'border-edge text-ink'
-                    }`}
-                  >
-                    {getFriendDisplayName(friend.username, friend.friendCode)}
-                  </button>
-                ))}
-              </div>
-              <button
-                type="button"
-                disabled={!selectedFriendUserId || isSubmittingSend}
-                onClick={handleSendToFriend}
-                className="mt-4 w-full rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-              >
-                {isSubmittingSend ? 'Sending...' : 'Send'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {isLoading && (
-          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">Loading...</p>
-        )}
+        {isLoading && <p className="vco-loading">Loading...</p>}
 
         {!isLoading && unifiedList.length === 0 && (
-          <p className="mt-6 rounded-lg bg-surface p-4 text-sm text-ink">No songs yet</p>
+          <p className="vco-empty">No songs yet.</p>
         )}
 
         {!isLoading && unifiedList.length > 0 && (
-          <section className="mt-6 space-y-2">
+          <section style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
             {unifiedList.map((item) => (
               <article
                 key={item.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-edge bg-surface px-3 py-2 shadow-sm"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderRadius: 6, border: '1px solid #2a2548', background: '#141028', padding: '10px 14px' }}
               >
-                <p className="truncate text-sm text-ink">
-                  <span className="font-semibold">{item.songName}</span>
+                <p style={{ fontSize: 13, color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontWeight: 600 }}>{item.songName}</span>
                   {' by '}
                   {item.artistName}
                   {item.kind === 'recommendation' && (
-                    <span className="text-ink-3"> · from {item.senderName}</span>
+                    <span style={{ color: '#7c6fad' }}> · from {item.senderName}</span>
                   )}
                 </p>
 
                 <button
                   type="button"
-                  onClick={() => handleListened(item)}
+                  onClick={() => void handleListened(item)}
                   disabled={removingItemId !== null}
-                  className="shrink-0 rounded-lg bg-cta px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
+                  className="vco-tbtn"
+                  style={{ flexShrink: 0 }}
                 >
                   {removingItemId === item.id ? 'Removing...' : 'Listened'}
                 </button>
@@ -309,6 +232,95 @@ function ToListenPage() {
           </section>
         )}
       </div>
+
+      {/* Add song modal */}
+      {isAddModalOpen && (
+        <div style={BACKDROP} onClick={closeAddModal}>
+          <div
+            className="vco-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="vco-modal-title">Add Song</h2>
+            <form onSubmit={handleAddToList} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <input
+                type="text"
+                placeholder="Song title"
+                value={songName}
+                onChange={(e) => setSongName(e.target.value)}
+                required
+                style={inputStyle}
+              />
+              <input
+                type="text"
+                placeholder="Artist"
+                value={artistName}
+                onChange={(e) => setArtistName(e.target.value)}
+                required
+                style={inputStyle}
+              />
+              <button
+                type="submit"
+                disabled={isSubmittingAdd}
+                className="vco-tbtn primary"
+                style={{ width: '100%' }}
+              >
+                {isSubmittingAdd ? 'Adding...' : 'Add to list'}
+              </button>
+              <button
+                type="button"
+                disabled={!songName.trim() || !artistName.trim() || friends.length === 0}
+                onClick={handleOpenFriendSelect}
+                className="vco-tbtn"
+                style={{ width: '100%' }}
+              >
+                Send to friend
+              </button>
+              {friends.length === 0 && (
+                <p style={{ textAlign: 'center', fontSize: 11, color: '#7c6fad', fontFamily: "'JetBrains Mono', monospace" }}>
+                  Add friends to send recommendations.
+                </p>
+              )}
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Friend select modal */}
+      {isFriendSelectModalOpen && (
+        <div
+          style={BACKDROP}
+          onClick={() => { setIsFriendSelectModalOpen(false); setSongName(''); setArtistName('') }}
+        >
+          <div
+            className="vco-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="vco-modal-title">Send to Friend</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+              {friends.map((friend) => (
+                <button
+                  key={friend.userId}
+                  type="button"
+                  onClick={() => setSelectedFriendUserId(friend.userId)}
+                  className={`vco-tbtn${selectedFriendUserId === friend.userId ? ' primary' : ''}`}
+                  style={{ width: '100%', textAlign: 'left' }}
+                >
+                  {getFriendDisplayName(friend.username, friend.friendCode)}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              disabled={!selectedFriendUserId || isSubmittingSend}
+              onClick={() => void handleSendToFriend()}
+              className="vco-tbtn primary"
+              style={{ width: '100%' }}
+            >
+              {isSubmittingSend ? 'Sending...' : 'Send'}
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
