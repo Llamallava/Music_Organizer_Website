@@ -79,63 +79,21 @@ function HomePage() {
 
       <div className="relative z-10 flex w-full max-w-5xl items-center gap-16">
         <div className="flex flex-1 flex-col gap-3">
-          {hasBackground ? (
-            <>
-              <button
-                type="button"
-                onClick={() => navigate('/reviews')}
-                className="rounded-lg border border-white/20 bg-white/15 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/25"
-              >
-                My Reviews
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/search')}
-                className="rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/20"
-              >
-                Search
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/stats')}
-                className="rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/20"
-              >
-                My Stats
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/to-listen')}
-                className="rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/20"
-              >
-                To-Listen
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/friends')}
-                className="rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/20"
-              >
-                Friends
-              </button>
-            </>
-          ) : (
-            <>
-              <button type="button" onClick={() => navigate('/reviews')} className="vco-tbtn primary" style={{ padding: '12px 16px', fontSize: 15 }}>
-                My Reviews
-              </button>
-              <button type="button" onClick={() => navigate('/search')} className="vco-tbtn" style={{ padding: '12px 16px', fontSize: 15 }}>
-                Search
-              </button>
-              <button type="button" onClick={() => navigate('/stats')} className="vco-tbtn" style={{ padding: '12px 16px', fontSize: 15 }}>
-                My Stats
-              </button>
-              <button type="button" onClick={() => navigate('/to-listen')} className="vco-tbtn" style={{ padding: '12px 16px', fontSize: 15 }}>
-                To-Listen
-              </button>
-              <button type="button" onClick={() => navigate('/friends')} className="vco-tbtn" style={{ padding: '12px 16px', fontSize: 15 }}>
-                Friends
-              </button>
-            </>
-          )}
+          <button type="button" onClick={() => navigate('/reviews')} className="vco-tbtn primary" style={{ padding: '12px 16px', fontSize: 15 }}>
+            My Reviews
+          </button>
+          <button type="button" onClick={() => navigate('/search')} className="vco-tbtn" style={{ padding: '12px 16px', fontSize: 15 }}>
+            Search
+          </button>
+          <button type="button" onClick={() => navigate('/stats')} className="vco-tbtn" style={{ padding: '12px 16px', fontSize: 15 }}>
+            My Stats
+          </button>
+          <button type="button" onClick={() => navigate('/to-listen')} className="vco-tbtn" style={{ padding: '12px 16px', fontSize: 15 }}>
+            To-Listen
+          </button>
+          <button type="button" onClick={() => navigate('/friends')} className="vco-tbtn" style={{ padding: '12px 16px', fontSize: 15 }}>
+            Friends
+          </button>
         </div>
 
         <div className="flex flex-1 items-center justify-center">

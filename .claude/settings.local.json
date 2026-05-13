@@ -6,7 +6,9 @@
       "Bash(find /c/Users/Matthew/source/repos/Music_Organizer_Website -name .env* -o -name *.env)",
       "Bash(git log:*)",
       "Bash(find /c/Users/Matthew/source/repos/Music_Organizer_Website -name README* -o -name ARCHITECTURE*)",
-      "Bash(find c:UsersMatthewsourcereposMusic_Organizer_Website/supabase/functions -type f -name *.ts)"
+      "Bash(find c:UsersMatthewsourcereposMusic_Organizer_Website/supabase/functions -type f -name *.ts)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Matthew\\\\source\\\\repos\\\\Music_Organizer_Website\" -Recurse -Force)",
+      "Bash(Select-Object FullName)"
     ]
   }
 }
