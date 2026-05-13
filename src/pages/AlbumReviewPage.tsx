@@ -1111,7 +1111,7 @@ function AlbumReviewPage() {
                     </button>
                   </span>
                 ))}
-                <div ref={tagPopoverRef} className="relative">
+                <div hidden ref={tagPopoverRef} className="relative">
                   <button
                     type="button"
                     onClick={() => setIsTagPopoverOpen((prev) => !prev)}
