@@ -10,6 +10,15 @@ import {
 
 const CYCLE_INTERVAL_MS = 30_000
 
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
 type BackgroundContextValue = {
   layers: [string, string]
   activeLayer: 0 | 1 | null
@@ -55,9 +64,9 @@ export function BackgroundProvider({ children }: { children: ReactNode }) {
           getBackgroundAllCoversEnabledForCurrentUser().catch(() => false),
         ])
 
-        const dynamicCovers = await (allCoversEnabled
+        const dynamicCovers = shuffle(await (allCoversEnabled
           ? listAllCoversForHomeBackground()
-          : listCoversForHomeBackground())
+          : listCoversForHomeBackground()))
 
         if (!isActive) return
 

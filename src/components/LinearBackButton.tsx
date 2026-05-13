@@ -35,12 +35,25 @@ const resolvePreviousPath = (pathname: string) => {
 type LinearBackButtonProps = {
   className?: string
   label?: string
+  variant?: 'default' | 'console'
 }
 
-function LinearBackButton({ className, label = 'Back' }: LinearBackButtonProps) {
+function LinearBackButton({ className, label = 'Back', variant = 'default' }: LinearBackButtonProps) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const previousPath = resolvePreviousPath(pathname)
+
+  if (variant === 'console') {
+    return (
+      <button
+        type="button"
+        onClick={() => navigate(previousPath)}
+        className={['vco-tbtn', className].filter(Boolean).join(' ')}
+      >
+        ⟨ {label}
+      </button>
+    )
+  }
 
   return (
     <button

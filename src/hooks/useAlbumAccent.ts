@@ -52,11 +52,11 @@ function pickWinner(
   const avgL = litSums[best] / n
 
   // Use the actual color from the image.
-  // Only nudge enough so it's readable on a dark background:
-  //   - L below 45% is invisible; boost it. Above 90% can wash out; cap it.
-  //   - S below 20% reads as gray; nudge it up just enough to show a hue.
+  // L is floored at 58% so gradients with negative offsets (e.g. L - 28%) stay
+  // visible even on dark/moody covers. Above 90% can wash out; cap it there.
+  // S below 20% reads as gray; nudge it up just enough to show a hue.
   const s = Math.max(20, Math.round(avgS * 100))
-  const l = Math.max(45, Math.min(90, Math.round(avgL * 100)))
+  const l = Math.max(58, Math.min(90, Math.round(avgL * 100)))
 
   return { h: Math.round(hueSums[best] / n), s, l }
 }

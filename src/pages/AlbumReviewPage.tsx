@@ -11,11 +11,6 @@ import {
   upsertTrackReviewSectionForCurrentUser,
   type AlbumWorkspace,
 } from '../lib/db/reviewsData'
-// import {
-//   addSongToPlaylistForCurrentUser,
-//   listPlaylistOptionsForCurrentUser,
-//   type PlaylistOption,
-// } from '../lib/db/playlistsData'
 import { sendRecommendationForCurrentUser, type RecommendationType } from '../lib/db/toListenData'
 import { addTagForCurrentUser, listTagsForAlbum, removeTagForCurrentUser } from '../lib/db/tagsData'
 import {
@@ -33,11 +28,6 @@ type SectionDraft = {
 }
 
 type DraftMap = Record<string, SectionDraft>
-// type PlaylistSelection = {
-//   trackNumber: number
-//   itemTitle: string
-//   artistName: string
-// }
 
 const CONCLUSION_KEY = 'conclusion'
 
@@ -52,35 +42,24 @@ const defaultDraft = (): SectionDraft => ({
 })
 
 const parseTrackNumberFromKey = (key: string): number | null => {
-  if (!key.startsWith('track:')) {
-    return null
-  }
-
+  if (!key.startsWith('track:')) return null
   const trackNumber = Number(key.replace('track:', ''))
-  if (!Number.isInteger(trackNumber) || trackNumber <= 0) {
-    return null
-  }
-
+  if (!Number.isInteger(trackNumber) || trackNumber <= 0) return null
   return trackNumber
 }
 
 const parseScoreInput = (scoreInput: string): number | null => {
   const trimmed = scoreInput.trim()
-  if (!trimmed) {
-    return null
-  }
-
+  if (!trimmed) return null
   const score = Number(trimmed)
   if (Number.isNaN(score) || score < 0 || score > 10) {
     throw new Error('Score must be a number between 0 and 10.')
   }
-
   return Number(score.toFixed(1))
 }
 
 const buildInitialDraftMap = (workspace: AlbumWorkspace): DraftMap => {
   const map: DraftMap = {}
-
   for (const section of workspace.sections) {
     if (section.sectionType === 'track' && section.trackNumber) {
       map[toTrackKey(section.trackNumber)] = {
@@ -91,7 +70,6 @@ const buildInitialDraftMap = (workspace: AlbumWorkspace): DraftMap => {
       }
       continue
     }
-
     if (section.sectionType === 'conclusion') {
       map[CONCLUSION_KEY] = {
         notesLyrically: section.notesLyrically,
@@ -101,16 +79,22 @@ const buildInitialDraftMap = (workspace: AlbumWorkspace): DraftMap => {
       }
     }
   }
-
   for (const track of workspace.tracks) {
     const key = toTrackKey(track.trackNumber)
     map[key] ??= defaultDraft()
   }
-
   map[CONCLUSION_KEY] ??= defaultDraft()
-
   return map
 }
+
+const formatDuration = (secs: number | null): string => {
+  if (!secs || secs <= 0) return ''
+  const total = Math.round(secs)
+  const m = Math.floor(total / 60)
+  const s = total % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+
 
 function AlbumReviewPage() {
   const { userSavedAlbumId } = useParams()
@@ -123,21 +107,14 @@ function AlbumReviewPage() {
   const [isRecommendationModalOpen, setIsRecommendationModalOpen] = useState(false)
   const [isRecommendationSubmitting, setIsRecommendationSubmitting] = useState(false)
   const [recommendationErrorMessage, setRecommendationErrorMessage] = useState<string | null>(null)
-  // const [playlists, setPlaylists] = useState<PlaylistOption[]>([])
-  // const [selectedPlaylistId, setSelectedPlaylistId] = useState('')
-  // const [playlistSelection, setPlaylistSelection] = useState<PlaylistSelection | null>(null)
-  // const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false)
-  // const [isPlaylistSubmitting, setIsPlaylistSubmitting] = useState(false)
-  // const [playlistErrorMessage, setPlaylistErrorMessage] = useState<string | null>(null)
   const [activeSectionKey, setActiveSectionKey] = useState<string>(CONCLUSION_KEY)
   const [activeNotesTab, setActiveNotesTab] = useState<'lyrically' | 'sonically'>('lyrically')
-  const [trackNameCopied, setTrackNameCopied] = useState(false)
   const [draftBySection, setDraftBySection] = useState<DraftMap>({})
   const [savedBySection, setSavedBySection] = useState<DraftMap>({})
-  const [tagsByTrack, setTagsByTrack] = useState<Record<number, string[]>>({})
+  const [_tagsByTrack, setTagsByTrack] = useState<Record<number, string[]>>({})
   const [tagInput, setTagInput] = useState('')
-  const [isTagSaving, setIsTagSaving] = useState(false)
-  const [tagErrorMessage, setTagErrorMessage] = useState<string | null>(null)
+  const [_isTagSaving, setIsTagSaving] = useState(false)
+  const [_tagErrorMessage, setTagErrorMessage] = useState<string | null>(null)
   const [lyricsOverrideByTrack, setLyricsOverrideByTrack] = useState<Record<number, string>>({})
   const [isEditingLyrics, setIsEditingLyrics] = useState(false)
   const [lyricsEditText, setLyricsEditText] = useState('')
@@ -147,10 +124,10 @@ function AlbumReviewPage() {
   const [isRefetchingLyrics, setIsRefetchingLyrics] = useState(false)
   const lyricsMenuRef = useRef<HTMLDivElement | null>(null)
   const activeTextareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const scoreInputRef = useRef<HTMLInputElement | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isSavingAll, setIsSavingAll] = useState(false)
-  const [showSavedMark, setShowSavedMark] = useState(false)
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false)
   const actionsMenuRef = useRef<HTMLDivElement | null>(null)
   const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false)
@@ -176,24 +153,19 @@ function AlbumReviewPage() {
       setInfoMessage(null)
 
       try {
-        const [loadedWorkspace, friendsOverview, /* playlistOptions, */ loadedTags, loadedLyricsOverrides] = await Promise.all([
+        const [loadedWorkspace, friendsOverview, loadedTags, loadedLyricsOverrides] = await Promise.all([
           getAlbumWorkspaceForCurrentUser(userSavedAlbumId),
           getFriendsOverviewForCurrentUser(),
-          // listPlaylistOptionsForCurrentUser(),
           listTagsForAlbum(userSavedAlbumId),
           listLyricsOverridesForAlbum(userSavedAlbumId),
         ])
 
-        if (!isActive) {
-          return
-        }
+        if (!isActive) return
 
         setFriends(friendsOverview.friends)
         setSelectedRecommendationFriendUserId(
           (previous) => previous || friendsOverview.friends[0]?.userId || '',
         )
-        // setPlaylists(playlistOptions)
-        // setSelectedPlaylistId((previous) => previous || playlistOptions[0]?.id || '')
 
         if (!loadedWorkspace) {
           setWorkspace(null)
@@ -212,49 +184,29 @@ function AlbumReviewPage() {
         setLyricsOverrideByTrack(loadedLyricsOverrides)
         setActiveSectionKey(firstTrack ? toTrackKey(firstTrack.trackNumber) : CONCLUSION_KEY)
       } catch (error) {
-        if (!isActive) {
-          return
-        }
-
+        if (!isActive) return
         const message = error instanceof Error ? error.message : 'Failed to load review workspace.'
         setErrorMessage(message)
       } finally {
-        if (isActive) {
-          setIsLoading(false)
-        }
+        if (isActive) setIsLoading(false)
       }
     }
 
     void loadWorkspace()
-
-    return () => {
-      isActive = false
-    }
+    return () => { isActive = false }
   }, [userSavedAlbumId])
 
   useEffect(() => {
-    if (!isActionsMenuOpen) {
-      return
-    }
-
+    if (!isActionsMenuOpen) return
     const handlePointerDown = (event: PointerEvent) => {
-      if (!(event.target instanceof Node)) {
-        return
-      }
-      if (!actionsMenuRef.current?.contains(event.target)) {
-        setIsActionsMenuOpen(false)
-      }
+      if (!(event.target instanceof Node)) return
+      if (!actionsMenuRef.current?.contains(event.target)) setIsActionsMenuOpen(false)
     }
-
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsActionsMenuOpen(false)
-      }
+      if (event.key === 'Escape') setIsActionsMenuOpen(false)
     }
-
     document.addEventListener('pointerdown', handlePointerDown)
     document.addEventListener('keydown', handleKeyDown)
-
     return () => {
       document.removeEventListener('pointerdown', handlePointerDown)
       document.removeEventListener('keydown', handleKeyDown)
@@ -267,25 +219,15 @@ function AlbumReviewPage() {
       setTagErrorMessage(null)
       return
     }
-
     const handlePointerDown = (event: PointerEvent) => {
-      if (!(event.target instanceof Node)) {
-        return
-      }
-      if (!tagPopoverRef.current?.contains(event.target)) {
-        setIsTagPopoverOpen(false)
-      }
+      if (!(event.target instanceof Node)) return
+      if (!tagPopoverRef.current?.contains(event.target)) setIsTagPopoverOpen(false)
     }
-
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsTagPopoverOpen(false)
-      }
+      if (event.key === 'Escape') setIsTagPopoverOpen(false)
     }
-
     document.addEventListener('pointerdown', handlePointerDown)
     document.addEventListener('keydown', handleKeyDown)
-
     return () => {
       document.removeEventListener('pointerdown', handlePointerDown)
       document.removeEventListener('keydown', handleKeyDown)
@@ -293,28 +235,16 @@ function AlbumReviewPage() {
   }, [isTagPopoverOpen])
 
   useEffect(() => {
-    if (!isLyricsMenuOpen) {
-      return
-    }
-
+    if (!isLyricsMenuOpen) return
     const handlePointerDown = (event: PointerEvent) => {
-      if (!(event.target instanceof Node)) {
-        return
-      }
-      if (!lyricsMenuRef.current?.contains(event.target)) {
-        setIsLyricsMenuOpen(false)
-      }
+      if (!(event.target instanceof Node)) return
+      if (!lyricsMenuRef.current?.contains(event.target)) setIsLyricsMenuOpen(false)
     }
-
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsLyricsMenuOpen(false)
-      }
+      if (event.key === 'Escape') setIsLyricsMenuOpen(false)
     }
-
     document.addEventListener('pointerdown', handlePointerDown)
     document.addEventListener('keydown', handleKeyDown)
-
     return () => {
       document.removeEventListener('pointerdown', handlePointerDown)
       document.removeEventListener('keydown', handleKeyDown)
@@ -330,7 +260,6 @@ function AlbumReviewPage() {
         handleSaveCurrentSectionRef.current()
       }
     }
-
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [])
@@ -356,15 +285,9 @@ function AlbumReviewPage() {
   }
 
   const activeTrack = useMemo(() => {
-    if (!workspace) {
-      return null
-    }
-
+    if (!workspace) return null
     const trackNumber = parseTrackNumberFromKey(activeSectionKey)
-    if (!trackNumber) {
-      return null
-    }
-
+    if (!trackNumber) return null
     return workspace.tracks.find((track) => track.trackNumber === trackNumber) ?? null
   }, [activeSectionKey, workspace])
 
@@ -374,7 +297,6 @@ function AlbumReviewPage() {
     const separator = currentValue && !currentValue.endsWith('\n') ? '\n' : ''
     const newValue = currentValue + separator + `"${line}"\n`
     handleNotesChange(tab, newValue)
-
     requestAnimationFrame(() => {
       const textarea = activeTextareaRef.current
       if (!textarea) return
@@ -426,22 +348,11 @@ function AlbumReviewPage() {
     setIsRecommendationModalOpen(true)
   }
 
-  // const openPlaylistModal = (selection: PlaylistSelection) => {
-  //   setPlaylistErrorMessage(null)
-  //   setIsRecommendationModalOpen(false)
-  //   setPlaylistSelection(selection)
-  //   setIsPlaylistModalOpen(true)
-  // }
-
   const handleSendRecommendation = async () => {
-    if (!workspace || !recommendationItemTitle || !recommendationArtistName) {
-      return
-    }
-
+    if (!workspace || !recommendationItemTitle || !recommendationArtistName) return
     setRecommendationErrorMessage(null)
     setInfoMessage(null)
     setIsRecommendationSubmitting(true)
-
     try {
       await sendRecommendationForCurrentUser({
         friendUserId: selectedRecommendationFriendUserId,
@@ -449,7 +360,6 @@ function AlbumReviewPage() {
         songName: recommendationItemTitle,
         artistName: recommendationArtistName,
       })
-
       setIsRecommendationModalOpen(false)
       setInfoMessage('Recommendation sent.')
     } catch (error) {
@@ -460,44 +370,13 @@ function AlbumReviewPage() {
     }
   }
 
-  // const handleAddSongToPlaylist = async () => {
-  //   if (!workspace || !playlistSelection) {
-  //     return
-  //   }
-  //
-  //   setPlaylistErrorMessage(null)
-  //   setInfoMessage(null)
-  //   setIsPlaylistSubmitting(true)
-  //
-  //   try {
-  //     await addSongToPlaylistForCurrentUser({
-  //       playlistId: selectedPlaylistId,
-  //       userSavedAlbumId: workspace.userSavedAlbumId,
-  //       trackNumber: playlistSelection.trackNumber,
-  //     })
-  //
-  //     setIsPlaylistModalOpen(false)
-  //     setInfoMessage(`Added "${playlistSelection.itemTitle}" to playlist.`)
-  //   } catch (error) {
-  //     const message = error instanceof Error ? error.message : 'Failed to add song to playlist.'
-  //     setPlaylistErrorMessage(message)
-  //   } finally {
-  //     setIsPlaylistSubmitting(false)
-  //   }
-  // }
-
   const handleSaveCurrentSection = async () => {
-    if (!workspace) {
-      return
-    }
-
+    if (!workspace) return
     setErrorMessage(null)
     setInfoMessage(null)
     setIsSaving(true)
-
     try {
       const score = parseScoreInput(activeDraft.scoreInput)
-
       if (activeSectionKey === CONCLUSION_KEY) {
         await upsertConclusionSectionForCurrentUser({
           userSavedAlbumId: workspace.userSavedAlbumId,
@@ -506,10 +385,7 @@ function AlbumReviewPage() {
         })
       } else {
         const trackNumber = parseTrackNumberFromKey(activeSectionKey)
-        if (!trackNumber) {
-          throw new Error('Invalid track selection.')
-        }
-
+        if (!trackNumber) throw new Error('Invalid track selection.')
         await upsertTrackReviewSectionForCurrentUser({
           userSavedAlbumId: workspace.userSavedAlbumId,
           trackNumber,
@@ -519,26 +395,14 @@ function AlbumReviewPage() {
           score,
         })
       }
-
       const normalizedDraft: SectionDraft = {
         notesLyrically: activeDraft.notesLyrically,
         notesSonically: activeDraft.notesSonically,
         scoreInput: score === null ? '' : String(score),
         isInterlude: activeTrack ? activeDraft.isInterlude : false,
       }
-
-      setDraftBySection((previous) => ({
-        ...previous,
-        [activeSectionKey]: normalizedDraft,
-      }))
-
-      setSavedBySection((previous) => ({
-        ...previous,
-        [activeSectionKey]: normalizedDraft,
-      }))
-
-      setShowSavedMark(true)
-      setTimeout(() => setShowSavedMark(false), 2000)
+      setDraftBySection((previous) => ({ ...previous, [activeSectionKey]: normalizedDraft }))
+      setSavedBySection((previous) => ({ ...previous, [activeSectionKey]: normalizedDraft }))
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save section.'
       setErrorMessage(message)
@@ -549,21 +413,16 @@ function AlbumReviewPage() {
   handleSaveCurrentSectionRef.current = handleSaveCurrentSection
 
   const handleSaveAllSections = async () => {
-    if (!workspace) {
-      return
-    }
-
+    if (!workspace) return
     setErrorMessage(null)
     setInfoMessage(null)
     setIsSavingAll(true)
-
     try {
       const results = await Promise.all(
         workspace.tracks.map(async (track) => {
           const key = toTrackKey(track.trackNumber)
           const draft = draftBySection[key] ?? defaultDraft()
           const score = parseScoreInput(draft.scoreInput)
-
           await upsertTrackReviewSectionForCurrentUser({
             userSavedAlbumId: workspace.userSavedAlbumId,
             trackNumber: track.trackNumber,
@@ -572,36 +431,25 @@ function AlbumReviewPage() {
             notesSonically: draft.notesSonically,
             score,
           })
-
           const normalizedDraft: SectionDraft = {
             notesLyrically: draft.notesLyrically,
             notesSonically: draft.notesSonically,
             scoreInput: score === null ? '' : String(score),
             isInterlude: draft.isInterlude,
           }
-
           return { key, normalizedDraft }
         })
       )
-
       setDraftBySection((previous) => {
         const next = { ...previous }
-        for (const { key, normalizedDraft } of results) {
-          next[key] = normalizedDraft
-        }
+        for (const { key, normalizedDraft } of results) next[key] = normalizedDraft
         return next
       })
-
       setSavedBySection((previous) => {
         const next = { ...previous }
-        for (const { key, normalizedDraft } of results) {
-          next[key] = normalizedDraft
-        }
+        for (const { key, normalizedDraft } of results) next[key] = normalizedDraft
         return next
       })
-
-      setShowSavedMark(true)
-      setTimeout(() => setShowSavedMark(false), 2000)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save all sections.'
       setErrorMessage(message)
@@ -611,16 +459,11 @@ function AlbumReviewPage() {
   }
 
   const handleSaveLyrics = async () => {
-    if (!workspace || !activeTrack) {
-      return
-    }
-
+    if (!workspace || !activeTrack) return
     setLyricsErrorMessage(null)
     setIsSavingLyrics(true)
-
     try {
       if (lyricsEditText === activeTrack.lyrics) {
-        // Matches original — delete any existing override
         await deleteLyricsOverrideForCurrentUser(workspace.userSavedAlbumId, activeTrack.trackNumber)
         setLyricsOverrideByTrack((previous) => {
           const next = { ...previous }
@@ -638,7 +481,6 @@ function AlbumReviewPage() {
           [activeTrack.trackNumber]: lyricsEditText,
         }))
       }
-
       setIsEditingLyrics(false)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save lyrics.'
@@ -649,13 +491,9 @@ function AlbumReviewPage() {
   }
 
   const handleRevertLyrics = async () => {
-    if (!workspace || !activeTrack) {
-      return
-    }
-
+    if (!workspace || !activeTrack) return
     setLyricsErrorMessage(null)
     setIsSavingLyrics(true)
-
     try {
       await deleteLyricsOverrideForCurrentUser(workspace.userSavedAlbumId, activeTrack.trackNumber)
       setLyricsOverrideByTrack((previous) => {
@@ -673,19 +511,14 @@ function AlbumReviewPage() {
   }
 
   const handleRefetchLyrics = async () => {
-    if (!workspace || !activeTrack) {
-      return
-    }
-
+    if (!workspace || !activeTrack) return
     setIsLyricsMenuOpen(false)
     setIsRefetchingLyrics(true)
     setLyricsErrorMessage(null)
-
     try {
       const artistName = workspace.album.artistNames[0] ?? workspace.album.artistName
       const newLyrics = await getLyricsAsync(activeTrack.title, artistName)
       await updateTrackLyrics(activeTrack.id, newLyrics)
-      // Clear any user override so the updated base lyrics are shown
       await deleteLyricsOverrideForCurrentUser(workspace.userSavedAlbumId, activeTrack.trackNumber)
       setLyricsOverrideByTrack((previous) => {
         const next = { ...previous }
@@ -693,9 +526,7 @@ function AlbumReviewPage() {
         return next
       })
       setWorkspace((previous) => {
-        if (!previous) {
-          return previous
-        }
+        if (!previous) return previous
         return {
           ...previous,
           tracks: previous.tracks.map((t) =>
@@ -711,26 +542,18 @@ function AlbumReviewPage() {
     }
   }
 
-  const handleAddTag = async (): Promise<boolean> => {
-    if (!workspace || !activeTrack) {
-      return false
-    }
-
+  // @ts-ignore - kept for future tag UI restoration
+  const _handleAddTag = async (): Promise<boolean> => {
+    if (!workspace || !activeTrack) return false
     const normalized = tagInput.trim().toLowerCase()
-    if (!normalized) {
-      return false
-    }
-
+    if (!normalized) return false
     setTagErrorMessage(null)
     setIsTagSaving(true)
-
     try {
       await addTagForCurrentUser(workspace.userSavedAlbumId, activeTrack.trackNumber, normalized)
       setTagsByTrack((previous) => {
         const existing = previous[activeTrack.trackNumber] ?? []
-        if (existing.includes(normalized)) {
-          return previous
-        }
+        if (existing.includes(normalized)) return previous
         return { ...previous, [activeTrack.trackNumber]: [...existing, normalized] }
       })
       setTagInput('')
@@ -744,13 +567,10 @@ function AlbumReviewPage() {
     }
   }
 
-  const handleRemoveTag = async (tag: string) => {
-    if (!workspace || !activeTrack) {
-      return
-    }
-
+  // @ts-ignore - kept for future tag UI restoration
+  const _handleRemoveTag = async (tag: string) => {
+    if (!workspace || !activeTrack) return
     setTagErrorMessage(null)
-
     try {
       await removeTagForCurrentUser(workspace.userSavedAlbumId, activeTrack.trackNumber, tag)
       setTagsByTrack((previous) => ({
@@ -781,7 +601,6 @@ function AlbumReviewPage() {
       <main className="min-h-screen px-6 py-8">
         <div className="mx-auto w-full max-w-6xl">
           <LinearBackButton />
-
           <div className="mt-6 rounded-lg border border-err-edge bg-err-bg p-4 text-sm text-err">
             {errorMessage ?? 'Could not load this album review.'}
           </div>
@@ -798,189 +617,275 @@ function AlbumReviewPage() {
       } as React.CSSProperties)
     : undefined
 
+  // --- Computed values for console UI ---
+  const totalSeconds = workspace.tracks.reduce((sum, t) => sum + (t.durationSeconds ?? 0), 0)
+  const totalRuntime = formatDuration(totalSeconds)
+  const releaseYear = workspace.album.releaseDate ? workspace.album.releaseDate.slice(0, 4) : ''
+  const activeChNum = activeTrack ? String(activeTrack.trackNumber).padStart(2, '0') : '—'
+
+  const parsedScore = parseFloat(activeDraft.scoreInput)
+  const scoreNum = isNaN(parsedScore) ? 0 : Math.max(0, Math.min(10, parsedScore))
+  const needleAngle = (scoreNum / 10) * 270 - 135
+  const scoreDisplay = activeDraft.scoreInput.trim() && !isNaN(parsedScore)
+    ? scoreNum.toFixed(1)
+    : '—'
+
+  const trackList = workspace.tracks
+  const currentTrackIndex = activeTrack
+    ? trackList.findIndex((t) => t.trackNumber === activeTrack.trackNumber)
+    : -1
+  const isFirstSection = currentTrackIndex === 0
+  const isLastSection = activeSectionKey === CONCLUSION_KEY
+
+  const navigate = (key: string) => {
+    setActiveSectionKey(key)
+    setInfoMessage(null)
+    setErrorMessage(null)
+  }
+  const goFirst = () => { if (trackList[0]) navigate(toTrackKey(trackList[0].trackNumber)) }
+  const goPrev = () => {
+    if (isLastSection) {
+      const last = trackList[trackList.length - 1]
+      if (last) navigate(toTrackKey(last.trackNumber))
+    } else if (currentTrackIndex > 0) {
+      navigate(toTrackKey(trackList[currentTrackIndex - 1].trackNumber))
+    }
+  }
+  const goNext = () => {
+    if (currentTrackIndex >= 0 && currentTrackIndex < trackList.length - 1) {
+      navigate(toTrackKey(trackList[currentTrackIndex + 1].trackNumber))
+    } else if (currentTrackIndex === trackList.length - 1) {
+      navigate(CONCLUSION_KEY)
+    }
+  }
+  const goLast = () => navigate(CONCLUSION_KEY)
+
   return (
-    <main className="flex h-screen flex-col overflow-hidden px-6 py-4" style={accentStyle}>
-      <div className="mx-auto flex min-h-0 w-full max-w-[2400px] flex-1 flex-col">
-        <LinearBackButton className="self-start" />
+    <main className="vco-page" style={accentStyle}>
+      {/* Top bar */}
+      <div className="vco-topbar">
+        <LinearBackButton variant="console" />
+      </div>
 
-        <section className="mt-4 grid min-h-0 flex-1 gap-4 lg:grid-cols-[clamp(240px,18%,500px)_minmax(0,1fr)_clamp(280px,21%,560px)]">
-          <aside className="flex min-h-0 flex-col gap-3">
-            <div className="pb-1">
-              <div className="aspect-square w-full overflow-hidden rounded-xl bg-surface-2 accent-art-shadow">
-                <AlbumCover src={workspace.album.coverUrl} alt={`${workspace.album.title} cover`} loading="eager" />
-              </div>
-              <h1 className="mt-3 px-1 text-base font-bold text-ink">{workspace.album.title}</h1>
-              <div className="flex items-center justify-between gap-2 px-1">
-                <p className="text-sm text-[#a78bfa]">{workspace.album.artistName}</p>
-                {activeTrack && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void navigator.clipboard.writeText(
-                        `${activeTrack.title} by ${workspace.album.artistName}`,
-                      )
-                      setTrackNameCopied(true)
-                      setTimeout(() => setTrackNameCopied(false), 1500)
-                    }}
-                    className={trackNameCopied ? 'text-green-500' : 'text-ink-3 hover:text-ink'}
-                    aria-label="Copy song and artist name"
-                  >
-                    {trackNameCopied ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden="true">
-                        <path fillRule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
-                      </svg>
-                    ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden="true">
-                        <path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1Zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm0 16H8V7h11v14Z" />
-                      </svg>
-                    )}
-                  </button>
-                )}
+      {/* Console case */}
+      <div className="vco-case">
+        <div className="vco-body">
+
+          {/* LEFT: Album info + tracklist */}
+          <aside className="vco-left">
+            <div className="vco-cover-wrap">
+              <AlbumCover
+                src={workspace.album.coverUrl}
+                alt={`${workspace.album.title} cover`}
+                loading="eager"
+              />
+              <div className="vco-cover-pin" />
+            </div>
+            <div className="vco-album-meta">
+              <div className="vco-album-title">{workspace.album.title}</div>
+              <div className="vco-album-artist">{workspace.album.artistName}</div>
+              <div className="vco-album-info">
+                {[releaseYear, `${workspace.album.totalTracks} tracks`, totalRuntime]
+                  .filter(Boolean)
+                  .join(' · ')}
               </div>
             </div>
-
-            <div className="flex min-h-0 flex-1 flex-col">
-              <p className="pb-2 pl-1 text-xs font-semibold uppercase tracking-wide text-[#a78bfa]">Tracklist</p>
-              <div className="min-h-0 flex-1 overflow-auto pr-1">
-                {workspace.tracks.map((track) => {
-                  const key = toTrackKey(track.trackNumber)
-                  const isActive = key === activeSectionKey
-
-                  return (
-                    <button
-                      key={track.id}
-                      type="button"
-                      onClick={() => {
-                        setActiveSectionKey(key)
-                        setInfoMessage(null)
-                        setErrorMessage(null)
-                      }}
-                      style={isActive ? { borderLeftColor: 'hsl(var(--accent-h) var(--accent-s) var(--accent-l))' } : undefined}
-                      className={`flex w-full items-center gap-2.5 border-l-2 py-1.5 pl-2 pr-2 text-left text-sm transition-all ${
-                        isActive ? 'track-item-active text-white' : 'border-l-transparent text-ink-2 hover:border-l-edge hover:text-ink'
-                      }`}
-                    >
-                      <span className={`w-5 shrink-0 text-right text-[11px] font-bold tabular-nums leading-none ${
-                        isActive ? 'text-white/70' : 'text-ink-3'
-                      }`}>
-                        {track.trackNumber}
-                      </span>
-                      <span className="flex-1 truncate">{track.title}</span>
-                      {!isActive && isDirtyForSection(key) && (
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" aria-label="Unsaved changes" />
-                      )}
-                    </button>
-                  )
-                })}
-
-                <div className="mt-1 border-t border-edge/30 pt-1">
+            <div className="vco-timeline">
+              {workspace.tracks.map((track) => {
+                const key = toTrackKey(track.trackNumber)
+                const isActive = key === activeSectionKey
+                const hasScore = !!(savedBySection[key]?.scoreInput)
+                const widthPct = totalSeconds > 0 && track.durationSeconds
+                  ? (track.durationSeconds / totalSeconds) * 100
+                  : 100 / trackList.length
+                return (
                   <button
+                    key={track.id}
                     type="button"
-                    onClick={() => {
-                      setActiveSectionKey(CONCLUSION_KEY)
-                      setInfoMessage(null)
-                      setErrorMessage(null)
-                    }}
-                    className={`flex w-full items-center gap-2.5 border-l-2 py-1.5 pl-2 pr-2 text-left text-sm font-semibold transition-all ${
-                      activeSectionKey === CONCLUSION_KEY
-                        ? 'border-l-pink text-white'
-                        : 'border-l-transparent text-pink hover:border-l-pink/50 hover:text-pink'
-                    }`}
-                  >
-                    <span className={`shrink-0 text-[11px] font-bold leading-none ${
-                      activeSectionKey === CONCLUSION_KEY ? 'text-white/70' : 'text-pink/70'
-                    }`}>
-                      ★
-                    </span>
-                    <span className="flex-1">Conclusion</span>
-                    {activeSectionKey !== CONCLUSION_KEY && isDirtyForSection(CONCLUSION_KEY) && (
-                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" aria-label="Unsaved changes" />
-                    )}
-                  </button>
-                </div>
-              </div>
+                    className={`vco-tl-seg${isActive ? ' active' : ''}${hasScore ? ' scored' : ''}`}
+                    style={{ width: `${widthPct}%` }}
+                    onClick={() => navigate(key)}
+                    title={`${String(track.trackNumber).padStart(2, '0')} ${track.title}`}
+                    aria-label={track.title}
+                  />
+                )
+              })}
             </div>
+
+            <nav className="vco-tracklist">
+              {workspace.tracks.map((track) => {
+                const key = toTrackKey(track.trackNumber)
+                const isActive = key === activeSectionKey
+                const hasUnsaved = isDirtyForSection(key)
+                const savedScore = savedBySection[key]?.scoreInput
+                const scoreDisp = savedScore && !isNaN(Number(savedScore)) ? Number(savedScore).toFixed(1) : ''
+                return (
+                  <button
+                    key={track.id}
+                    type="button"
+                    className={`vco-tl-item${isActive ? ' active' : ''}`}
+                    onClick={() => navigate(key)}
+                  >
+                    <span className="vco-tl-num">{String(track.trackNumber).padStart(2, '0')}</span>
+                    <span className="vco-tl-title">{track.title}</span>
+                    {hasUnsaved && !isActive && <span className="vco-tl-dirty" />}
+                    {scoreDisp && <span className="vco-tl-score">{scoreDisp}</span>}
+                  </button>
+                )
+              })}
+              <button
+                type="button"
+                className={`vco-tl-item vco-tl-conc${isLastSection ? ' active' : ''}`}
+                onClick={() => navigate(CONCLUSION_KEY)}
+              >
+                <span className="vco-tl-num">★</span>
+                <span className="vco-tl-title">Conclusion</span>
+                {isDirtyForSection(CONCLUSION_KEY) && !isLastSection && <span className="vco-tl-dirty" />}
+                {(() => {
+                  const s = savedBySection[CONCLUSION_KEY]?.scoreInput
+                  return s && !isNaN(Number(s)) ? <span className="vco-tl-score">{Number(s).toFixed(1)}</span> : null
+                })()}
+              </button>
+            </nav>
           </aside>
 
-          <section className="writing-panel flex min-h-0 flex-col rounded-xl border border-edge p-4">
-            <div className="mb-3">
-              <div className="mb-3 flex items-start justify-between gap-3">
-                <h2 className="text-2xl font-bold leading-tight text-ink">
-                  {activeTrack ? (
-                    <>
-                      <span
-                        className="mr-1.5 text-sm font-semibold tabular-nums"
-                        style={{ color: 'hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.7)' }}
-                      >
-                        {activeTrack.trackNumber}.
-                      </span>
-                      {activeTrack.title}
-                    </>
-                  ) : (
-                    'Conclusion'
-                  )}
-                </h2>
-
-                <div className="flex shrink-0 items-center gap-2">
-                {showSavedMark && (
-                  <span className="accent-badge rounded-full border px-2 py-0.5 text-xs font-semibold">
-                    Saved ✓
-                  </span>
+          {/* CENTER: Writing section */}
+          <section className="vco-center">
+            <header className="vco-track-bar">
+              <div className="vco-track-info">
+                <span className="tn">
+                  {activeTrack ? `${activeChNum}.` : '★'}
+                </span>
+                <span className="tt">
+                  {activeTrack ? activeTrack.title : 'Conclusion'}
+                </span>
+                {activeTrack?.durationSeconds ? (
+                  <span className="rt">{formatDuration(activeTrack.durationSeconds)}</span>
+                ) : null}
+              </div>
+              <div className="vco-toggles">
+                {activeTrack && (
+                  <>
+                    <button
+                      type="button"
+                      className={`vco-toggle${activeNotesTab === 'lyrically' ? ' on' : ''}`}
+                      onClick={() => setActiveNotesTab('lyrically')}
+                    >
+                      Lyrically
+                    </button>
+                    <button
+                      type="button"
+                      className={`vco-toggle${activeNotesTab === 'sonically' ? ' on' : ''}`}
+                      onClick={() => setActiveNotesTab('sonically')}
+                    >
+                      Sonically
+                    </button>
+                  </>
                 )}
-                {isDirty && !isSaving && (
-                  <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-400">
-                    Unsaved
-                  </span>
-                )}
+              </div>
+            </header>
 
-                <div className="flex flex-col items-center">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Score</span>
-                  <div className="flex items-baseline gap-1">
-                    <input
-                      type="number"
-                      min={0}
-                      max={10}
-                      step={0.1}
-                      value={activeDraft.scoreInput}
-                      onChange={(event) => handleScoreChange(event.target.value)}
-                      placeholder="—"
-                      className="score-input"
-                    />
-                    <span className="text-sm font-semibold text-ink-3">/10</span>
-                  </div>
-                </div>
+            <div className={`vco-text-wrap${isDirty ? ' recording' : ''}`}>
+              {activeTrack ? (
+                <textarea
+                  key={`${activeSectionKey}-${activeNotesTab}`}
+                  ref={activeTextareaRef}
+                  className="vco-text-panel"
+                  value={activeNotesTab === 'lyrically' ? activeDraft.notesLyrically : activeDraft.notesSonically}
+                  onChange={(e) => handleNotesChange(activeNotesTab, e.target.value)}
+                  style={{ borderLeftColor: 'hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.5)' }}
+                />
+              ) : (
+                <textarea
+                  ref={activeTextareaRef}
+                  className="vco-text-panel"
+                  value={activeDraft.notesLyrically}
+                  onChange={(e) => handleNotesChange('lyrically', e.target.value)}
+                  style={{ borderLeftColor: 'rgba(219,39,119,0.5)' }}
+                />
+              )}
+            </div>
 
+            <footer className="vco-transport">
+              <div className="vco-transport-nav">
                 <button
                   type="button"
-                  onClick={() => void handleSaveCurrentSection()}
-                  disabled={isSaving || isSavingAll || !isDirty}
-                  className="btn-gradient-cta rounded-lg px-4 py-2 text-sm font-semibold text-white"
-                >
-                  {isSaving ? 'Saving...' : 'Save'}
-                </button>
+                  className="vco-tbtn"
+                  onClick={goFirst}
+                  disabled={isFirstSection}
+                  title="First track"
+                >⟨⟨</button>
                 <button
                   type="button"
-                  onClick={() => void handleSaveAllSections()}
-                  disabled={isSaving || isSavingAll}
-                  className="rounded-lg border border-edge/70 bg-transparent px-3 py-2 text-xs font-semibold text-ink-3 hover:border-edge hover:text-ink disabled:opacity-50"
-                >
-                  {isSavingAll ? 'Saving all...' : 'Save all'}
-                </button>
-                <div ref={actionsMenuRef} className="relative">
+                  className="vco-tbtn"
+                  onClick={goPrev}
+                  disabled={isFirstSection}
+                  title="Previous"
+                >⟨</button>
+                <button
+                  type="button"
+                  className="vco-tbtn"
+                  onClick={goNext}
+                  disabled={isLastSection}
+                  title="Next"
+                >⟩</button>
+                <button
+                  type="button"
+                  className="vco-tbtn"
+                  onClick={goLast}
+                  disabled={isLastSection}
+                  title="Last section"
+                >⟩⟩</button>
+              </div>
+
+              <span className="vco-timecode">
+                {activeTrack ? activeChNum : '★'} / {trackList.length}
+              </span>
+
+              <button
+                type="button"
+                className="vco-tbtn primary"
+                onClick={() => void handleSaveCurrentSection()}
+                disabled={isSaving || isSavingAll || !isDirty}
+              >
+                {isSaving ? 'Saving...' : 'Save'}
+              </button>
+
+              <button
+                type="button"
+                className="vco-tbtn"
+                onClick={() => void handleSaveAllSections()}
+                disabled={isSaving || isSavingAll}
+              >
+                {isSavingAll ? 'Saving...' : 'Save All'}
+              </button>
+
+              <div className="vco-transport-right">
+                {activeTrack && (
+                  <>
+
+                    <label className="vco-interlude-label">
+                      <input
+                        type="checkbox"
+                        checked={activeDraft.isInterlude}
+                        onChange={(e) => handleInterludeChange(e.target.checked)}
+                      />
+                      Interlude
+                    </label>
+                  </>
+                )}
+
+                <div ref={actionsMenuRef} className="vco-actions-wrap">
                   <button
                     type="button"
-                    onClick={() => setIsActionsMenuOpen((prev) => !prev)}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-edge bg-surface text-ink hover:bg-surface-2"
+                    className="vco-tbtn"
+                    onClick={() => setIsActionsMenuOpen((p) => !p)}
                     aria-label="More actions"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden="true">
-                      <circle cx="12" cy="5" r="1.5" />
-                      <circle cx="12" cy="12" r="1.5" />
-                      <circle cx="12" cy="19" r="1.5" />
-                    </svg>
+                    &#8943;
                   </button>
                   {isActionsMenuOpen && (
-                    <div className="absolute right-0 top-full z-20 mt-1 w-56 overflow-hidden rounded-xl border border-edge bg-gradient-to-b from-[#141028] to-[#0e0c1c] p-1 shadow-lg">
+                    <div className="vco-actions-menu">
                       {activeTrack && (
                         <button
                           type="button"
@@ -992,9 +897,9 @@ function AlbumReviewPage() {
                               artistName: workspace.album.artistName,
                             })
                           }}
-                          className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-ink hover:bg-surface-2"
+                          className="vco-actions-item"
                         >
-                          Recommend song to friend
+                          Recommend song
                         </button>
                       )}
                       <button
@@ -1007,346 +912,223 @@ function AlbumReviewPage() {
                             artistName: workspace.album.artistName,
                           })
                         }}
-                        className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-ink hover:bg-surface-2"
+                        className="vco-actions-item"
                       >
-                        Recommend album to friend
+                        Recommend album
                       </button>
-                      {/* {activeTrack && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsActionsMenuOpen(false)
-                            openPlaylistModal({
-                              trackNumber: activeTrack.trackNumber,
-                              itemTitle: activeTrack.title,
-                              artistName: workspace.album.artistName,
-                            })
-                          }}
-                          className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-ink hover:bg-surface-2"
-                        >
-                          Add song to playlist
-                        </button>
-                      )} */}
                     </div>
                   )}
                 </div>
               </div>
-            </div>
-            <div
-              className="h-[2px] rounded-full"
-              style={{
-                background: activeTrack
-                  ? 'linear-gradient(to right, hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.7), hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.12) 65%, transparent)'
-                  : 'linear-gradient(to right, rgba(219, 39, 119, 0.7), rgba(219, 39, 119, 0.12) 65%, transparent)',
-              }}
-            />
-            </div>
-
-            <div className="mb-3 flex items-center gap-3">
-              {activeTrack && (
-                <div className="flex rounded-full bg-surface-3 p-1 text-sm font-semibold">
-                  <button
-                    type="button"
-                    onClick={() => setActiveNotesTab('lyrically')}
-                    className={`rounded-full px-4 py-1 transition-all ${activeNotesTab === 'lyrically' ? 'tab-btn-active accent-tab-glow text-white' : 'text-ink-2 hover:text-ink'}`}
-                  >
-                    Lyrically
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveNotesTab('sonically')}
-                    className={`rounded-full px-4 py-1 transition-all ${activeNotesTab === 'sonically' ? 'tab-btn-active accent-tab-glow text-white' : 'text-ink-2 hover:text-ink'}`}
-                  >
-                    Sonically
-                  </button>
-                </div>
-              )}
-
-              {activeTrack && (
-                <label className="inline-flex items-center gap-2 text-sm font-semibold text-ink">
-                  <input
-                    type="checkbox"
-                    checked={activeDraft.isInterlude}
-                    onChange={(event) => handleInterludeChange(event.target.checked)}
-                    className="h-4 w-4 rounded border-edge"
-                  />
-                  Mark as interlude
-                </label>
-              )}
-            </div>
-
-            {activeTrack ? (
-              <textarea
-                key={`${activeSectionKey}-${activeNotesTab}`}
-                ref={activeTextareaRef}
-                value={activeNotesTab === 'lyrically' ? activeDraft.notesLyrically : activeDraft.notesSonically}
-                onChange={(event) => handleNotesChange(activeNotesTab, event.target.value)}
-                style={{ borderLeftColor: 'hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.5)' }}
-                className="min-h-0 flex-1 w-full resize-none rounded-lg border border-edge border-l-2 p-3 text-sm leading-relaxed text-ink"
-              />
-            ) : (
-              <textarea
-                ref={activeTextareaRef}
-                value={activeDraft.notesLyrically}
-                onChange={(event) => handleNotesChange('lyrically', event.target.value)}
-                className="min-h-0 flex-1 w-full resize-none rounded-lg border border-edge border-l-2 border-l-pink/50 p-3 text-sm leading-relaxed text-ink"
-              />
-            )}
-
-            {activeTrack && (
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                {(tagsByTrack[activeTrack.trackNumber] ?? []).map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center gap-1 rounded-full tag-pill px-3 py-1 text-xs font-semibold"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => void handleRemoveTag(tag)}
-                      className="ml-1 text-ink-3 hover:text-[#6ee7b7]"
-                      aria-label={`Remove tag ${tag}`}
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-                <div hidden ref={tagPopoverRef} className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setIsTagPopoverOpen((prev) => !prev)}
-                    className="tag-add-btn inline-flex items-center gap-1 rounded-full border border-dashed border-edge px-3 py-1 text-xs font-semibold text-ink-3 transition-colors"
-                  >
-                    + Tag
-                  </button>
-                  {isTagPopoverOpen && (
-                    <div className="absolute left-0 top-full z-20 mt-1 w-64 rounded-xl border border-edge bg-gradient-to-b from-[#141028] to-[#0e0c1c] p-3 shadow-lg">
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={tagInput}
-                          onChange={(event) => setTagInput(event.target.value)}
-                          onKeyDown={(event) => {
-                            if (event.key === 'Enter') {
-                              event.preventDefault()
-                              void handleAddTag().then((ok) => { if (ok) setIsTagPopoverOpen(false) })
-                            }
-                          }}
-                          placeholder="Tag name..."
-                          maxLength={50}
-                          autoFocus
-                          className="flex-1 rounded-md border border-edge px-3 py-1.5 text-sm"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => void handleAddTag().then((ok) => { if (ok) setIsTagPopoverOpen(false) })}
-                          disabled={isTagSaving || !tagInput.trim()}
-                          className="btn-gradient-cta rounded-lg px-3 py-1.5 text-sm font-semibold text-white"
-                        >
-                          Add
-                        </button>
-                      </div>
-                      {tagErrorMessage && (
-                        <p className="mt-2 text-xs text-err">{tagErrorMessage}</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            </footer>
 
             {errorMessage && (
-              <div className="mt-3 rounded-lg border border-err-edge bg-err-bg p-3 text-sm text-err">
-                {errorMessage}
-              </div>
+              <div className="vco-msg-err">{errorMessage}</div>
             )}
-
             {infoMessage && (
-              <div className="mt-3 rounded-lg border border-ok-edge bg-ok-bg p-3 text-sm text-ok">
-                {infoMessage}
-              </div>
+              <div className="vco-msg-ok">{infoMessage}</div>
             )}
           </section>
 
-          <aside className="flex min-h-0 flex-col rounded-xl border border-edge/60 bg-gradient-to-b from-[#0e0c1c] to-[#090710] p-4">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-[#a78bfa]">Lyrics</p>
-              {activeTrack && !isEditingLyrics && (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setQuoteModeEnabled((prev) => !prev)}
-                    title={quoteModeEnabled ? 'Click-to-quote: on' : 'Click-to-quote: off'}
-                    className={`rounded px-1.5 text-sm font-bold leading-none transition-all ${quoteModeEnabled ? 'quote-active' : 'text-ink-3 hover:text-ink'}`}
-                    aria-label={quoteModeEnabled ? 'Disable click-to-quote' : 'Enable click-to-quote'}
-                  >
-                    "
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const displayed = lyricsOverrideByTrack[activeTrack.trackNumber] ?? activeTrack.lyrics
-                      setLyricsEditText(displayed)
-                      setLyricsErrorMessage(null)
-                      setIsEditingLyrics(true)
-                    }}
-                    className="text-xs font-semibold text-ink-3 hover:text-ink"
-                  >
-                    Edit
-                  </button>
-                  <div ref={lyricsMenuRef} className="relative">
-                    <button
-                      type="button"
-                      disabled={isRefetchingLyrics}
-                      onClick={() => setIsLyricsMenuOpen((open) => !open)}
-                      className="flex h-5 w-5 items-center justify-center rounded text-ink-3 hover:bg-surface-2 hover:text-ink disabled:opacity-40"
-                      aria-label="Lyrics options"
-                    >
-                      {isRefetchingLyrics ? (
-                        <span className="text-xs">...</span>
-                      ) : (
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                          <circle cx="8" cy="2.5" r="1.5" />
-                          <circle cx="8" cy="8" r="1.5" />
-                          <circle cx="8" cy="13.5" r="1.5" />
-                        </svg>
-                      )}
-                    </button>
-                    {isLyricsMenuOpen && (
-                      <div className="absolute right-0 top-full z-20 mt-1 min-w-[140px] rounded-lg border border-edge bg-gradient-to-b from-[#141028] to-[#0e0c1c] shadow-lg">
-                        <button
-                          type="button"
-                          onClick={() => void handleRefetchLyrics()}
-                          className="w-full px-3 py-2 text-left text-xs text-ink hover:bg-surface-2"
-                        >
-                          Re-fetch lyrics
-                        </button>
-                      </div>
-                    )}
-                  </div>
+          {/* RIGHT: Score dial + lyrics */}
+          <aside className="vco-right">
+            <div className="vco-dial-wrap">
+              <div
+                className="vco-dial"
+                onClick={() => scoreInputRef.current?.focus()}
+                role="presentation"
+                title="Click to edit score"
+              >
+                <div
+                  className="vco-dial-needle"
+                  style={{ transform: `translateX(-50%) rotate(${needleAngle}deg)` }}
+                />
+                <div className="vco-dial-inner">{scoreDisplay}</div>
+              </div>
+              <div className="vco-dial-info">
+                <div className="lab">Score</div>
+                <div className="val">
+                  {scoreDisplay}<span>/10</span>
                 </div>
-              )}
+                <input
+                  ref={scoreInputRef}
+                  type="number"
+                  min={0}
+                  max={10}
+                  step={0.1}
+                  value={activeDraft.scoreInput}
+                  onChange={(e) => handleScoreChange(e.target.value)}
+                  placeholder="0.0"
+                  className="vco-score-input"
+                />
+              </div>
             </div>
 
-            {activeTrack ? (
-              isEditingLyrics ? (
-                <>
-                  <textarea
-                    value={lyricsEditText}
-                    onChange={(event) => setLyricsEditText(event.target.value)}
-                    className="min-h-0 flex-1 w-full resize-none rounded-lg border border-edge p-2 text-sm leading-relaxed text-ink"
-                  />
-                  {lyricsErrorMessage && (
-                    <p className="mt-1 text-xs text-err">{lyricsErrorMessage}</p>
-                  )}
-                  <div className="mt-2 flex flex-wrap gap-2">
+            <div className="vco-lyr-panel">
+              <header className="vco-lyr-head">
+                <span>
+                  {activeTrack ? `Lyrics · ${activeChNum}` : 'Lyrics'}
+                </span>
+                {activeTrack && !isEditingLyrics && (
+                  <div className="vco-lyr-actions">
                     <button
                       type="button"
-                      onClick={() => void handleSaveLyrics()}
-                      disabled={isSavingLyrics}
-                      className="btn-gradient-cta rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+                      className={`vco-lyr-btn${quoteModeEnabled ? ' active' : ''}`}
+                      onClick={() => setQuoteModeEnabled((p) => !p)}
+                      title={quoteModeEnabled ? 'Click-to-quote: on' : 'Click-to-quote: off'}
+                      aria-label={quoteModeEnabled ? 'Disable click-to-quote' : 'Enable click-to-quote'}
                     >
-                      {isSavingLyrics ? 'Saving...' : 'Save'}
+                      &#8220; QUOTE
                     </button>
                     <button
                       type="button"
-                      onClick={() => setIsEditingLyrics(false)}
-                      disabled={isSavingLyrics}
-                      className="rounded-lg border border-edge px-3 py-1.5 text-xs font-semibold text-ink disabled:opacity-60"
+                      className="vco-lyr-btn"
+                      onClick={() => {
+                        const displayed = lyricsOverrideByTrack[activeTrack.trackNumber] ?? activeTrack.lyrics
+                        setLyricsEditText(displayed)
+                        setLyricsErrorMessage(null)
+                        setIsEditingLyrics(true)
+                      }}
                     >
-                      Cancel
+                      EDIT
                     </button>
-                    {lyricsOverrideByTrack[activeTrack.trackNumber] !== undefined && (
+                    <div ref={lyricsMenuRef} className="vco-lyr-menu-wrap">
                       <button
                         type="button"
-                        onClick={() => void handleRevertLyrics()}
-                        disabled={isSavingLyrics}
-                        className="rounded-lg border border-err-edge px-3 py-1.5 text-xs font-semibold text-err hover:bg-err-bg disabled:opacity-60"
+                        className="vco-lyr-btn"
+                        disabled={isRefetchingLyrics}
+                        onClick={() => setIsLyricsMenuOpen((o) => !o)}
+                        aria-label="Lyrics options"
                       >
-                        Revert to original
+                        {isRefetchingLyrics ? '...' : '⋯'}
                       </button>
-                    )}
+                      {isLyricsMenuOpen && (
+                        <div className="vco-lyr-menu">
+                          <button
+                            type="button"
+                            onClick={() => void handleRefetchLyrics()}
+                            className="vco-lyr-menu-item"
+                          >
+                            Re-fetch lyrics
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </>
-              ) : (() => {
-                const displayed = lyricsOverrideByTrack[activeTrack.trackNumber] ?? activeTrack.lyrics
-                const hasOverride = lyricsOverrideByTrack[activeTrack.trackNumber] !== undefined
-                return displayed.trim() ? (
-                  <div className="min-h-0 flex-1 overflow-auto">
-                    {hasOverride && (
-                      <p className="mb-1 text-xs font-semibold text-ink-2">Edited</p>
+                )}
+              </header>
+
+              <div className="vco-lyr-body">
+                {!activeTrack ? (
+                  <p className="vco-lyr-empty">Conclusion has no lyrics.</p>
+                ) : isEditingLyrics ? (
+                  <>
+                    <textarea
+                      value={lyricsEditText}
+                      onChange={(e) => setLyricsEditText(e.target.value)}
+                      className="vco-lyr-edit-textarea"
+                    />
+                    {lyricsErrorMessage && (
+                      <p className="vco-lyr-error">{lyricsErrorMessage}</p>
                     )}
-                    {quoteModeEnabled ? (
-                      <div className="text-sm leading-relaxed text-ink">
-                        {displayed.split('\n').map((line, index) =>
+                    <div className="vco-lyr-edit-actions">
+                      <button
+                        type="button"
+                        onClick={() => void handleSaveLyrics()}
+                        disabled={isSavingLyrics}
+                        className="vco-tbtn primary"
+                      >
+                        {isSavingLyrics ? 'SAVING...' : 'SAVE'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingLyrics(false)}
+                        disabled={isSavingLyrics}
+                        className="vco-tbtn"
+                      >
+                        CANCEL
+                      </button>
+                      {lyricsOverrideByTrack[activeTrack.trackNumber] !== undefined && (
+                        <button
+                          type="button"
+                          onClick={() => void handleRevertLyrics()}
+                          disabled={isSavingLyrics}
+                          className="vco-tbtn vco-tbtn-danger"
+                        >
+                          REVERT
+                        </button>
+                      )}
+                    </div>
+                  </>
+                ) : (() => {
+                  const displayed = lyricsOverrideByTrack[activeTrack.trackNumber] ?? activeTrack.lyrics
+                  const hasOverride = lyricsOverrideByTrack[activeTrack.trackNumber] !== undefined
+                  if (!displayed.trim()) {
+                    return <p className="vco-lyr-empty">No lyrics stored for this track.</p>
+                  }
+                  return (
+                    <>
+                      {hasOverride && <p className="vco-lyr-edited">Edited</p>}
+                      {quoteModeEnabled ? (
+                        displayed.split('\n').map((line, i) =>
                           line.trim() ? (
                             <button
-                              key={index}
+                              key={i}
                               type="button"
+                              className="vco-lyr-line"
                               onClick={() => handleQuoteLine(line)}
-                              className="lyric-quote-line block w-full rounded px-1 py-0.5 text-left"
                             >
+                              <span className="ln">{i + 1}</span>
                               {line}
                             </button>
                           ) : (
-                            <div key={index} className="h-3" />
+                            <div key={i} className="vco-lyr-gap" />
                           )
-                        )}
-                      </div>
-                    ) : (
-                      <pre className="whitespace-pre-wrap text-sm leading-relaxed text-ink">
-                        {displayed}
-                      </pre>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-ink-2">No lyrics stored for this track.</p>
-                )
-              })()
-            ) : (
-              <p className="text-sm text-ink-2">Conclusion has no lyrics.</p>
-            )}
+                        )
+                      ) : (
+                        <pre className="vco-lyr-pre">{displayed}</pre>
+                      )}
+                    </>
+                  )
+                })()}
+              </div>
+            </div>
           </aside>
-        </section>
+
+        </div>
+
       </div>
 
+      {/* Recommendation modal */}
       {isRecommendationModalOpen && workspace && recommendationItemTitle && recommendationArtistName && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
-          onClick={() => {
-            if (!isRecommendationSubmitting) {
-              setIsRecommendationModalOpen(false)
-            }
-          }}
+          onClick={() => { if (!isRecommendationSubmitting) setIsRecommendationModalOpen(false) }}
         >
           <div
             role="dialog"
             aria-modal="true"
-            aria-labelledby="recommend-track-title"
-            className="w-full max-w-md rounded-xl border border-edge bg-gradient-to-b from-[#141028] to-[#0e0c1c] p-5 shadow-xl"
-            onClick={(event) => event.stopPropagation()}
+            aria-labelledby="recommend-title"
+            className="vco-modal"
+            onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="recommend-track-title" className="text-lg font-bold text-ink">
-              {recommendationType === 'album'
-                ? 'Recommend this album to a friend?'
-                : 'Recommend this song to a friend?'}
+            <h2 id="recommend-title" className="vco-modal-title">
+              {recommendationType === 'album' ? 'Recommend this album?' : 'Recommend this song?'}
             </h2>
-
-            <div className="mt-4 rounded-lg border border-edge bg-surface-2 px-4 py-3">
-              <p className="text-sm font-semibold text-ink">{recommendationItemTitle}</p>
-              <p className="mt-1 text-sm text-ink">{recommendationArtistName}</p>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-ink-3">
+            <div className="vco-modal-info">
+              <p className="vco-modal-item-title">{recommendationItemTitle}</p>
+              <p className="vco-modal-item-artist">{recommendationArtistName}</p>
+              <p className="vco-modal-item-type">
                 {recommendationType === 'album' ? 'Album' : 'Song'}
               </p>
             </div>
-
-            <label className="mt-4 block text-sm font-semibold text-ink">
+            <label className="vco-modal-label">
               Send To
               <select
                 value={selectedRecommendationFriendUserId}
-                onChange={(event) => setSelectedRecommendationFriendUserId(event.target.value)}
+                onChange={(e) => setSelectedRecommendationFriendUserId(e.target.value)}
                 disabled={friends.length === 0 || isRecommendationSubmitting}
-                className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
+                className="vco-modal-select"
               >
                 {friends.length === 0 && <option value="">No friends available</option>}
                 {friends.map((friend) => (
@@ -1356,23 +1138,20 @@ function AlbumReviewPage() {
                 ))}
               </select>
             </label>
-
             {friends.length === 0 && (
-              <p className="mt-3 text-sm text-ink">Add a friend first to send recommendations.</p>
+              <p className="vco-modal-note">Add a friend first to send recommendations.</p>
             )}
-
             {recommendationErrorMessage && (
-              <div className="mt-3 rounded-lg border border-err-edge bg-err-bg p-3 text-sm text-err">
+              <div className="vco-msg-err" style={{ marginTop: '12px' }}>
                 {recommendationErrorMessage}
               </div>
             )}
-
-            <div className="mt-5 flex justify-end gap-2">
+            <div className="vco-modal-actions">
               <button
                 type="button"
                 onClick={() => setIsRecommendationModalOpen(false)}
                 disabled={isRecommendationSubmitting}
-                className="rounded-lg border border-edge px-4 py-2 text-sm font-semibold text-ink disabled:opacity-60"
+                className="vco-tbtn"
               >
                 Cancel
               </button>
@@ -1380,91 +1159,14 @@ function AlbumReviewPage() {
                 type="button"
                 onClick={() => void handleSendRecommendation()}
                 disabled={isRecommendationSubmitting || friends.length === 0}
-                className="btn-gradient-cta rounded-lg px-4 py-2 text-sm font-semibold text-white"
+                className="vco-tbtn primary"
               >
-                {isRecommendationSubmitting ? 'Sending...' : 'Send Recommendation'}
+                {isRecommendationSubmitting ? 'Sending...' : 'Send'}
               </button>
             </div>
           </div>
         </div>
       )}
-
-      {/* {isPlaylistModalOpen && workspace && playlistSelection && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
-          onClick={() => {
-            if (!isPlaylistSubmitting) {
-              setIsPlaylistModalOpen(false)
-            }
-          }}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="add-to-playlist-title"
-            className="w-full max-w-md rounded-xl border border-edge bg-gradient-to-b from-[#141028] to-[#0e0c1c] p-5 shadow-xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h2 id="add-to-playlist-title" className="text-lg font-bold text-ink">
-              Add this song to a playlist?
-            </h2>
-
-            <div className="mt-4 rounded-lg border border-edge bg-surface-2 px-4 py-3">
-              <p className="text-sm font-semibold text-ink">{playlistSelection.itemTitle}</p>
-              <p className="mt-1 text-sm text-ink">{playlistSelection.artistName}</p>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-ink-3">Song</p>
-            </div>
-
-            <label className="mt-4 block text-sm font-semibold text-ink">
-              Playlist
-              <select
-                value={selectedPlaylistId}
-                onChange={(event) => setSelectedPlaylistId(event.target.value)}
-                disabled={playlists.length === 0 || isPlaylistSubmitting}
-                className="mt-1 w-full rounded-lg border border-edge px-3 py-2 text-sm"
-              >
-                {playlists.length === 0 && <option value="">No playlists available</option>}
-                {playlists.map((playlist) => (
-                  <option key={playlist.id} value={playlist.id}>
-                    {playlist.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            {playlists.length === 0 && (
-              <p className="mt-3 text-sm text-ink">
-                Create a playlist first from My Stuff {'>'} Playlists.
-              </p>
-            )}
-
-            {playlistErrorMessage && (
-              <div className="mt-3 rounded-lg border border-err-edge bg-err-bg p-3 text-sm text-err">
-                {playlistErrorMessage}
-              </div>
-            )}
-
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setIsPlaylistModalOpen(false)}
-                disabled={isPlaylistSubmitting}
-                className="rounded-lg border border-edge px-4 py-2 text-sm font-semibold text-ink disabled:opacity-60"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleAddSongToPlaylist()}
-                disabled={isPlaylistSubmitting || playlists.length === 0}
-                className="rounded-lg bg-cta px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-              >
-                {isPlaylistSubmitting ? 'Adding...' : 'Add to Playlist'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )} */}
     </main>
   )
 }
