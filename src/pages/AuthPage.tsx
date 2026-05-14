@@ -19,7 +19,7 @@ function AuthPage() {
 
   useEffect(() => {
     if (!isLoading && user) {
-      navigate('/reviews', { replace: true })
+      navigate('/', { replace: true })
     }
   }, [isLoading, navigate, user])
 
@@ -40,7 +40,7 @@ function AuthPage() {
           throw error
         }
 
-        navigate('/reviews', { replace: true })
+        navigate('/', { replace: true })
       } else {
         const trimmedUsername = username.trim()
         if (trimmedUsername.length < 3 || trimmedUsername.length > 32) {
@@ -62,7 +62,7 @@ function AuthPage() {
         }
 
         if (data.session) {
-          navigate('/reviews', { replace: true })
+          navigate('/', { replace: true })
           return
         }
 
