@@ -369,7 +369,7 @@ function SearchPage() {
   }
 
   return (
-    <main className="page-wrap">
+    <main className="page-wrap" style={{ minHeight: 'unset', height: 'calc(100vh - var(--nav-h))', overflowY: 'auto' }}>
       <h1 className="page-title">Search Songs</h1>
       <p style={{ marginTop: 6, fontSize: 13, color: '#7c6fad', fontFamily: "'JetBrains Mono', monospace" }}>
         Combine filters to answer questions like lyrics keyword matches or artist + score ranges.

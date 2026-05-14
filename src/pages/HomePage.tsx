@@ -71,7 +71,7 @@ function HomePage() {
   })
 
   return (
-    <main className="relative flex items-center justify-center overflow-hidden px-12" style={{ minHeight: 'calc(100vh - var(--nav-h))' }}>
+    <main className="relative flex items-center justify-center overflow-hidden px-12" style={{ height: 'calc(100vh - var(--nav-h))' }}>
       <div ref={layer0Ref} className="absolute inset-0" style={backgroundLayerStyle(0)} />
       <div ref={layer1Ref} className="absolute inset-0" style={backgroundLayerStyle(1)} />
 

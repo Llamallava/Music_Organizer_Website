@@ -137,7 +137,7 @@ function FriendsPage() {
   }
 
   return (
-    <main className="page-wrap">
+    <main className="page-wrap" style={{ minHeight: 'unset', height: 'calc(100vh - var(--nav-h))', overflowY: 'auto' }}>
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <h1 className="page-title">Friends</h1>
 
