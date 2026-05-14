@@ -685,9 +685,7 @@ function AlbumReviewPage() {
                 const key = toTrackKey(track.trackNumber)
                 const isActive = key === activeSectionKey
                 const hasScore = !!(savedBySection[key]?.scoreInput)
-                const widthPct = totalSeconds > 0 && track.durationSeconds
-                  ? (track.durationSeconds / totalSeconds) * 100
-                  : 100 / trackList.length
+                const widthPct = 100 / trackList.length
                 return (
                   <button
                     key={track.id}
