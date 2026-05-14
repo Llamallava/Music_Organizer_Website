@@ -769,25 +769,6 @@ input[type='text']:focus {
   padding: 12px 16px;
 }
 
-.vco-text-wrap.recording::after {
-  content: '';
-  position: absolute;
-  top: 23px;
-  right: 30px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #ef4444;
-  box-shadow: 0 0 6px #ef4444;
-  animation: vco-blink 1.5s infinite;
-  pointer-events: none;
-  z-index: 2;
-}
-
-@keyframes vco-blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0.2; }
-}
 
 .vco-text-panel {
   width: 100%;

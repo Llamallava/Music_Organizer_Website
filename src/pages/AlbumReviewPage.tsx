@@ -773,7 +773,7 @@ function AlbumReviewPage() {
               </div>
             </header>
 
-            <div className={`vco-text-wrap${isDirty ? ' recording' : ''}`}>
+            <div className="vco-text-wrap">
               {activeTrack ? (
                 <textarea
                   key={`${activeSectionKey}-${activeNotesTab}`}
