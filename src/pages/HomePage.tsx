@@ -71,14 +71,14 @@ function HomePage() {
   })
 
   return (
-    <main className="relative flex items-center justify-center overflow-hidden px-12" style={{ height: 'calc(100vh - var(--nav-h))' }}>
+    <main className="relative flex items-center justify-center overflow-hidden px-6 sm:px-12" style={{ height: 'calc(100vh - var(--nav-h))' }}>
       <div ref={layer0Ref} className="absolute inset-0" style={backgroundLayerStyle(0)} />
       <div ref={layer1Ref} className="absolute inset-0" style={backgroundLayerStyle(1)} />
 
       {hasBackground && <div className="absolute inset-0 bg-black/50" />}
 
-      <div className="relative z-10 flex w-full max-w-5xl items-center gap-16">
-        <div className="flex flex-1 flex-col gap-3">
+      <div className="relative z-10 flex w-full max-w-5xl flex-col items-center gap-8 sm:flex-row sm:gap-16">
+        <div className="flex w-full flex-col gap-3 sm:flex-1">
           <button type="button" onClick={() => navigate('/reviews')} className="vco-tbtn primary" style={{ padding: '12px 16px', fontSize: 15 }}>
             My Reviews
           </button>
@@ -96,9 +96,9 @@ function HomePage() {
           </button>
         </div>
 
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex w-full items-center justify-center sm:flex-1">
           <h1
-            className={`text-6xl font-black tracking-tight ${hasBackground ? 'text-white drop-shadow-lg' : 'text-ink'}`}
+            className={`text-4xl font-black tracking-tight sm:text-6xl ${hasBackground ? 'text-white drop-shadow-lg' : 'text-ink'}`}
           >
             Music Organizer
           </h1>

@@ -138,8 +138,18 @@ function AlbumReviewPage() {
   const accentColor = useAlbumAccent(workspace?.album.coverUrl)
 
   useEffect(() => {
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
+    // Lock scroll on desktop where the console is a fixed-height viewport.
+    // On mobile the layout stacks vertically and needs normal scrolling.
+    const mq = window.matchMedia('(max-width: 640px)')
+    const apply = () => {
+      document.body.style.overflow = mq.matches ? '' : 'hidden'
+    }
+    apply()
+    mq.addEventListener('change', apply)
+    return () => {
+      document.body.style.overflow = ''
+      mq.removeEventListener('change', apply)
+    }
   }, [])
 
   useEffect(() => {

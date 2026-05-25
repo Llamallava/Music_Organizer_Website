@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { generatePath, matchPath, useLocation, useNavigate } from 'react-router-dom'
 import AccountMenu from './AccountMenu'
 import { useAuthSession } from '../hooks/useAuthSession'
@@ -42,6 +43,12 @@ function NavBar() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAuthSession()
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  // Close the mobile menu whenever the user navigates to a new page
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [location.pathname])
 
   const previousPath = resolvePreviousPath(location.pathname)
 
@@ -49,22 +56,54 @@ function NavBar() {
     location.pathname === path || location.pathname.startsWith(path + '/')
 
   return (
-    <nav className="app-nav">
-      {previousPath ? (
-        <button type="button" className="vco-tbtn" onClick={() => navigate(previousPath)}>
-          ⟨ Back
-        </button>
-      ) : (
-        <span className="app-nav-brand">Music Organizer</span>
-      )}
+    <>
+      <nav className="app-nav">
+        {previousPath ? (
+          <button type="button" className="vco-tbtn" onClick={() => navigate(previousPath)}>
+            ⟨ Back
+          </button>
+        ) : (
+          <span className="app-nav-brand">Music Organizer</span>
+        )}
 
-      {user && (
-        <div className="app-nav-links">
+        {user && (
+          <div className="app-nav-links">
+            {NAV_LINKS.map(({ label, path }) => (
+              <button
+                key={path}
+                type="button"
+                className={`app-nav-link${isActive(path) ? ' active' : ''}`}
+                onClick={() => navigate(path)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div style={{ flex: 1 }} />
+
+        {user && (
+          <button
+            type="button"
+            className="app-nav-hamburger"
+            onClick={() => setMenuOpen(o => !o)}
+            aria-label="Toggle navigation menu"
+          >
+            {menuOpen ? '✕' : '☰'}
+          </button>
+        )}
+
+        <AccountMenu />
+      </nav>
+
+      {user && menuOpen && (
+        <div className="app-nav-mobile-menu">
           {NAV_LINKS.map(({ label, path }) => (
             <button
               key={path}
               type="button"
-              className={`app-nav-link${isActive(path) ? ' active' : ''}`}
+              className={`app-nav-mobile-link${isActive(path) ? ' active' : ''}`}
               onClick={() => navigate(path)}
             >
               {label}
@@ -72,10 +111,7 @@ function NavBar() {
           ))}
         </div>
       )}
-
-      <div style={{ flex: 1 }} />
-      <AccountMenu />
-    </nav>
+    </>
   )
 }
 

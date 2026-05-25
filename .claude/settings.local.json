@@ -14,7 +14,12 @@
       "Bash(git stash *)",
       "Bash(git pull *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Matthew\\\\source\\\\repos\\\\Music_Organizer_Website\" -Force)",
+      "Bash(Select-Object Name, FullName)",
+      "Bash(npm run *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5174)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173)"
     ]
   }
 }
