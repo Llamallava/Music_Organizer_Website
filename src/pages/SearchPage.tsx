@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
+import { StellarHorizon } from '../components/StellarHorizon'
 import { listSearchSongsForCurrentUser, type SearchSongRecord } from '../lib/db/searchData'
 
 type ScoreMinOperator = 'gte' | 'gt'
@@ -493,6 +494,8 @@ function SearchPage() {
           </div>
         )}
       </section>
+
+      <StellarHorizon label="SCANNING THE SKY" />
 
       {hasSearched && isLoading && <p className="vco-loading">Loading songs...</p>}
 

@@ -678,7 +678,7 @@ function AlbumReviewPage() {
 
           {/* LEFT: Album info + tracklist */}
           <aside className="vco-left">
-            <div className="vco-cover-wrap">
+            <div className="vco-cover-wrap cover-halo">
               <AlbumCover
                 src={workspace.album.coverUrl}
                 alt={`${workspace.album.title} cover`}

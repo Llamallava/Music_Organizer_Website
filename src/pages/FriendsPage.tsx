@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { StellarHorizon } from '../components/StellarHorizon'
 import {
   addFriendByCodeForCurrentUser,
   getFriendsOverviewForCurrentUser,
@@ -140,6 +141,8 @@ function FriendsPage() {
     <main className="page-wrap" style={{ minHeight: 'unset', height: 'calc(100vh - var(--nav-h))', overflowY: 'auto' }}>
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <h1 className="page-title">Friends</h1>
+
+        <StellarHorizon label="NEARBY OBSERVERS" />
 
         {isLoading && <p className="vco-loading">Loading friends...</p>}
 

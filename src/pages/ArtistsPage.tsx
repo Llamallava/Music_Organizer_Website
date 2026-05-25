@@ -107,16 +107,16 @@ function ArtistsPage() {
                   key={artist}
                   type="button"
                   onClick={() => navigate(`/artists/${encodeURIComponent(artist)}`)}
-                  className="text-left"
+                  className="group text-left"
                 >
-                  <div className="aspect-square w-full overflow-hidden rounded-lg bg-surface-2">
+                  <div className="aspect-square w-full overflow-hidden rounded-lg bg-surface-2 cover-halo transition-transform duration-200 ease-out group-hover:scale-[1.025]">
                     <AlbumCover
                       src={artistImages.get(artist) ?? null}
                       alt={`${artist} profile`}
                       loading="lazy"
                     />
                   </div>
-                  <p className="mt-2 truncate text-sm font-semibold text-ink">{artist}</p>
+                  <p className="mt-2 truncate text-sm font-semibold text-ink transition-colors duration-200 group-hover:text-[#ede9fe]">{artist}</p>
                 </button>
               ))}
             </section>

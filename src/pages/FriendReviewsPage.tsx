@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
+import { StellarHorizon } from '../components/StellarHorizon'
 import { getFriendsOverviewForCurrentUser } from '../lib/db/friendsData'
 import { listSavedAlbumsForUser, type SavedAlbumCard } from '../lib/db/reviewsData'
 
@@ -76,6 +77,8 @@ function FriendReviewsPage() {
         {toPossessiveName(friendName ?? 'Friend')} Reviews
       </h1>
 
+      <StellarHorizon label={`${(friendName ?? 'FRIEND').toUpperCase()}'S LIBRARY`} />
+
       {isLoading && <p className="vco-loading">Loading albums...</p>}
 
       {!isLoading && errorMessage && (
@@ -97,7 +100,7 @@ function FriendReviewsPage() {
               onClick={() => navigate(`/friends/${friendUserId}/reviews/${album.userSavedAlbumId}`)}
               className="text-left"
             >
-              <div className="aspect-square w-full overflow-hidden rounded-lg bg-surface-2">
+              <div className="aspect-square w-full overflow-hidden rounded-lg bg-surface-2 cover-halo">
                 <AlbumCover src={album.coverUrl} alt={`${album.title} cover`} loading="lazy" />
               </div>
 

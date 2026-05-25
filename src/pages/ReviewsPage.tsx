@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
+import { StellarHorizon } from '../components/StellarHorizon'
 import { getFriendsOverviewForCurrentUser, type FriendProfile } from '../lib/db/friendsData'
 import {
   listSavedAlbumsForCurrentUser,
@@ -185,6 +186,8 @@ function ReviewsPage() {
           />
         </div>
 
+        <StellarHorizon label={`MY LIBRARY · ${albums.length} CHARTED`} />
+
         {(isLoading || (!errorMessage && albums.length > 0 && loadedCovers.size < albums.filter((a) => a.coverUrl).length)) && (
           <div className="mt-12 flex justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#2a2548] border-t-ink-2" />
@@ -218,9 +221,9 @@ function ReviewsPage() {
                 <div
                   key={album.userSavedAlbumId}
                   ref={isMenuOpen ? menuRef : null}
-                  className="relative"
+                  className="relative group"
                 >
-                  <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-surface-2">
+                  <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-surface-2 cover-halo transition-transform duration-200 ease-out group-hover:scale-[1.025]">
                     <button
                       type="button"
                       onClick={() => navigate(`/reviews/${album.userSavedAlbumId}`)}
@@ -256,8 +259,8 @@ function ReviewsPage() {
                     onClick={() => navigate(`/reviews/${album.userSavedAlbumId}`)}
                     className="mt-2 block w-full text-left"
                   >
-                    <p className="truncate text-sm font-semibold text-ink">{album.title}</p>
-                    <p className="truncate text-xs text-ink-3" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{album.artistName}</p>
+                    <p className="truncate text-sm font-semibold text-ink transition-colors duration-200 group-hover:text-[#ede9fe]">{album.title}</p>
+                    <p className="truncate text-xs text-ink-3 transition-colors duration-200 group-hover:text-ink-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{album.artistName}</p>
                   </button>
 
                   {backgroundAlbumId === album.userSavedAlbumId && (

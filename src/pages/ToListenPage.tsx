@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react'
 import { useEffect, useState } from 'react'
+import { StellarHorizon } from '../components/StellarHorizon'
 import { getFriendsOverviewForCurrentUser, type FriendProfile } from '../lib/db/friendsData'
 import {
   addToListenSongForCurrentUser,
@@ -195,6 +196,8 @@ function ToListenPage() {
             + Add
           </button>
         </div>
+
+        <StellarHorizon label={`QUEUE · ${unifiedList.length} IN ORBIT`} />
 
         {isLoading && <p className="vco-loading">Loading...</p>}
 

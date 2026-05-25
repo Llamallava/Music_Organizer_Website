@@ -33,10 +33,7 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #ede9fe;
-  background:
-    radial-gradient(ellipse at 15% 30%, rgba(124, 58, 237, 0.2) 0%, transparent 55%),
-    radial-gradient(ellipse at 85% 75%, rgba(219, 39, 119, 0.12) 0%, transparent 50%),
-    #07050f;
+  background: #06050d;
 
   /* Album accent — defaults to emerald green; overridden per-page via JS */
   --accent-h: 160;
@@ -45,6 +42,84 @@
 
   /* Nav bar height — referenced by vco-page and body padding */
   --nav-h: 40px;
+}
+
+/* ============================================================
+   ETHEREAL BACKGROUND — aurora blobs + noise overlay
+   ============================================================ */
+
+.aurora-blob {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+/* Violet — top-left, drifts gently toward center */
+.aurora-blob-1 {
+  width: 100vw;
+  height: 85vh;
+  top: -20%;
+  left: -20%;
+  background: radial-gradient(ellipse at center, rgba(124, 58, 237, 0.20) 0%, transparent 70%);
+  filter: blur(90px);
+  animation: aurora-1 50s ease-in-out infinite;
+}
+
+/* Rose — bottom-right, slow upward drift */
+.aurora-blob-2 {
+  width: 90vw;
+  height: 75vh;
+  bottom: -20%;
+  right: -15%;
+  background: radial-gradient(ellipse at center, rgba(219, 39, 119, 0.13) 0%, transparent 70%);
+  filter: blur(100px);
+  animation: aurora-2 62s ease-in-out infinite;
+}
+
+/* Teal — top-right, drifts diagonally */
+.aurora-blob-3 {
+  width: 80vw;
+  height: 70vh;
+  top: -10%;
+  right: -15%;
+  background: radial-gradient(ellipse at center, rgba(6, 182, 212, 0.09) 0%, transparent 70%);
+  filter: blur(110px);
+  animation: aurora-3 70s ease-in-out infinite;
+}
+
+/* Deep indigo — bottom-center, breathes in place */
+.aurora-blob-4 {
+  width: 85vw;
+  height: 90vh;
+  bottom: -25%;
+  left: 10%;
+  background: radial-gradient(ellipse at center, rgba(80, 50, 160, 0.16) 0%, transparent 70%);
+  filter: blur(120px);
+  animation: aurora-4 55s ease-in-out infinite;
+}
+
+@keyframes aurora-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  30%       { transform: translate(7vw, 8vh) scale(1.06); }
+  65%       { transform: translate(-3vw, 14vh) scale(0.94); }
+}
+
+@keyframes aurora-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40%       { transform: translate(-9vw, -7vh) scale(1.08); }
+  75%       { transform: translate(4vw, -12vh) scale(0.96); }
+}
+
+@keyframes aurora-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25%       { transform: translate(-6vw, 10vh) scale(0.93); }
+  60%       { transform: translate(-12vw, 4vh) scale(1.05); }
+}
+
+@keyframes aurora-4 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  45%       { transform: translate(5vw, -8vh) scale(1.07); }
+  80%       { transform: translate(-4vw, -4vh) scale(0.97); }
 }
 
 * {
@@ -226,6 +301,21 @@ input[type='text']:focus {
   border-color: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.5) !important;
   box-shadow: 0 0 0 2px hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.1),
     0 0 14px hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.06) !important;
+}
+
+.cover-halo {
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(196, 181, 253, 0.10),
+    0 0 24px rgba(167, 139, 250, 0.18);
+  transition: box-shadow 0.2s ease-out;
+}
+
+.group:hover .cover-halo {
+  box-shadow:
+    0 6px 22px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(196, 181, 253, 0.30),
+    0 0 36px rgba(167, 139, 250, 0.36);
 }
 
 /* ============================================================

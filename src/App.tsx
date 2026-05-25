@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import NavBar from './components/NavBar'
 import ProtectedRoute from './components/ProtectedRoute'
+import EtherealBackground from './components/EtherealBackground'
 import HomePage from './pages/HomePage'
 import AddAlbumPage from './pages/AddAlbumPage'
 import AlbumReviewPage from './pages/AlbumReviewPage'
@@ -24,6 +25,7 @@ import ToListenPage from './pages/ToListenPage'
 function App() {
   return (
     <BackgroundProvider>
+      <EtherealBackground />
       <NavBar />
       <Routes>
         <Route path="/" element={<HomePage />} />
