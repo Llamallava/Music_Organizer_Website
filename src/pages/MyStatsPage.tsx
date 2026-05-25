@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
-import { formatScoreValue, GrandTotalWordsModule, TopTenAlbumsModule, TopTenSongsModule } from '../components/StatsModules'
+import { motion } from 'framer-motion'
+import { formatScoreValue, GrandTotalWordsModule, listContainerVariants, listItemVariants, TopTenAlbumsModule, TopTenSongsModule } from '../components/StatsModules'
 import { getFriendsOverviewForCurrentUser } from '../lib/db/friendsData'
 import {
   type FavoriteWordStat,
@@ -116,36 +117,49 @@ function TopTenArtistsModule({ title, items, artistImages }: Omit<TopTenArtistMo
               </div>
             </div>
 
-            <ol style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {remainingArtists.map((artist, index) => (
-                <li
-                  key={artist.artistName}
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, borderRadius: 4, background: '#1c1836', padding: '8px 10px' }}
-                >
-                  <div style={{ width: 36, height: 36, flexShrink: 0, overflow: 'hidden', borderRadius: 4, background: '#141028' }}>
-                    <AlbumCover
-                      src={artistImages.get(artist.artistName) ?? null}
-                      alt={`${artist.artistName} profile`}
-                      loading="eager"
-                      onLoad={() => handleImageLoad(artist.artistName)}
-                    />
-                  </div>
+            <motion.ol
+              variants={listContainerVariants}
+              initial="hidden"
+              animate={allLoaded ? 'visible' : 'hidden'}
+              style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 6 }}
+            >
+              {remainingArtists.map((artist, index) => {
+                const rank = index + 2
+                const imgSize = rank === 2 ? 48 : rank === 3 ? 40 : 32
+                const itemPadding = rank === 2 ? '10px 12px' : '8px 10px'
+                const titleSize = rank === 2 ? 14 : 13
+                const titleWeight = rank === 2 ? 700 : 600
+                return (
+                  <motion.li
+                    key={artist.artistName}
+                    variants={listItemVariants}
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, borderRadius: 4, background: '#1c1836', padding: itemPadding }}
+                  >
+                    <div style={{ width: imgSize, height: imgSize, flexShrink: 0, overflow: 'hidden', borderRadius: 4, background: '#141028' }}>
+                      <AlbumCover
+                        src={artistImages.get(artist.artistName) ?? null}
+                        alt={`${artist.artistName} profile`}
+                        loading="eager"
+                        onLoad={() => handleImageLoad(artist.artistName)}
+                      />
+                    </div>
 
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {index + 2}. {artist.artistName}
-                    </p>
-                    <p style={{ fontSize: 11, color: '#7c6fad' }}>
-                      {artist.albumCount} {artist.albumCount === 1 ? 'album' : 'albums'} rated
-                    </p>
-                  </div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <p style={{ fontSize: titleSize, fontWeight: titleWeight, color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {rank}. {artist.artistName}
+                      </p>
+                      <p style={{ fontSize: 11, color: '#7c6fad' }}>
+                        {artist.albumCount} {artist.albumCount === 1 ? 'album' : 'albums'} rated
+                      </p>
+                    </div>
 
-                  <p style={{ flexShrink: 0, fontSize: 13, fontWeight: 600, color: '#c4b5fd' }}>
-                    {formatScoreValue(artist.value)}
-                  </p>
-                </li>
-              ))}
-            </ol>
+                    <p style={{ flexShrink: 0, fontSize: titleSize, fontWeight: 600, color: '#c4b5fd' }}>
+                      {formatScoreValue(artist.value)}
+                    </p>
+                  </motion.li>
+                )
+              })}
+            </motion.ol>
           </>
         )}
       </div>

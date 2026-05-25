@@ -1,3 +1,5 @@
+import { useEffect } from 'react'
+import { animate, motion, useMotionValue, useTransform, type Variants } from 'framer-motion'
 import AlbumCover from './AlbumCover'
 import type { FavoriteWordStat, RankedAlbumStat, RankedSongStat } from '../lib/db/statsData'
 
@@ -38,6 +40,28 @@ const listItem: React.CSSProperties = {
   borderRadius: 4,
   background: '#1c1836',
   padding: '8px 10px',
+}
+
+export const listContainerVariants: Variants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.045 } },
+}
+
+export const listItemVariants: Variants = {
+  hidden: { opacity: 0, y: 8 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.22, ease: 'easeOut' } },
+}
+
+function AnimatedCounter({ target }: { target: number }) {
+  const count = useMotionValue(0)
+  const display = useTransform(count, (v) => Math.round(v).toLocaleString())
+
+  useEffect(() => {
+    const controls = animate(count, target, { duration: 1.8, ease: [0.16, 1, 0.3, 1] })
+    return controls.stop
+  }, [target, count])
+
+  return <motion.span>{display}</motion.span>
 }
 
 export function TopTenAlbumsModule({
@@ -84,24 +108,40 @@ export function TopTenAlbumsModule({
             </div>
           </div>
 
-          <ol style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {remainingAlbums.map((album, index) => (
-              <li key={album.userSavedAlbumId} style={listItem}>
-                <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {index + 2}. {album.title}
+          <motion.ol
+            variants={listContainerVariants}
+            initial="hidden"
+            animate="visible"
+            style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}
+          >
+            {remainingAlbums.map((album, index) => {
+              const rank = index + 2
+              const imgSize = rank === 2 ? 42 : rank === 3 ? 34 : 0
+              const itemPadding = rank === 2 ? '10px 12px' : '8px 10px'
+              const titleSize = rank === 2 ? 14 : 13
+              const titleWeight = rank === 2 ? 700 : 600
+              return (
+                <motion.li key={album.userSavedAlbumId} variants={listItemVariants} style={{ ...listItem, padding: itemPadding }}>
+                  {imgSize > 0 && (
+                    <div style={{ width: imgSize, height: imgSize, flexShrink: 0, overflow: 'hidden', borderRadius: 4, background: '#141028' }}>
+                      <AlbumCover src={album.coverUrl} alt={`${album.title} cover`} loading="lazy" />
+                    </div>
+                  )}
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <p style={{ fontSize: titleSize, fontWeight: titleWeight, color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {rank}. {album.title}
+                    </p>
+                    <p style={{ fontSize: 11, color: '#7c6fad', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {album.artistName}
+                    </p>
+                  </div>
+                  <p style={{ flexShrink: 0, fontSize: titleSize, fontWeight: 600, color: '#c4b5fd' }}>
+                    {formatValue(album.value, valueType)}
                   </p>
-                  <p style={{ fontSize: 11, color: '#7c6fad', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {album.artistName}
-                  </p>
-                </div>
-
-                <p style={{ flexShrink: 0, fontSize: 13, fontWeight: 600, color: '#c4b5fd' }}>
-                  {formatValue(album.value, valueType)}
-                </p>
-              </li>
-            ))}
-          </ol>
+                </motion.li>
+              )
+            })}
+          </motion.ol>
         </>
       )}
     </article>
@@ -159,24 +199,40 @@ export function TopTenSongsModule({
             </div>
           </div>
 
-          <ol style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {remainingSongs.map((song, index) => (
-              <li key={`${song.userSavedAlbumId}:${song.trackNumber}`} style={listItem}>
-                <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {index + 2}. {song.trackTitle}
+          <motion.ol
+            variants={listContainerVariants}
+            initial="hidden"
+            animate="visible"
+            style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}
+          >
+            {remainingSongs.map((song, index) => {
+              const rank = index + 2
+              const imgSize = rank === 2 ? 42 : rank === 3 ? 34 : 0
+              const itemPadding = rank === 2 ? '10px 12px' : '8px 10px'
+              const titleSize = rank === 2 ? 14 : 13
+              const titleWeight = rank === 2 ? 700 : 600
+              return (
+                <motion.li key={`${song.userSavedAlbumId}:${song.trackNumber}`} variants={listItemVariants} style={{ ...listItem, padding: itemPadding }}>
+                  {imgSize > 0 && (
+                    <div style={{ width: imgSize, height: imgSize, flexShrink: 0, overflow: 'hidden', borderRadius: 4, background: '#141028' }}>
+                      <AlbumCover src={song.coverUrl} alt={`${song.albumTitle} cover`} loading="lazy" />
+                    </div>
+                  )}
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <p style={{ fontSize: titleSize, fontWeight: titleWeight, color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {rank}. {song.trackTitle}
+                    </p>
+                    <p style={{ fontSize: 11, color: '#7c6fad', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {showArtistName ? `${song.artistName} - ${song.albumTitle}` : song.albumTitle}
+                    </p>
+                  </div>
+                  <p style={{ flexShrink: 0, fontSize: titleSize, fontWeight: 600, color: '#c4b5fd' }}>
+                    {formatValue(song.value, valueType)}
                   </p>
-                  <p style={{ fontSize: 11, color: '#7c6fad', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {showArtistName ? `${song.artistName} - ${song.albumTitle}` : song.albumTitle}
-                  </p>
-                </div>
-
-                <p style={{ flexShrink: 0, fontSize: 13, fontWeight: 600, color: '#c4b5fd' }}>
-                  {formatValue(song.value, valueType)}
-                </p>
-              </li>
-            ))}
-          </ol>
+                </motion.li>
+              )
+            })}
+          </motion.ol>
         </>
       )}
     </article>
@@ -203,7 +259,7 @@ export function GrandTotalWordsModule({
           <h2 style={moduleTitle}>{title}</h2>
           <p style={{ fontSize: 12, color: '#7c6fad', marginBottom: 16 }}>{subtitle}</p>
           <p style={{ fontSize: 36, fontWeight: 900, color: '#ede9fe', letterSpacing: '-0.02em', fontFamily: "'Sora', sans-serif" }}>
-            {formatValue(totalWords, 'words')}
+            <AnimatedCounter target={totalWords} />
           </p>
           <p style={{ marginTop: 4, fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: '#7c6fad' }}>
             {valueLabel}

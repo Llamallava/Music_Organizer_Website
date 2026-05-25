@@ -138,6 +138,11 @@ function AlbumReviewPage() {
   const accentColor = useAlbumAccent(workspace?.album.coverUrl)
 
   useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
+  useEffect(() => {
     if (!userSavedAlbumId) {
       setErrorMessage('Missing album id.')
       setIsLoading(false)
