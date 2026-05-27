@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import AlbumCover from '../components/AlbumCover'
 import { StellarHorizon } from '../components/StellarHorizon'
 import { getFriendsOverviewForCurrentUser, type FriendProfile } from '../lib/db/friendsData'
@@ -210,18 +211,20 @@ function ReviewsPage() {
         )}
 
         {!isLoading && !errorMessage && filteredAlbums.length > 0 && (
-          <section
-            className={`mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 transition-opacity duration-500 ${
-              loadedCovers.size >= albums.filter((a) => a.coverUrl).length ? 'opacity-100' : 'opacity-0 pointer-events-none'
-            }`}
+          <motion.section
+            className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
+            initial="hidden"
+            animate={loadedCovers.size >= albums.filter((a) => a.coverUrl).length ? 'visible' : 'hidden'}
+            variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.05 } } }}
           >
             {filteredAlbums.map((album) => {
               const isMenuOpen = activeMenuAlbumId === album.userSavedAlbumId
               return (
-                <div
+                <motion.div
                   key={album.userSavedAlbumId}
                   ref={isMenuOpen ? menuRef : null}
                   className="relative group"
+                  variants={{ hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0, transition: { duration: 0.38, ease: [0.16, 1, 0.3, 1] } } }}
                 >
                   <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-surface-2 cover-halo transition-transform duration-200 ease-out group-hover:scale-[1.025]">
                     <button
@@ -301,10 +304,10 @@ function ReviewsPage() {
                       </button>
                     </div>
                   )}
-                </div>
+                </motion.div>
               )
             })}
-          </section>
+          </motion.section>
         )}
       </div>
 

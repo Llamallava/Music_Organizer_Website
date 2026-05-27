@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import AlbumCover from '../components/AlbumCover'
 import { listSavedAlbumsForCurrentUser } from '../lib/db/reviewsData'
 import { getArtistImageUrls } from '../lib/external/spotifyArtistImages'
@@ -101,13 +102,19 @@ function ArtistsPage() {
           {filteredArtists.length === 0 ? (
             <p className="vco-empty">No artists match your search.</p>
           ) : (
-            <section className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+            <motion.section
+              className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
+              initial="hidden"
+              animate="visible"
+              variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.05 } } }}
+            >
               {filteredArtists.map((artist) => (
-                <button
+                <motion.button
                   key={artist}
                   type="button"
                   onClick={() => navigate(`/artists/${encodeURIComponent(artist)}`)}
                   className="group text-left"
+                  variants={{ hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0, transition: { duration: 0.38, ease: [0.16, 1, 0.3, 1] } } }}
                 >
                   <div className="aspect-square w-full overflow-hidden rounded-lg bg-surface-2 cover-halo transition-transform duration-200 ease-out group-hover:scale-[1.025]">
                     <AlbumCover
@@ -117,9 +124,9 @@ function ArtistsPage() {
                     />
                   </div>
                   <p className="mt-2 truncate text-sm font-semibold text-ink transition-colors duration-200 group-hover:text-[#ede9fe]">{artist}</p>
-                </button>
+                </motion.button>
               ))}
-            </section>
+            </motion.section>
           )}
         </>
       )}
