@@ -4,8 +4,6 @@ import AlbumCover from '../components/AlbumCover'
 import { StellarHorizon } from '../components/StellarHorizon'
 import { listSearchSongsForCurrentUser, type SearchSongRecord } from '../lib/db/searchData'
 
-type ScoreMinOperator = 'gte' | 'gt'
-type ScoreMaxOperator = 'lte' | 'lt'
 type ScoreMode = 'any' | 'scored' | 'unscored'
 type InterludeMode = 'any' | 'only' | 'exclude'
 type SortOrder = 'artist' | 'score-desc' | 'score-asc' | 'recent'
@@ -38,43 +36,6 @@ const parseOptionalNumber = (value: string) => {
   }
 
   return { value: parsed, error: null as string | null }
-}
-
-const scorePassesMinFilter = (score: number, minScore: number, operator: ScoreMinOperator) => {
-  if (operator === 'gt') {
-    return score > minScore
-  }
-
-  return score >= minScore
-}
-
-const scorePassesMaxFilter = (score: number, maxScore: number, operator: ScoreMaxOperator) => {
-  if (operator === 'lt') {
-    return score < maxScore
-  }
-
-  return score <= maxScore
-}
-
-const scoreBoundsConflict = (
-  minScore: number | null,
-  minOperator: ScoreMinOperator,
-  maxScore: number | null,
-  maxOperator: ScoreMaxOperator,
-) => {
-  if (minScore === null || maxScore === null) {
-    return false
-  }
-
-  if (minScore > maxScore) {
-    return true
-  }
-
-  if (minScore < maxScore) {
-    return false
-  }
-
-  return minOperator === 'gt' || maxOperator === 'lt'
 }
 
 const fieldInputStyle: React.CSSProperties = {
@@ -117,15 +78,21 @@ function SearchPage() {
   const [trackQuery, setTrackQuery] = useState('')
   const [lyricsQuery, setLyricsQuery] = useState('')
   const [notesQuery, setNotesQuery] = useState('')
-  const [tagQuery, setTagQuery] = useState('')
   const [scoreMode, setScoreMode] = useState<ScoreMode>('any')
   const [interludeMode, setInterludeMode] = useState<InterludeMode>('any')
   const [minScoreInput, setMinScoreInput] = useState('')
-  const [minScoreOperator, setMinScoreOperator] = useState<ScoreMinOperator>('gte')
   const [maxScoreInput, setMaxScoreInput] = useState('')
-  const [maxScoreOperator, setMaxScoreOperator] = useState<ScoreMaxOperator>('lte')
   const [sortOrder, setSortOrder] = useState<SortOrder>('artist')
   const [hasSearched, setHasSearched] = useState(false)
+
+  const minScoreValue = parseOptionalNumber(minScoreInput).value
+  const maxScoreValue = parseOptionalNumber(maxScoreInput).value
+
+  useEffect(() => {
+    if (minScoreValue !== null || maxScoreValue !== null) {
+      setSortOrder((current) => (current === 'artist' ? 'score-asc' : current))
+    }
+  }, [minScoreValue, maxScoreValue])
 
   useEffect(() => {
     let isActive = true
@@ -168,7 +135,6 @@ function SearchPage() {
   const normalizedTrackQuery = trackQuery.trim().toLocaleLowerCase()
   const normalizedLyricsQuery = lyricsQuery.trim().toLocaleLowerCase()
   const normalizedNotesQuery = notesQuery.trim().toLocaleLowerCase()
-  const normalizedTagQuery = tagQuery.trim().toLocaleLowerCase()
   const parsedMinScore = parseOptionalNumber(minScoreInput)
   const parsedMaxScore = parseOptionalNumber(maxScoreInput)
 
@@ -182,18 +148,15 @@ function SearchPage() {
     }
 
     if (
-      scoreBoundsConflict(
-        parsedMinScore.value,
-        minScoreOperator,
-        parsedMaxScore.value,
-        maxScoreOperator,
-      )
+      parsedMinScore.value !== null &&
+      parsedMaxScore.value !== null &&
+      parsedMinScore.value > parsedMaxScore.value
     ) {
-      return 'Min and max score filters conflict. Update bounds or operators.'
+      return 'Min score cannot be greater than max score.'
     }
 
     return null
-  }, [maxScoreOperator, minScoreOperator, parsedMaxScore, parsedMinScore])
+  }, [parsedMaxScore, parsedMinScore])
 
   const filteredSongs = useMemo(() => {
     if (validationMessage) {
@@ -224,10 +187,6 @@ function SearchPage() {
         return false
       }
 
-      if (normalizedTagQuery && !song.tags.some((tag) => tag.includes(normalizedTagQuery))) {
-        return false
-      }
-
       if (scoreMode === 'scored' && song.score === null) {
         return false
       }
@@ -249,11 +208,11 @@ function SearchPage() {
           return false
         }
 
-        if (minScore !== null && !scorePassesMinFilter(song.score, minScore, minScoreOperator)) {
+        if (minScore !== null && song.score < minScore) {
           return false
         }
 
-        if (maxScore !== null && !scorePassesMaxFilter(song.score, maxScore, maxScoreOperator)) {
+        if (maxScore !== null && song.score > maxScore) {
           return false
         }
       }
@@ -336,13 +295,10 @@ function SearchPage() {
     return filtered
   }, [
     interludeMode,
-    maxScoreOperator,
-    minScoreOperator,
     normalizedAlbumQuery,
     normalizedArtistQuery,
     normalizedLyricsQuery,
     normalizedNotesQuery,
-    normalizedTagQuery,
     normalizedTrackQuery,
     parsedMaxScore.value,
     parsedMinScore.value,
@@ -358,19 +314,16 @@ function SearchPage() {
     setTrackQuery('')
     setLyricsQuery('')
     setNotesQuery('')
-    setTagQuery('')
     setScoreMode('any')
     setInterludeMode('any')
     setMinScoreInput('')
-    setMinScoreOperator('gte')
     setMaxScoreInput('')
-    setMaxScoreOperator('lte')
     setSortOrder('artist')
     setHasSearched(false)
   }
 
   return (
-    <main className="page-wrap" style={{ minHeight: 'unset', height: 'calc(100vh - var(--nav-h))', overflowY: 'auto' }}>
+    <main className="page-wrap">
       <h1 className="page-title">Search Songs</h1>
       <p style={{ marginTop: 6, fontSize: 13, color: '#7c6fad', fontFamily: "'JetBrains Mono', monospace" }}>
         Combine filters to answer questions like lyrics keyword matches or artist + score ranges.
@@ -402,14 +355,9 @@ function SearchPage() {
             Notes contain
             <input type="text" value={notesQuery} onChange={(event) => setNotesQuery(event.target.value)} style={fieldInputStyle} />
           </label>
-
-          <label style={fieldLabelStyle}>
-            Tag contains
-            <input type="text" value={tagQuery} onChange={(event) => setTagQuery(event.target.value)} placeholder="e.g. rainy day" style={fieldInputStyle} />
-          </label>
         </div>
 
-        <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <label style={fieldLabelStyle}>
             Score mode
             <select value={scoreMode} onChange={(event) => setScoreMode(event.target.value as ScoreMode)} style={fieldSelectStyle}>
@@ -428,35 +376,26 @@ function SearchPage() {
             </select>
           </label>
 
-          <label style={fieldLabelStyle}>
-            Min score
-            <div style={{ marginTop: 6, display: 'flex', gap: 8 }}>
-              <select
-                value={minScoreOperator}
-                onChange={(event) => setMinScoreOperator(event.target.value as ScoreMinOperator)}
-                style={{ ...fieldSelectStyle, marginTop: 0, width: 72, flexShrink: 0 }}
-              >
-                <option value="gte">&gt;=</option>
-                <option value="gt">&gt;</option>
-              </select>
-              <input type="text" value={minScoreInput} onChange={(event) => setMinScoreInput(event.target.value)} style={{ ...fieldInputStyle, marginTop: 0, flex: 1 }} />
+          <div style={fieldLabelStyle}>
+            Score range
+            <div style={{ marginTop: 6, display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input
+                type="text"
+                placeholder="min"
+                value={minScoreInput}
+                onChange={(event) => setMinScoreInput(event.target.value)}
+                style={{ ...fieldInputStyle, marginTop: 0, flex: 1 }}
+              />
+              <span style={{ color: '#4a3f7a', fontSize: 14, flexShrink: 0 }}>–</span>
+              <input
+                type="text"
+                placeholder="max"
+                value={maxScoreInput}
+                onChange={(event) => setMaxScoreInput(event.target.value)}
+                style={{ ...fieldInputStyle, marginTop: 0, flex: 1 }}
+              />
             </div>
-          </label>
-
-          <label style={fieldLabelStyle}>
-            Max score
-            <div style={{ marginTop: 6, display: 'flex', gap: 8 }}>
-              <select
-                value={maxScoreOperator}
-                onChange={(event) => setMaxScoreOperator(event.target.value as ScoreMaxOperator)}
-                style={{ ...fieldSelectStyle, marginTop: 0, width: 72, flexShrink: 0 }}
-              >
-                <option value="lte">&lt;=</option>
-                <option value="lt">&lt;</option>
-              </select>
-              <input type="text" value={maxScoreInput} onChange={(event) => setMaxScoreInput(event.target.value)} style={{ ...fieldInputStyle, marginTop: 0, flex: 1 }} />
-            </div>
-          </label>
+          </div>
 
           <label style={fieldLabelStyle}>
             Sort
@@ -541,12 +480,6 @@ function SearchPage() {
                       {song.isInterlude ? 'Interlude' : 'Track'}
                     </span>
                   </div>
-
-                  {song.reviewNotes.trim() && (
-                    <p style={{ marginTop: 8, fontSize: 12, color: '#c4b5fd' }}>
-                      <span style={{ fontWeight: 600, color: '#ede9fe' }}>Notes:</span> {song.reviewNotes}
-                    </p>
-                  )}
                 </div>
 
                 <button
