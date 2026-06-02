@@ -22,7 +22,9 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173)",
       "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\Matthew\\\\source\\\\repos\\\\Music_Organizer_Website\" -Recurse -File | Where-Object { $_.Extension -match '\\\\.\\(css|js|ts|jsx|tsx\\)$' } | Select-Object -First 40 FullName)",
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Matthew\\\\source\\\\repos\\\\Music_Organizer_Website\" -Force)",
-      "Bash(Select-Object Name, PSIsContainer)"
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Matthew\\\\source\\\\repos\\\\Music_Organizer_Website\" -Recurse -Directory -Depth 2)",
+      "Bash(Select-Object -ExpandProperty FullName)"
     ]
   }
 }

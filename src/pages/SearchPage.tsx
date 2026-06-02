@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AlbumCover from '../components/AlbumCover'
 import { StellarHorizon } from '../components/StellarHorizon'
+import { updateTrackScoreForCurrentUser } from '../lib/db/reviewsData'
 import { listSearchSongsForCurrentUser, type SearchSongRecord } from '../lib/db/searchData'
 
 type ScoreMode = 'any' | 'scored' | 'unscored'
@@ -84,6 +85,11 @@ function SearchPage() {
   const [maxScoreInput, setMaxScoreInput] = useState('')
   const [sortOrder, setSortOrder] = useState<SortOrder>('artist')
   const [hasSearched, setHasSearched] = useState(false)
+
+  const [quickEditKey, setQuickEditKey] = useState<string | null>(null)
+  const [quickEditInput, setQuickEditInput] = useState('')
+  const [quickEditSaving, setQuickEditSaving] = useState(false)
+  const [quickEditError, setQuickEditError] = useState<string | null>(null)
 
   const minScoreValue = parseOptionalNumber(minScoreInput).value
   const maxScoreValue = parseOptionalNumber(maxScoreInput).value
@@ -308,6 +314,60 @@ function SearchPage() {
     validationMessage,
   ])
 
+  const openQuickEdit = (song: SearchSongRecord) => {
+    setQuickEditKey(`${song.userSavedAlbumId}:${song.trackNumber}`)
+    setQuickEditInput(song.score !== null ? String(song.score) : '')
+    setQuickEditError(null)
+  }
+
+  const closeQuickEdit = () => {
+    setQuickEditKey(null)
+    setQuickEditInput('')
+    setQuickEditError(null)
+  }
+
+  const saveQuickEdit = async (song: SearchSongRecord) => {
+    const trimmed = quickEditInput.trim()
+    let newScore: number | null
+
+    if (trimmed === '') {
+      newScore = null
+    } else {
+      const parsed = Number(trimmed)
+      if (Number.isNaN(parsed) || parsed < 0 || parsed > 10) {
+        setQuickEditError('Score must be a number between 0 and 10.')
+        return
+      }
+      newScore = Number(parsed.toFixed(1))
+    }
+
+    setQuickEditSaving(true)
+    setQuickEditError(null)
+
+    try {
+      await updateTrackScoreForCurrentUser({
+        userSavedAlbumId: song.userSavedAlbumId,
+        trackNumber: song.trackNumber,
+        isInterlude: song.isInterlude,
+        score: newScore,
+      })
+
+      setSongs((prev) =>
+        prev.map((s) =>
+          s.userSavedAlbumId === song.userSavedAlbumId && s.trackNumber === song.trackNumber
+            ? { ...s, score: newScore }
+            : s
+        )
+      )
+
+      closeQuickEdit()
+    } catch (error) {
+      setQuickEditError(error instanceof Error ? error.message : 'Failed to save score.')
+    } finally {
+      setQuickEditSaving(false)
+    }
+  }
+
   const clearFilters = () => {
     setArtistQuery('')
     setAlbumQuery('')
@@ -454,45 +514,117 @@ function SearchPage() {
 
       {hasSearched && !isLoading && !errorMessage && filteredSongs.length > 0 && (
         <section style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {filteredSongs.map((song) => (
-            <article
-              key={`${song.userSavedAlbumId}:${song.trackNumber}`}
-              className="vco-panel"
-              style={{ padding: '14px 16px' }}
-            >
-              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
-                <div style={{ width: 72, height: 72, flexShrink: 0, overflow: 'hidden', borderRadius: 6, background: '#141028' }}>
-                  <AlbumCover src={song.coverUrl} alt={`${song.albumTitle} cover`} loading="lazy" />
-                </div>
+          {filteredSongs.map((song) => {
+            const songKey = `${song.userSavedAlbumId}:${song.trackNumber}`
+            const isEditing = quickEditKey === songKey
 
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <p style={{ fontSize: 15, fontWeight: 700, color: '#ede9fe' }}>
-                    {song.trackNumber}. {song.trackTitle}
-                  </p>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: '#c4b5fd' }}>{song.artistName}</p>
-                  <p style={{ fontSize: 12, color: '#7c6fad' }}>{song.albumTitle}</p>
+            return (
+              <article
+                key={songKey}
+                className="vco-panel"
+                style={{ padding: '14px 16px' }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
+                  <div style={{ width: 72, height: 72, flexShrink: 0, overflow: 'hidden', borderRadius: 6, background: '#141028' }}>
+                    <AlbumCover src={song.coverUrl} alt={`${song.albumTitle} cover`} loading="lazy" />
+                  </div>
 
-                  <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    <span style={{ borderRadius: 4, border: '1px solid #2a2548', background: '#1c1836', padding: '2px 8px', fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: '#c4b5fd' }}>
-                      Score: {formatScore(song.score)}
-                    </span>
-                    <span style={{ borderRadius: 4, border: '1px solid #2a2548', background: '#1c1836', padding: '2px 8px', fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: '#7c6fad' }}>
-                      {song.isInterlude ? 'Interlude' : 'Track'}
-                    </span>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <p style={{ fontSize: 15, fontWeight: 700, color: '#ede9fe' }}>
+                      {song.trackNumber}. {song.trackTitle}
+                    </p>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: '#c4b5fd' }}>{song.artistName}</p>
+                    <p style={{ fontSize: 12, color: '#7c6fad' }}>{song.albumTitle}</p>
+
+                    <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
+                      {isEditing ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: '#c4b5fd', letterSpacing: '0.5px' }}>Score:</span>
+                          <input
+                            type="number"
+                            min={0}
+                            max={10}
+                            step={0.1}
+                            value={quickEditInput}
+                            onChange={(e) => setQuickEditInput(e.target.value)}
+                            placeholder="0–10"
+                            autoFocus
+                            style={{
+                              width: 72,
+                              borderRadius: 4,
+                              border: '1px solid #7c6fad',
+                              background: '#1c1836',
+                              padding: '2px 6px',
+                              fontSize: 12,
+                              fontFamily: "'JetBrains Mono', monospace",
+                              color: '#ede9fe',
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') void saveQuickEdit(song)
+                              if (e.key === 'Escape') closeQuickEdit()
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <span style={{ borderRadius: 4, border: '1px solid #2a2548', background: '#1c1836', padding: '2px 8px', fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: '#c4b5fd' }}>
+                          Score: {formatScore(song.score)}
+                        </span>
+                      )}
+                      <span style={{ borderRadius: 4, border: '1px solid #2a2548', background: '#1c1836', padding: '2px 8px', fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: '#7c6fad' }}>
+                        {song.isInterlude ? 'Interlude' : 'Track'}
+                      </span>
+                    </div>
+
+                    {isEditing && quickEditError && (
+                      <p style={{ marginTop: 6, fontSize: 11, color: '#f87171', fontFamily: "'JetBrains Mono', monospace" }}>
+                        {quickEditError}
+                      </p>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+                    {isEditing ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => void saveQuickEdit(song)}
+                          className="vco-tbtn primary"
+                          disabled={quickEditSaving}
+                        >
+                          {quickEditSaving ? 'Saving…' : 'Save'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={closeQuickEdit}
+                          className="vco-tbtn"
+                          disabled={quickEditSaving}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/reviews/${song.userSavedAlbumId}`)}
+                          className="vco-tbtn primary"
+                        >
+                          Open Review
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openQuickEdit(song)}
+                          className="vco-tbtn"
+                        >
+                          Quick Edit
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => navigate(`/reviews/${song.userSavedAlbumId}`)}
-                  className="vco-tbtn primary"
-                  style={{ flexShrink: 0 }}
-                >
-                  Open Review
-                </button>
-              </div>
-            </article>
-          ))}
+              </article>
+            )
+          })}
         </section>
       )}
     </main>

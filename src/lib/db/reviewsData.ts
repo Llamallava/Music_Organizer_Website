@@ -394,6 +394,54 @@ export const upsertTrackReviewSectionForCurrentUser = async (params: {
   throwIfError(error, 'Failed to insert track section')
 }
 
+export const updateTrackScoreForCurrentUser = async (params: {
+  userSavedAlbumId: string
+  trackNumber: number
+  isInterlude: boolean
+  score: number | null
+}): Promise<void> => {
+  await requireAuthenticatedUserId()
+
+  if (params.trackNumber <= 0) {
+    throw new Error('Track number must be greater than 0.')
+  }
+
+  const existing = await findSectionForTrack(params.userSavedAlbumId, params.trackNumber)
+
+  if (existing) {
+    if (existing.score === params.score) {
+      return
+    }
+
+    const { error } = await supabase
+      .from('review_sections')
+      .update({ score: params.score })
+      .eq('id', existing.id)
+
+    throwIfError(error, 'Failed to update track score')
+
+    const { error: historyError } = await supabase
+      .from('review_section_score_history')
+      .insert({ review_section_id: existing.id, old_score: existing.score, new_score: params.score })
+
+    throwIfError(historyError, 'Failed to record score history')
+
+    return
+  }
+
+  const { error } = await supabase.from('review_sections').insert({
+    user_saved_album_id: params.userSavedAlbumId,
+    section_type: 'track',
+    track_number: params.trackNumber,
+    is_interlude: params.isInterlude,
+    notes_lyrically: '',
+    notes_sonically: '',
+    score: params.score,
+  })
+
+  throwIfError(error, 'Failed to insert track section with score')
+}
+
 export const upsertConclusionSectionForCurrentUser = async (params: {
   userSavedAlbumId: string
   notesLyrically: string
