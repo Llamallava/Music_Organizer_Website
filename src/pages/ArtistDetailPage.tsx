@@ -226,7 +226,7 @@ function ArtistDetailPage() {
 
   return (
     <div className="na-page">
-      <Starfield opacity={0.55} />
+      <Starfield opacity={0.55} seed={10245} />
 
       <main className="na-content">
         {/* ── Masthead ── */}

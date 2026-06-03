@@ -19,8 +19,8 @@ type Star = {
   dur: number
 }
 
-function buildStars(w: number, h: number, density: number): Star[] {
-  let s = 20251
+function buildStars(w: number, h: number, density: number, seed: number): Star[] {
+  let s = seed
   const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280 }
   const count = Math.round(Math.min(240, Math.max(46, ((w * h) / 9400) * density)))
   const stars: Star[] = []
@@ -48,10 +48,12 @@ export default function Starfield({
   opacity = 0.55,
   density = 1,
   twinkle = true,
+  seed = 20251,
 }: {
   opacity?: number
   density?: number
   twinkle?: boolean
+  seed?: number
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const [dim, setDim] = useState({ w: 0, h: 0 })
@@ -70,8 +72,8 @@ export default function Starfield({
     typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
   const stars = useMemo(
-    () => (dim.w && dim.h ? buildStars(dim.w, dim.h, density) : []),
-    [dim.w, dim.h, density],
+    () => (dim.w && dim.h ? buildStars(dim.w, dim.h, density, seed) : []),
+    [dim.w, dim.h, density, seed],
   )
 
   return (

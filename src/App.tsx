@@ -1,8 +1,41 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import NavBar from './components/NavBar'
 import ProtectedRoute from './components/ProtectedRoute'
 import EtherealBackground from './components/EtherealBackground'
 import Starfield from './components/Starfield'
+
+const PAGE_SEEDS: [string, number][] = [
+  ['/friends/:id/reviews/:albumId', 65790],
+  ['/friends/:id/reviews',          54689],
+  ['/friends/:id/stats',            76801],
+  ['/friends/:id',                  43578],
+  ['/reviews/add',                  61893],
+  ['/reviews/:id',                  74912],
+  ['/artists/:name',                10245],
+  ['/friends',                      32467],
+  ['/artists',                      96134],
+  ['/stats',                        85023],
+  ['/auth',                         42561],
+  ['/search',                       21356],
+  ['/explore',                      87912],
+  ['/customize',                    99023],
+  ['/my-stuff',                     11134],
+  ['/to-listen',                    22245],
+  ['/',                             31337],
+]
+
+function matchPattern(pathname: string, pattern: string): boolean {
+  const a = pathname.split('/').filter(Boolean)
+  const b = pattern.split('/').filter(Boolean)
+  return a.length === b.length && b.every((seg, i) => seg.startsWith(':') || seg === a[i])
+}
+
+function seedForPath(pathname: string): number {
+  for (const [pattern, seed] of PAGE_SEEDS) {
+    if (matchPattern(pathname, pattern)) return seed
+  }
+  return 20251
+}
 import HomePage from './pages/HomePage'
 import AddAlbumPage from './pages/AddAlbumPage'
 import AlbumReviewPage from './pages/AlbumReviewPage'
@@ -24,11 +57,14 @@ import ToListenPage from './pages/ToListenPage'
 // import PlaylistsPage from './pages/PlaylistsPage'
 
 function App() {
+  const { pathname } = useLocation()
+  const starSeed = seedForPath(pathname)
+
   return (
     <BackgroundProvider>
       <EtherealBackground />
       <div aria-hidden style={{ position: 'fixed', inset: 0, zIndex: -3, pointerEvents: 'none' }}>
-        <Starfield opacity={0.55} />
+        <Starfield opacity={0.55} seed={starSeed} />
       </div>
       <NavBar />
       <Routes>

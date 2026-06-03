@@ -300,7 +300,7 @@ function MyStatsPage() {
 
   return (
     <div className="na-page">
-      <Starfield opacity={0.55} />
+      <Starfield opacity={0.55} seed={85023} />
 
       <main className="na-content">
         {/* ── Masthead ── */}
