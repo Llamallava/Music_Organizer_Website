@@ -1,94 +1,175 @@
-import React from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
-const STARS = {
-  near: [
-    [8,14,1.7],[22,32,1.4],[38,9,1.6],[55,28,1.5],[72,16,1.4],
-    [88,38,1.7],[14,78,1.5],[41,88,1.4],[66,72,1.6],[83,86,1.5],
-    [29,62,1.4],[50,50,1.6],[78,56,1.5],
-  ],
-  mid: [
-    [3,28,0.9],[17,8,0.9],[27,22,1],[32,48,0.9],[44,36,1],
-    [49,14,0.9],[60,6,1],[67,38,0.9],[76,28,1],[85,18,0.9],
-    [93,52,1],[9,52,1],[19,66,0.9],[33,76,1],[45,68,0.9],
-    [58,82,1],[70,92,0.9],[80,70,1],[91,76,0.9],[4,92,1],
-    [26,95,0.9],[37,18,1],[54,60,0.9],[70,50,1],[89,64,0.9],
-  ],
-  far: [
-    [2,6,0.5],[11,22,0.4],[16,38,0.5],[20,48,0.4],[24,6,0.5],
-    [30,36,0.4],[36,52,0.5],[42,22,0.4],[47,42,0.5],[52,6,0.4],
-    [56,18,0.5],[62,22,0.4],[68,8,0.5],[73,38,0.4],[79,48,0.5],
-    [82,8,0.4],[87,28,0.5],[92,14,0.4],[96,38,0.5],[97,8,0.4],
-    [6,64,0.5],[12,86,0.4],[22,72,0.5],[28,88,0.4],[34,60,0.5],
-    [40,82,0.4],[46,96,0.5],[52,76,0.4],[58,70,0.5],[62,60,0.4],
-    [66,86,0.5],[72,78,0.4],[76,64,0.5],[82,96,0.4],[88,80,0.5],
-    [94,92,0.4],[98,70,0.5],[4,38,0.4],[38,68,0.5],[50,90,0.4],
-  ],
+const STAR_COLORS = [
+  { halo: 'sf-halo-w', core: '#ffffff' },
+  { halo: 'sf-halo-c', core: '#eef5ff' },
+  { halo: 'sf-halo-b', core: '#d2e6ff' },
+  { halo: 'sf-halo-v', core: '#ece4ff' },
+  { halo: 'sf-halo-warm', core: '#fff1da' },
+]
+
+type Star = {
+  x: number
+  y: number
+  core: number
+  halo: number
+  spike: number
+  ci: number
+  tw: number
+  dur: number
 }
 
-function Starfield() {
+function buildStars(w: number, h: number, density: number): Star[] {
+  let s = 20251
+  const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280 }
+  const count = Math.round(Math.min(240, Math.max(46, ((w * h) / 9400) * density)))
+  const stars: Star[] = []
+  for (let i = 0; i < count; i++) {
+    const b = rnd()
+    const bright = b > 0.88
+    const mid = !bright && b > 0.52
+    const t = rnd()
+    const ci = t > 0.95 ? 4 : t > 0.76 ? 2 : t > 0.52 ? 3 : t > 0.27 ? 1 : 0
+    stars.push({
+      x: +(rnd() * w).toFixed(1),
+      y: +(rnd() * h).toFixed(1),
+      core: +(0.45 + b * (bright ? 1.5 : mid ? 0.85 : 0.35)).toFixed(2),
+      halo: +(1.8 + b * (bright ? 9 : mid ? 4 : 1.8)).toFixed(2),
+      spike: bright ? +(9 + b * 28).toFixed(1) : 0,
+      ci,
+      tw: rnd(),
+      dur: +(3.2 + rnd() * 5).toFixed(1),
+    })
+  }
+  return stars
+}
+
+export default function Starfield({
+  opacity = 0.55,
+  density = 1,
+  twinkle = true,
+}: {
+  opacity?: number
+  density?: number
+  twinkle?: boolean
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [dim, setDim] = useState({ w: 0, h: 0 })
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const measure = () => setDim({ w: el.offsetWidth, h: el.offsetHeight })
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const reduce =
+    typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+  const stars = useMemo(
+    () => (dim.w && dim.h ? buildStars(dim.w, dim.h, density) : []),
+    [dim.w, dim.h, density],
+  )
+
   return (
-    <svg
-      aria-hidden="true"
+    <div
+      ref={ref}
+      aria-hidden
       style={{
-        position: 'fixed',
+        position: 'absolute',
         inset: 0,
-        width: '100%',
-        height: '100%',
-        zIndex: -1,
+        overflow: 'hidden',
+        zIndex: 0,
         pointerEvents: 'none',
+        opacity,
       }}
-      viewBox="0 0 100 100"
-      preserveAspectRatio="none"
-      xmlns="http://www.w3.org/2000/svg"
     >
-      <defs>
-        {/* Faint blue-violet dot fading to transparent */}
-        <radialGradient id="sg-far">
-          <stop offset="0%"   stopColor="#d4c8ff" stopOpacity={0.9} />
-          <stop offset="45%"  stopColor="#c4b5fd" stopOpacity={0.2} />
-          <stop offset="100%" stopColor="#c4b5fd" stopOpacity={0} />
-        </radialGradient>
-
-        {/* White core, lavender halo */}
-        <radialGradient id="sg-mid">
-          <stop offset="0%"   stopColor="#ffffff" stopOpacity={1} />
-          <stop offset="30%"  stopColor="#e8defc" stopOpacity={0.4} />
-          <stop offset="100%" stopColor="#c4b5fd" stopOpacity={0} />
-        </radialGradient>
-
-        {/* Slightly brighter than mid, but not dominant */}
-        <radialGradient id="sg-near">
-          <stop offset="0%"   stopColor="#ffffff" stopOpacity={0.55} />
-          <stop offset="22%"  stopColor="#f0eaff" stopOpacity={0.18} />
-          <stop offset="55%"  stopColor="#a78bfa" stopOpacity={0.05} />
-          <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
-        </radialGradient>
-
-        {/* Bloom: blurred copy merged behind the sharp source */}
-        <filter id="near-bloom">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="0.25" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-
-      {STARS.far.map(([x, y, r], i) => (
-        <circle key={`far-${i}`} cx={x} cy={y} r={r * 0.5} fill="url(#sg-far)" />
-      ))}
-
-      {STARS.mid.map(([x, y, r], i) => (
-        <circle key={`mid-${i}`} cx={x} cy={y} r={r * 0.75} fill="url(#sg-mid)" />
-      ))}
-
-      <g filter="url(#near-bloom)">
-        {STARS.near.map(([x, y, r], i) => (
-          <circle key={`near-${i}`} cx={x} cy={y} r={r * 0.65} fill="url(#sg-near)" />
-        ))}
-      </g>
-    </svg>
+      {dim.w > 0 && (
+        <svg width={dim.w} height={dim.h} style={{ display: 'block' }}>
+          <defs>
+            <radialGradient id="sf-halo-w">
+              <stop offset="0%" stopColor="#fff" stopOpacity={1} />
+              <stop offset="22%" stopColor="#fff" stopOpacity={0.45} />
+              <stop offset="100%" stopColor="#fff" stopOpacity={0} />
+            </radialGradient>
+            <radialGradient id="sf-halo-c">
+              <stop offset="0%" stopColor="#fff" stopOpacity={1} />
+              <stop offset="28%" stopColor="#cfe2ff" stopOpacity={0.42} />
+              <stop offset="100%" stopColor="#9bc2ff" stopOpacity={0} />
+            </radialGradient>
+            <radialGradient id="sf-halo-b">
+              <stop offset="0%" stopColor="#fff" stopOpacity={0.95} />
+              <stop offset="26%" stopColor="#8fc1ff" stopOpacity={0.46} />
+              <stop offset="100%" stopColor="#3f8bff" stopOpacity={0} />
+            </radialGradient>
+            <radialGradient id="sf-halo-v">
+              <stop offset="0%" stopColor="#fff" stopOpacity={0.95} />
+              <stop offset="28%" stopColor="#cdbcff" stopOpacity={0.44} />
+              <stop offset="100%" stopColor="#9a7bff" stopOpacity={0} />
+            </radialGradient>
+            <radialGradient id="sf-halo-warm">
+              <stop offset="0%" stopColor="#fff" stopOpacity={1} />
+              <stop offset="26%" stopColor="#ffe2b8" stopOpacity={0.48} />
+              <stop offset="100%" stopColor="#ffb86b" stopOpacity={0} />
+            </radialGradient>
+            <linearGradient id="sf-spike-h" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#fff" stopOpacity={0} />
+              <stop offset="50%" stopColor="#fff" stopOpacity={0.8} />
+              <stop offset="100%" stopColor="#fff" stopOpacity={0} />
+            </linearGradient>
+            <linearGradient id="sf-spike-v" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#fff" stopOpacity={0} />
+              <stop offset="50%" stopColor="#fff" stopOpacity={0.8} />
+              <stop offset="100%" stopColor="#fff" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          {stars.map((st, i) => {
+            const c = STAR_COLORS[st.ci]
+            const anim = twinkle && !reduce && st.spike > 0
+            const lo = (0.4 + st.tw * 0.2).toFixed(2)
+            return (
+              <g
+                key={i}
+                transform={`translate(${st.x} ${st.y})`}
+                opacity={+(0.45 + st.tw * 0.55).toFixed(2)}
+              >
+                {anim && (
+                  <animate
+                    attributeName="opacity"
+                    values={`${lo};1;${lo}`}
+                    dur={`${st.dur}s`}
+                    begin={`${(st.tw * 4).toFixed(1)}s`}
+                    repeatCount="indefinite"
+                  />
+                )}
+                <circle r={st.halo} fill={`url(#${c.halo})`} />
+                {st.spike > 0 && (
+                  <g>
+                    <rect
+                      x={-st.spike}
+                      y={-0.45}
+                      width={st.spike * 2}
+                      height={0.9}
+                      fill="url(#sf-spike-h)"
+                    />
+                    <rect
+                      x={-0.45}
+                      y={-st.spike}
+                      width={0.9}
+                      height={st.spike * 2}
+                      fill="url(#sf-spike-v)"
+                    />
+                  </g>
+                )}
+                <circle r={st.core} fill={c.core} />
+              </g>
+            )
+          })}
+        </svg>
+      )}
+    </div>
   )
 }
-
-export default React.memo(Starfield)

@@ -1,181 +1,237 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
 import AlbumCover from '../components/AlbumCover'
-import { motion } from 'framer-motion'
-import { formatScoreValue, GrandTotalWordsModule, listContainerVariants, listItemVariants, TopTenAlbumsModule, TopTenSongsModule } from '../components/StatsModules'
+import Starfield from '../components/Starfield'
+import { StellarHorizon } from '../components/StellarHorizon'
+import {
+  AlmanacList,
+  type AlmanacRow,
+  albumsToRows,
+  AnimatedCounter,
+  artistsToRows,
+  formatScoreValue,
+  songsToRows,
+} from '../components/StatsModules'
 import { getFriendsOverviewForCurrentUser } from '../lib/db/friendsData'
 import {
-  type FavoriteWordStat,
-  getStatsForUser,
   getMyStatsForCurrentUser,
+  getStatsForUser,
   type MyStatsData,
-  type RankedAlbumStat,
-  type RankedArtistStat,
-  type RankedSongStat,
 } from '../lib/db/statsData'
 import { getArtistImageUrls } from '../lib/external/spotifyArtistImages'
 
-type TopTenAlbumModuleConfig = {
-  id: string
-  moduleType: 'album'
-  title: string
-  valueLabel: string
-  valueType: 'score' | 'words'
-  items: RankedAlbumStat[]
-}
-
-type TopTenSongModuleConfig = {
-  id: string
-  moduleType: 'song'
-  title: string
-  valueLabel: string
-  valueType: 'score' | 'words'
-  items: RankedSongStat[]
-}
-
-type GrandTotalWordsModuleConfig = {
-  id: string
-  moduleType: 'grand-total-words'
-  title: string
-  valueLabel: string
-  totalWords: number
-  favoriteWords: FavoriteWordStat[]
-}
-
-type TopTenArtistModuleConfig = {
-  id: string
-  moduleType: 'artist'
-  title: string
-  items: RankedArtistStat[]
-  artistImages: Map<string, string | null>
-}
-
-type TopTenModuleConfig = TopTenAlbumModuleConfig | TopTenSongModuleConfig | GrandTotalWordsModuleConfig | TopTenArtistModuleConfig
-
 const getDisplayName = (username: string | null | undefined) => username?.trim() || 'Unnamed User'
-const toPossessiveName = (name: string) => (name.endsWith('s') || name.endsWith('S') ? `${name}'` : `${name}'s`)
+const toPossessiveName = (name: string) =>
+  name.endsWith('s') || name.endsWith('S') ? `${name}'` : `${name}'s`
 
-function TopTenArtistsModule({ title, items, artistImages }: Omit<TopTenArtistModuleConfig, 'id' | 'moduleType'>) {
-  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
-  const firstArtist = items[0] ?? null
-  const remainingArtists = items.slice(1)
+// ── Nebula wash behind the hero cover ─────────────────────────────────────────
 
-  useEffect(() => {
-    setLoadedImages(new Set())
-  }, [artistImages])
-
-  const isUrlsFetching = items.length > 0 && artistImages.size === 0
-  const imagesWithUrls = items.filter((a) => artistImages.get(a.artistName) != null)
-  const allLoaded = !isUrlsFetching && (imagesWithUrls.length === 0 || loadedImages.size >= imagesWithUrls.length)
-
-  const handleImageLoad = (artistName: string) => {
-    setLoadedImages((prev) => { const next = new Set(prev); next.add(artistName); return next })
-  }
-
+function NebulaCover({
+  coverUrl,
+  alt,
+}: {
+  coverUrl: string | null
+  alt: string
+}) {
   return (
-    <article className="vco-panel" style={{ position: 'relative', padding: 16 }}>
-      {!allLoaded && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      {/* blurred radial washes behind the cover */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          inset: -56,
+          zIndex: 0,
+          pointerEvents: 'none',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: '50%',
+            background:
+              'radial-gradient(circle at 50% 50%, rgba(167,139,250,0.45) 0%, transparent 68%)',
+            filter: 'blur(28px)',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            inset: 24,
+            borderRadius: '50%',
+            background:
+              'radial-gradient(circle at 60% 40%, rgba(56,189,248,0.28) 0%, transparent 70%)',
+            filter: 'blur(22px)',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            inset: 40,
+            borderRadius: '50%',
+            background:
+              'radial-gradient(circle at 40% 60%, rgba(244,114,182,0.18) 0%, transparent 70%)',
+            filter: 'blur(30px)',
+          }}
+        />
+      </div>
+
+      <div className="na-hero-cover-wrap" style={{ position: 'relative', zIndex: 1 }}>
+        <AlbumCover src={coverUrl} alt={alt} loading="eager" />
+      </div>
+    </div>
+  )
+}
+
+// ── Section wrapper ────────────────────────────────────────────────────────────
+
+function AlmanacSection({
+  numeral,
+  title,
+  subLabel,
+  dividerLabel,
+  children,
+}: {
+  numeral: string
+  title: string
+  subLabel: string
+  dividerLabel: string
+  children: React.ReactNode
+}) {
+  return (
+    <>
+      <StellarHorizon label={dividerLabel} />
+      <div className="na-section-header">
+        <span className="na-roman">{numeral}</span>
+        <h2 className="na-section-title">{title}</h2>
+        <span className="na-section-sub">{subLabel}</span>
+      </div>
+      {children}
+    </>
+  )
+}
+
+// ── Almanac card panel ─────────────────────────────────────────────────────────
+
+function AlmanacCard({
+  label,
+  rows,
+  isLoading = false,
+}: {
+  label: string
+  rows: AlmanacRow[]
+  isLoading?: boolean
+}) {
+  return (
+    <div className="na-card" style={{ padding: '16px 20px', position: 'relative' }}>
+      {isLoading && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 10,
+          }}
+        >
           <div
             className="animate-spin"
-            style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid #2a2548', borderTopColor: '#c4b5fd' }}
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: '50%',
+              border: '2px solid #1b1640',
+              borderTopColor: '#38bdf8',
+            }}
           />
         </div>
       )}
-
-      <div style={{ opacity: allLoaded ? 1 : 0, pointerEvents: allLoaded ? 'auto' : 'none', transition: 'opacity 0.5s' }}>
-        <h2 style={{ fontSize: 15, fontWeight: 700, color: '#ede9fe', fontFamily: "'Sora', sans-serif" }}>{title}</h2>
-
-        {!firstArtist && <p style={{ marginTop: 16, fontSize: 13, color: '#7c6fad' }}>No data yet.</p>}
-
-        {firstArtist && (
-          <>
-            <div style={{ marginTop: 16, borderRadius: 6, border: '1px solid rgba(167, 139, 250, 0.35)', background: 'linear-gradient(135deg, #1f1a3d 0%, #16122a 100%)', padding: '10px 14px', boxShadow: 'inset 4px 0 0 rgba(124, 58, 237, 0.7), 0 2px 12px rgba(0, 0, 0, 0.35)' }}>
-              <p className="vco-label" style={{ color: '#38bdf8' }}>#1</p>
-
-              <div style={{ marginTop: 10, display: 'flex', gap: 12 }}>
-                <div style={{ width: 80, height: 80, flexShrink: 0, overflow: 'hidden', borderRadius: 6, background: '#141028' }}>
-                  <AlbumCover
-                    src={artistImages.get(firstArtist.artistName) ?? null}
-                    alt={`${firstArtist.artistName} profile`}
-                    loading="eager"
-                    onLoad={() => handleImageLoad(firstArtist.artistName)}
-                  />
-                </div>
-
-                <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: 15, fontWeight: 800, fontFamily: "'JetBrains Mono', monospace", color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {firstArtist.artistName}
-                  </p>
-                  <p style={{ marginTop: 4, fontSize: 13, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace", color: '#a78bfa' }}>
-                    Avg Score: {formatScoreValue(firstArtist.value)}
-                  </p>
-                  <p style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: '#7c6fad' }}>
-                    {firstArtist.albumCount} {firstArtist.albumCount === 1 ? 'album' : 'albums'} rated
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <motion.ol
-              variants={listContainerVariants}
-              initial="hidden"
-              animate={allLoaded ? 'visible' : 'hidden'}
-              style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 6 }}
-            >
-              {remainingArtists.map((artist, index) => {
-                const rank = index + 2
-                const imgSize = rank === 2 ? 48 : rank === 3 ? 40 : 32
-                const itemPadding = rank === 2 ? '10px 12px' : '8px 10px'
-                const titleSize = rank === 2 ? 14 : 13
-                const titleWeight = rank === 2 ? 700 : 600
-                return (
-                  <motion.li
-                    key={artist.artistName}
-                    variants={listItemVariants}
-                    style={{ display: 'flex', alignItems: 'center', gap: 10, borderRadius: 4, background: 'rgba(20, 16, 40, 0.7)', border: '1px solid rgba(42, 37, 72, 0.9)', padding: itemPadding }}
-                  >
-                    <div style={{ width: imgSize, height: imgSize, flexShrink: 0, overflow: 'hidden', borderRadius: 4, background: '#141028' }}>
-                      <AlbumCover
-                        src={artistImages.get(artist.artistName) ?? null}
-                        alt={`${artist.artistName} profile`}
-                        loading="eager"
-                        onLoad={() => handleImageLoad(artist.artistName)}
-                      />
-                    </div>
-
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <p style={{ fontSize: titleSize, fontWeight: titleWeight, fontFamily: "'JetBrains Mono', monospace", color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {rank}. {artist.artistName}
-                      </p>
-                      <p style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: '#7c6fad' }}>
-                        {artist.albumCount} {artist.albumCount === 1 ? 'album' : 'albums'} rated
-                      </p>
-                    </div>
-
-                    <p style={{ flexShrink: 0, fontSize: titleSize, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace", color: '#a78bfa' }}>
-                      {formatScoreValue(artist.value)}
-                    </p>
-                  </motion.li>
-                )
-              })}
-            </motion.ol>
-          </>
-        )}
+      <div style={{ opacity: isLoading ? 0.35 : 1, transition: 'opacity 0.4s' }}>
+        <p className="na-card-heading">{label}</p>
+        <AlmanacList rows={rows} />
       </div>
-    </article>
+    </div>
   )
 }
+
+// ── Ledger ─────────────────────────────────────────────────────────────────────
+
+function AlmanacLedger({ data }: { data: MyStatsData }) {
+  return (
+    <>
+      <StellarHorizon label="THE LEDGER" />
+      <div className="na-card na-ledger" style={{ marginTop: 16 }}>
+        <div>
+          <p className="na-kicker" style={{ marginBottom: 6 }}>Words Written</p>
+          <p
+            className="na-display-num"
+            style={{ fontSize: 68, display: 'block', lineHeight: 1 }}
+          >
+            <AnimatedCounter target={data.grandTotalWordsWritten} />
+          </p>
+          <p
+            className="na-col-label"
+            style={{ marginTop: 8 }}
+          >
+            Total words written
+          </p>
+        </div>
+
+        <div>
+          <p
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: '#f2efff',
+              fontFamily: "'Sora', sans-serif",
+              marginBottom: 14,
+            }}
+          >
+            Your favorite words
+          </p>
+          {data.favoriteWords.length > 0 ? (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {data.favoriteWords.map((item) => (
+                <span key={item.word} className="na-word-pill">
+                  {item.word}
+                  <span style={{ color: '#38bdf8', opacity: 0.6 }}>·</span>
+                  {item.count.toLocaleString()}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p style={{ fontSize: 13, color: '#8b7fb8', fontFamily: "'JetBrains Mono', monospace" }}>
+              No words yet.
+            </p>
+          )}
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ── Page ───────────────────────────────────────────────────────────────────────
 
 function MyStatsPage() {
   const navigate = useNavigate()
   const { friendUserId } = useParams<{ friendUserId: string }>()
   const isFriendView = Boolean(friendUserId)
+
   const [statsData, setStatsData] = useState<MyStatsData | null>(null)
   const [friendName, setFriendName] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [artistImages, setArtistImages] = useState<Map<string, string | null>>(new Map())
+  const [minElapsed, setMinElapsed] = useState(false)
+
+  useEffect(() => {
+    setMinElapsed(false)
+    const id = setTimeout(() => setMinElapsed(true), 650)
+    return () => clearTimeout(id)
+  }, [friendUserId])
 
   useEffect(() => {
     let isActive = true
@@ -190,9 +246,7 @@ function MyStatsPage() {
             getStatsForUser(friendUserId),
             getFriendsOverviewForCurrentUser(),
           ])
-          if (!isActive) {
-            return
-          }
+          if (!isActive) return
 
           const friend = overview.friends.find((entry) => entry.userId === friendUserId)
           if (!friend) {
@@ -208,183 +262,273 @@ function MyStatsPage() {
         }
 
         const data = await getMyStatsForCurrentUser()
-        if (!isActive) {
-          return
-        }
-
+        if (!isActive) return
         setStatsData(data)
         setFriendName(null)
       } catch (error) {
-        if (!isActive) {
-          return
-        }
-
+        if (!isActive) return
         const message = error instanceof Error ? error.message : 'Failed to load stats.'
         setErrorMessage(message)
       } finally {
-        if (isActive) {
-          setIsLoading(false)
-        }
+        if (isActive) setIsLoading(false)
       }
     }
 
     void loadStats()
-
-    return () => {
-      isActive = false
-    }
+    return () => { isActive = false }
   }, [friendUserId])
 
   useEffect(() => {
-    if (!statsData?.topArtistsByScore.length) {
-      return
-    }
-
+    if (!statsData?.topArtistsByScore.length) return
     let isActive = true
     const names = statsData.topArtistsByScore.map((a) => a.artistName)
-
     void getArtistImageUrls(names).then((images) => {
-      if (isActive) {
-        setArtistImages(images)
-      }
+      if (isActive) setArtistImages(images)
     })
-
-    return () => {
-      isActive = false
-    }
+    return () => { isActive = false }
   }, [statsData])
 
-  const modules = useMemo<TopTenModuleConfig[]>(() => {
-    return [
-      {
-        id: 'top-10-by-score',
-        moduleType: 'album',
-        title: 'Top 10 Albums by Score',
-        valueLabel: 'Score',
-        valueType: 'score',
-        items: statsData?.topAlbumsByConclusionScore ?? [],
-      },
-      {
-        id: 'top-10-by-average',
-        moduleType: 'album',
-        title: 'Top 10 Albums by Average',
-        valueLabel: 'Average',
-        valueType: 'score',
-        items: statsData?.topAlbumsByTrackAverage ?? [],
-      },
-      {
-        id: 'top-10-songs-by-score',
-        moduleType: 'song',
-        title: 'Top 10 Songs by Score',
-        valueLabel: 'Score',
-        valueType: 'score',
-        items: statsData?.topSongsByScore ?? [],
-      },
-      {
-        id: 'top-10-interlude-songs',
-        moduleType: 'song',
-        title: 'Top 10 Interlude Songs',
-        valueLabel: 'Score',
-        valueType: 'score',
-        items: statsData?.topInterludeSongs ?? [],
-      },
-      {
-        id: 'top-10-albums-by-words',
-        moduleType: 'album',
-        title: 'Top 10 Albums by Words Written',
-        valueLabel: 'Words',
-        valueType: 'words',
-        items: statsData?.topAlbumsByWordsWritten ?? [],
-      },
-      {
-        id: 'top-10-songs-by-words',
-        moduleType: 'song',
-        title: 'Top 10 Songs by Words Written',
-        valueLabel: 'Words',
-        valueType: 'words',
-        items: statsData?.topSongsByWordsWritten ?? [],
-      },
-      {
-        id: 'grand-total-words-written',
-        moduleType: 'grand-total-words',
-        title: 'Grand Total of Words Written',
-        valueLabel: 'Total Words Written',
-        totalWords: statsData?.grandTotalWordsWritten ?? 0,
-        favoriteWords: statsData?.favoriteWords ?? [],
-      },
-      {
-        id: 'top-10-artists',
-        moduleType: 'artist',
-        title: 'Top 10 Artists',
-        items: statsData?.topArtistsByScore ?? [],
-        artistImages,
-      },
-    ]
-  }, [statsData, artistImages])
+  const isArtistImagesLoading =
+    (statsData?.topArtistsByScore.length ?? 0) > 0 && artistImages.size === 0
+
+  const pageTitle = isFriendView
+    ? `${toPossessiveName(friendName ?? 'Friend')} Stats`
+    : 'My Stats'
+
+  const topAlbumsByScore = statsData?.topAlbumsByConclusionScore ?? []
+  const heroAlbum = topAlbumsByScore[0] ?? null
 
   return (
-    <main className="page-wrap">
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-        <h1 className="page-title" style={isFriendView ? { fontSize: 36, letterSpacing: '-0.02em' } : {}}>
-          {isFriendView ? `${toPossessiveName(friendName ?? 'Friend')} Stats` : 'My Stats'}
-        </h1>
+    <div className="na-page">
+      <Starfield opacity={0.55} />
 
-        <button
-          type="button"
-          onClick={() => navigate('/artists')}
-          className="vco-tbtn"
+      <main className="na-content">
+        {/* ── Masthead ── */}
+        <div
+          style={{
+            textAlign: 'center',
+            paddingTop: 48,
+            paddingBottom: 8,
+            position: 'relative',
+          }}
         >
-          Your Artists
-        </button>
-      </div>
+          <div style={{ position: 'absolute', top: 52, right: 0 }}>
+            <button type="button" onClick={() => navigate('/artists')} className="vco-tbtn">
+              Your Artists
+            </button>
+          </div>
 
-      {isLoading && <p className="vco-loading">Loading stats...</p>}
-
-      {!isLoading && errorMessage && (
-        <div className="vco-msg-err" style={{ marginTop: 20 }}>
-          Could not load stats. {errorMessage}
+          <h1
+            style={{
+              fontFamily: "'Sora', sans-serif",
+              fontSize: 52,
+              fontWeight: 800,
+              color: '#f2efff',
+              letterSpacing: '-0.02em',
+              lineHeight: 1.1,
+              margin: 0,
+            }}
+          >
+            {pageTitle}
+          </h1>
         </div>
-      )}
 
-      {!isLoading && !errorMessage && (
-        <section className="mt-6 grid grid-cols-2 gap-4">
-          {modules.map((module) => (
-            module.moduleType === 'album' ? (
-              <TopTenAlbumsModule
-                key={module.id}
-                title={module.title}
-                valueLabel={module.valueLabel}
-                valueType={module.valueType}
-                items={module.items}
-              />
-            ) : module.moduleType === 'song' ? (
-              <TopTenSongsModule
-                key={module.id}
-                title={module.title}
-                valueLabel={module.valueLabel}
-                valueType={module.valueType}
-                items={module.items}
-              />
-            ) : module.moduleType === 'artist' ? (
-              <TopTenArtistsModule
-                key={module.id}
-                title={module.title}
-                items={module.items}
-                artistImages={module.artistImages}
-              />
-            ) : (
-              <GrandTotalWordsModule
-                key={module.id}
-                title={module.title}
-                valueLabel={module.valueLabel}
-                totalWords={module.totalWords}
-                favoriteWords={module.favoriteWords}
-              />
-            )
-          ))}
-        </section>
-      )}
-    </main>
+        {/* ── Loading / Error / Content ── */}
+        <AnimatePresence mode="wait">
+          {(isLoading || !minElapsed) ? (
+            <motion.p
+              key="loading"
+              className="vco-loading"
+              style={{ marginTop: 40, textAlign: 'center' }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.45 }}
+            >
+              Loading stats…
+            </motion.p>
+          ) : errorMessage ? (
+            <motion.div
+              key="error"
+              className="vco-msg-err"
+              style={{ marginTop: 24, marginLeft: 0, marginRight: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.45 }}
+            >
+              Could not load stats. {errorMessage}
+            </motion.div>
+          ) : statsData ? (
+            <motion.div
+              key="content"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.7, ease: 'easeOut' }}
+            >
+              <>
+                {/* ── Hero: Top 10 Albums by Score ── */}
+                <StellarHorizon />
+
+                {heroAlbum ? (
+                  <div className="na-hero">
+                    <div className="na-hero-left">
+                      <NebulaCover
+                        coverUrl={heroAlbum.coverUrl}
+                        alt={`${heroAlbum.title} cover`}
+                      />
+                      <div style={{ textAlign: 'center', marginTop: 18 }}>
+                        <p
+                          style={{
+                            fontFamily: "'Sora', sans-serif",
+                            fontSize: 15,
+                            fontWeight: 700,
+                            color: '#f2efff',
+                            margin: 0,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            maxWidth: 300,
+                          }}
+                        >
+                          {heroAlbum.title}
+                        </p>
+                        <p
+                          style={{
+                            fontFamily: "'JetBrains Mono', monospace",
+                            fontSize: 11,
+                            color: '#8b7fb8',
+                            marginTop: 4,
+                          }}
+                        >
+                          {heroAlbum.artistName}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="na-hero-right">
+                      <div>
+                        <p
+                          className="na-kicker"
+                          style={{ marginBottom: 4 }}
+                        >
+                          Top 10 Albums · BY CONCLUSION SCORE
+                        </p>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'baseline',
+                            gap: 10,
+                            marginTop: 4,
+                          }}
+                        >
+                          <span className="na-display-num" style={{ fontSize: 88 }}>
+                            {formatScoreValue(heroAlbum.value)}
+                          </span>
+                          <div>
+                            <p
+                              style={{
+                                fontFamily: "'JetBrains Mono', monospace",
+                                fontSize: 13,
+                                color: '#8b7fb8',
+                                margin: 0,
+                              }}
+                            >
+                              / 10
+                            </p>
+                            <p className="na-col-label" style={{ margin: 0 }}>
+                              SCORE
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ marginTop: 24 }}>
+                        <AlmanacList
+                          rows={albumsToRows(topAlbumsByScore.slice(1), 'score', 2)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p
+                    style={{
+                      margin: '40px 0',
+                      fontSize: 13,
+                      color: '#8b7fb8',
+                      fontFamily: "'JetBrains Mono', monospace",
+                    }}
+                  >
+                    No scored albums yet. Start writing reviews to see your stats here.
+                  </p>
+                )}
+
+                {/* ── II · Songs ── */}
+                <AlmanacSection
+                  numeral="II"
+                  title="Songs"
+                  subLabel="BY SCORE"
+                  dividerLabel="II · SONGS"
+                >
+                  <div className="na-2col">
+                    <AlmanacCard
+                      label="Top Songs by Score"
+                      rows={songsToRows(statsData.topSongsByScore, 'score', true)}
+                    />
+                    <AlmanacCard
+                      label="Top Interlude Songs"
+                      rows={songsToRows(statsData.topInterludeSongs, 'score', true)}
+                    />
+                  </div>
+                </AlmanacSection>
+
+                {/* ── III · Albums & Artists ── */}
+                <AlmanacSection
+                  numeral="III"
+                  title="Albums & Artists"
+                  subLabel="BY AVERAGE & SCORE"
+                  dividerLabel="III · ALBUMS & ARTISTS"
+                >
+                  <div className="na-2col">
+                    <AlmanacCard
+                      label="Albums by Average"
+                      rows={albumsToRows(statsData.topAlbumsByTrackAverage, 'score')}
+                    />
+                    <AlmanacCard
+                      label="Top Artists"
+                      rows={artistsToRows(statsData.topArtistsByScore, artistImages)}
+                      isLoading={isArtistImagesLoading}
+                    />
+                  </div>
+                </AlmanacSection>
+
+                {/* ── IV · Words Written ── */}
+                <AlmanacSection
+                  numeral="IV"
+                  title="Words Written"
+                  subLabel="BY COUNT"
+                  dividerLabel="IV · WORDS WRITTEN"
+                >
+                  <div className="na-2col">
+                    <AlmanacCard
+                      label="Albums by Words"
+                      rows={albumsToRows(statsData.topAlbumsByWordsWritten, 'words')}
+                    />
+                    <AlmanacCard
+                      label="Songs by Words"
+                      rows={songsToRows(statsData.topSongsByWordsWritten, 'words', true)}
+                    />
+                  </div>
+                </AlmanacSection>
+
+                {/* ── Ledger ── */}
+                <AlmanacLedger data={statsData} />
+              </>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </main>
+    </div>
   )
 }
 

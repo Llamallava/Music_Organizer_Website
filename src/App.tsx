@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import NavBar from './components/NavBar'
 import ProtectedRoute from './components/ProtectedRoute'
 import EtherealBackground from './components/EtherealBackground'
+import Starfield from './components/Starfield'
 import HomePage from './pages/HomePage'
 import AddAlbumPage from './pages/AddAlbumPage'
 import AlbumReviewPage from './pages/AlbumReviewPage'
@@ -26,6 +27,9 @@ function App() {
   return (
     <BackgroundProvider>
       <EtherealBackground />
+      <div aria-hidden style={{ position: 'fixed', inset: 0, zIndex: -3, pointerEvents: 'none' }}>
+        <Starfield opacity={0.55} />
+      </div>
       <NavBar />
       <Routes>
         <Route path="/" element={<HomePage />} />

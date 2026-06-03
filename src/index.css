@@ -1912,6 +1912,276 @@ input[type='text']:focus {
   margin-top: 16px;
 }
 
+/* ============================================================
+   NEBULA ALMANAC — stats pages redesign
+   ============================================================ */
+
+.na-page {
+  position: relative;
+  min-height: calc(100vh - var(--nav-h));
+  background: radial-gradient(120% 90% at 50% -10%, #14102e 0%, #0a0818 42%, #070611 100%);
+}
+
+.na-content {
+  position: relative;
+  z-index: 1;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px 72px;
+}
+
+.na-kicker {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #38bdf8;
+  margin: 0 0 14px;
+}
+
+.na-summary {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #8b7fb8;
+  margin: 10px 0 0;
+}
+
+.na-display-num {
+  font-family: 'Sora', sans-serif;
+  font-weight: 800;
+  background: linear-gradient(135deg, #7dd3fc, #38bdf8 55%, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.na-card {
+  border-radius: 10px;
+  border: 1px solid rgba(139, 92, 246, 0.28);
+  background: linear-gradient(180deg, #1b1640 0%, #151035 100%);
+}
+
+.na-card-sky {
+  border-color: rgba(56, 189, 248, 0.45);
+}
+
+.na-hero {
+  display: grid;
+  grid-template-columns: 0.92fr 1.08fr;
+  gap: 40px;
+  align-items: center;
+  margin: 28px 0 52px;
+}
+
+.na-hero-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.na-hero-right {
+  display: flex;
+  flex-direction: column;
+}
+
+.na-hero-cover-wrap {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  border-radius: 16px;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow:
+    0 0 0 1px rgba(56, 189, 248, 0.25),
+    0 0 48px rgba(56, 189, 248, 0.28),
+    0 0 96px rgba(167, 139, 250, 0.16),
+    0 20px 48px rgba(0, 0, 0, 0.6);
+}
+
+.na-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+.na-section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 20px 0 18px;
+}
+
+.na-roman {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #a78bfa;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.na-section-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: #f2efff;
+  margin: 0;
+}
+
+.na-section-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #8b7fb8;
+  text-transform: uppercase;
+}
+
+.na-col-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #8b7fb8;
+  margin: 0 0 12px;
+}
+
+/* Card / panel heading — used for "Top Songs by Score", "Albums by Average", etc. */
+.na-card-heading {
+  font-family: 'Sora', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #c4b5fd;
+  letter-spacing: 0.2px;
+  margin: 0 0 14px;
+}
+
+/* Almanac list */
+.na-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.na-list-row {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  align-items: start;
+  padding: 11px 0;
+  border-top: 1px solid rgba(196, 181, 253, 0.12);
+}
+
+.na-list-row:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.na-list-rank {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #8b7fb8;
+  padding-top: 1px;
+}
+
+.na-list-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f2efff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 10px;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.na-list-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #8b7fb8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 2px 0 0;
+  padding-right: 10px;
+}
+
+.na-list-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: #38bdf8;
+  white-space: nowrap;
+  padding-top: 1px;
+}
+
+/* Ledger */
+.na-ledger {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 40px;
+  align-items: center;
+  padding: 28px 32px;
+  margin: 16px 0 0;
+}
+
+/* Word pills */
+.na-word-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: rgba(56, 189, 248, 0.06);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #7dd3fc;
+}
+
+/* Artist image thumbnail in list */
+.na-list-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #141028;
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+
+/* Responsive: collapse to single column */
+@media (max-width: 768px) {
+  .na-hero {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .na-2col {
+    grid-template-columns: 1fr;
+  }
+
+  .na-ledger {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .na-hero-cover-wrap {
+    width: 220px;
+    height: 220px;
+  }
+
+  .na-content {
+    padding: 0 16px 56px;
+  }
+}
+
 /* ---- Responsive: below 1200px ---- */
 @media (max-width: 1199px) {
   .vco-body {
