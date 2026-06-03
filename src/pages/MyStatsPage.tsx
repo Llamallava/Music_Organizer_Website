@@ -90,8 +90,8 @@ function TopTenArtistsModule({ title, items, artistImages }: Omit<TopTenArtistMo
 
         {firstArtist && (
           <>
-            <div style={{ marginTop: 16, borderRadius: 6, border: '1px solid #2a2548', background: '#1c1836', padding: '10px 14px' }}>
-              <p className="vco-label">#1</p>
+            <div style={{ marginTop: 16, borderRadius: 6, border: '1px solid rgba(167, 139, 250, 0.35)', background: 'linear-gradient(135deg, #1f1a3d 0%, #16122a 100%)', padding: '10px 14px', boxShadow: 'inset 4px 0 0 rgba(124, 58, 237, 0.7), 0 2px 12px rgba(0, 0, 0, 0.35)' }}>
+              <p className="vco-label" style={{ color: '#38bdf8' }}>#1</p>
 
               <div style={{ marginTop: 10, display: 'flex', gap: 12 }}>
                 <div style={{ width: 80, height: 80, flexShrink: 0, overflow: 'hidden', borderRadius: 6, background: '#141028' }}>
@@ -104,13 +104,13 @@ function TopTenArtistsModule({ title, items, artistImages }: Omit<TopTenArtistMo
                 </div>
 
                 <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: 15, fontWeight: 800, color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <p style={{ fontSize: 15, fontWeight: 800, fontFamily: "'JetBrains Mono', monospace", color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {firstArtist.artistName}
                   </p>
-                  <p style={{ marginTop: 4, fontSize: 13, fontWeight: 600, color: '#c4b5fd' }}>
+                  <p style={{ marginTop: 4, fontSize: 13, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace", color: '#a78bfa' }}>
                     Avg Score: {formatScoreValue(firstArtist.value)}
                   </p>
-                  <p style={{ fontSize: 11, color: '#7c6fad' }}>
+                  <p style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: '#7c6fad' }}>
                     {firstArtist.albumCount} {firstArtist.albumCount === 1 ? 'album' : 'albums'} rated
                   </p>
                 </div>
@@ -133,7 +133,7 @@ function TopTenArtistsModule({ title, items, artistImages }: Omit<TopTenArtistMo
                   <motion.li
                     key={artist.artistName}
                     variants={listItemVariants}
-                    style={{ display: 'flex', alignItems: 'center', gap: 10, borderRadius: 4, background: '#1c1836', padding: itemPadding }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, borderRadius: 4, background: 'rgba(20, 16, 40, 0.7)', border: '1px solid rgba(42, 37, 72, 0.9)', padding: itemPadding }}
                   >
                     <div style={{ width: imgSize, height: imgSize, flexShrink: 0, overflow: 'hidden', borderRadius: 4, background: '#141028' }}>
                       <AlbumCover
@@ -145,15 +145,15 @@ function TopTenArtistsModule({ title, items, artistImages }: Omit<TopTenArtistMo
                     </div>
 
                     <div style={{ minWidth: 0, flex: 1 }}>
-                      <p style={{ fontSize: titleSize, fontWeight: titleWeight, color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <p style={{ fontSize: titleSize, fontWeight: titleWeight, fontFamily: "'JetBrains Mono', monospace", color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {rank}. {artist.artistName}
                       </p>
-                      <p style={{ fontSize: 11, color: '#7c6fad' }}>
+                      <p style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: '#7c6fad' }}>
                         {artist.albumCount} {artist.albumCount === 1 ? 'album' : 'albums'} rated
                       </p>
                     </div>
 
-                    <p style={{ flexShrink: 0, fontSize: titleSize, fontWeight: 600, color: '#c4b5fd' }}>
+                    <p style={{ flexShrink: 0, fontSize: titleSize, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace", color: '#a78bfa' }}>
                       {formatScoreValue(artist.value)}
                     </p>
                   </motion.li>

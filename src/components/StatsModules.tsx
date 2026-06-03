@@ -12,7 +12,7 @@ const rankLabel: React.CSSProperties = {
   fontSize: 9,
   letterSpacing: 2,
   textTransform: 'uppercase',
-  color: '#7c6fad',
+  color: '#38bdf8',
   marginBottom: 8,
 }
 
@@ -27,9 +27,10 @@ const moduleTitle: React.CSSProperties = {
 const innerCard: React.CSSProperties = {
   marginTop: 14,
   borderRadius: 6,
-  border: '1px solid #2a2548',
-  background: '#1c1836',
+  border: '1px solid rgba(167, 139, 250, 0.35)',
+  background: 'linear-gradient(135deg, #1f1a3d 0%, #16122a 100%)',
   padding: '10px 14px',
+  boxShadow: 'inset 4px 0 0 rgba(124, 58, 237, 0.7), 0 2px 12px rgba(0, 0, 0, 0.35)',
 }
 
 const listItem: React.CSSProperties = {
@@ -38,7 +39,8 @@ const listItem: React.CSSProperties = {
   justifyContent: 'space-between',
   gap: 10,
   borderRadius: 4,
-  background: '#1c1836',
+  background: 'rgba(20, 16, 40, 0.7)',
+  border: '1px solid rgba(42, 37, 72, 0.9)',
   padding: '8px 10px',
 }
 
@@ -98,10 +100,10 @@ export function TopTenAlbumsModule({
                 <p style={{ fontSize: 15, fontWeight: 800, color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {firstAlbum.title}
                 </p>
-                <p style={{ fontSize: 13, fontWeight: 600, color: '#c4b5fd', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <p style={{ fontSize: 13, fontWeight: 600, color: '#a78bfa', fontFamily: "'JetBrains Mono', monospace", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {firstAlbum.artistName}
                 </p>
-                <p style={{ marginTop: 4, fontSize: 12, fontWeight: 600, color: '#ede9fe' }}>
+                <p style={{ marginTop: 4, fontSize: 12, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace", color: '#ede9fe' }}>
                   {valueLabel}: {formatValue(firstAlbum.value, valueType)}
                 </p>
               </div>
@@ -131,11 +133,11 @@ export function TopTenAlbumsModule({
                     <p style={{ fontSize: titleSize, fontWeight: titleWeight, color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {rank}. {album.title}
                     </p>
-                    <p style={{ fontSize: 11, color: '#7c6fad', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: 11, color: '#7c6fad', fontFamily: "'JetBrains Mono', monospace", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {album.artistName}
                     </p>
                   </div>
-                  <p style={{ flexShrink: 0, fontSize: titleSize, fontWeight: 600, color: '#c4b5fd' }}>
+                  <p style={{ flexShrink: 0, fontSize: titleSize, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace", color: '#a78bfa' }}>
                     {formatValue(album.value, valueType)}
                   </p>
                 </motion.li>
@@ -185,14 +187,14 @@ export function TopTenSongsModule({
                   {firstSong.trackTitle}
                 </p>
                 {showArtistName && (
-                  <p style={{ fontSize: 13, fontWeight: 600, color: '#c4b5fd', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#a78bfa', fontFamily: "'JetBrains Mono', monospace", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {firstSong.artistName}
                   </p>
                 )}
-                <p style={{ fontSize: 12, color: '#7c6fad', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <p style={{ fontSize: 12, color: '#7c6fad', fontFamily: "'JetBrains Mono', monospace", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {firstSong.albumTitle}
                 </p>
-                <p style={{ marginTop: 4, fontSize: 12, fontWeight: 600, color: '#ede9fe' }}>
+                <p style={{ marginTop: 4, fontSize: 12, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace", color: '#ede9fe' }}>
                   {valueLabel}: {formatValue(firstSong.value, valueType)}
                 </p>
               </div>
@@ -222,11 +224,11 @@ export function TopTenSongsModule({
                     <p style={{ fontSize: titleSize, fontWeight: titleWeight, color: '#ede9fe', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {rank}. {song.trackTitle}
                     </p>
-                    <p style={{ fontSize: 11, color: '#7c6fad', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: 11, color: '#7c6fad', fontFamily: "'JetBrains Mono', monospace", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {showArtistName ? `${song.artistName} - ${song.albumTitle}` : song.albumTitle}
                     </p>
                   </div>
-                  <p style={{ flexShrink: 0, fontSize: titleSize, fontWeight: 600, color: '#c4b5fd' }}>
+                  <p style={{ flexShrink: 0, fontSize: titleSize, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace", color: '#a78bfa' }}>
                     {formatValue(song.value, valueType)}
                   </p>
                 </motion.li>
@@ -257,8 +259,8 @@ export function GrandTotalWordsModule({
       <div className="grid gap-5 md:grid-cols-2">
         <div>
           <h2 style={moduleTitle}>{title}</h2>
-          <p style={{ fontSize: 12, color: '#7c6fad', marginBottom: 16 }}>{subtitle}</p>
-          <p style={{ fontSize: 36, fontWeight: 900, color: '#ede9fe', letterSpacing: '-0.02em', fontFamily: "'Sora', sans-serif" }}>
+          <p style={{ fontSize: 12, color: '#7c6fad', fontFamily: "'JetBrains Mono', monospace", marginBottom: 16 }}>{subtitle}</p>
+          <p style={{ fontSize: 36, fontWeight: 900, background: 'linear-gradient(135deg, #e0d7ff 0%, #a78bfa 55%, #38bdf8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', letterSpacing: '-0.02em', fontFamily: "'Sora', sans-serif" }}>
             <AnimatedCounter target={totalWords} />
           </p>
           <p style={{ marginTop: 4, fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: '#7c6fad' }}>
@@ -273,12 +275,12 @@ export function GrandTotalWordsModule({
               {favoriteWords.map((item, index) => (
                 <li
                   key={item.word}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: 4, background: '#1c1836', padding: '6px 10px', fontSize: 13 }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: 4, background: 'rgba(20, 16, 40, 0.7)', border: '1px solid rgba(42, 37, 72, 0.9)', padding: '6px 10px', fontSize: 13 }}
                 >
-                  <span style={{ fontWeight: 600, color: '#ede9fe' }}>
+                  <span style={{ fontWeight: 600, fontFamily: "'JetBrains Mono', monospace", color: '#ede9fe' }}>
                     {index + 1}. {item.word}
                   </span>
-                  <span style={{ color: '#7c6fad' }}>{item.count.toLocaleString()}</span>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", color: '#7c6fad' }}>{item.count.toLocaleString()}</span>
                 </li>
               ))}
             </ul>
