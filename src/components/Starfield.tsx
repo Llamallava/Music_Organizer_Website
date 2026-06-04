@@ -56,12 +56,21 @@ export default function Starfield({
   seed?: number
 }) {
   const ref = useRef<HTMLDivElement>(null)
-  const [dim, setDim] = useState({ w: 0, h: 0 })
+  // svgDim tracks the actual element size so the SVG always fills it.
+  // buildDim only updates when width changes — height growth (e.g. content loading
+  // on a long page) must not regenerate stars or the layout shifts mid-load.
+  const [svgDim, setSvgDim] = useState({ w: 0, h: 0 })
+  const [buildDim, setBuildDim] = useState({ w: 0, h: 0 })
 
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    const measure = () => setDim({ w: el.offsetWidth, h: el.offsetHeight })
+    const measure = () => {
+      const w = el.offsetWidth
+      const h = el.offsetHeight
+      setSvgDim({ w, h })
+      setBuildDim(prev => (prev.w !== w ? { w, h } : prev))
+    }
     measure()
     const ro = new ResizeObserver(measure)
     ro.observe(el)
@@ -72,8 +81,8 @@ export default function Starfield({
     typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
   const stars = useMemo(
-    () => (dim.w && dim.h ? buildStars(dim.w, dim.h, density, seed) : []),
-    [dim.w, dim.h, density, seed],
+    () => (buildDim.w && buildDim.h ? buildStars(buildDim.w, buildDim.h, density, seed) : []),
+    [buildDim.w, buildDim.h, density, seed],
   )
 
   return (
@@ -89,8 +98,8 @@ export default function Starfield({
         opacity,
       }}
     >
-      {dim.w > 0 && (
-        <svg width={dim.w} height={dim.h} style={{ display: 'block' }}>
+      {svgDim.w > 0 && (
+        <svg width={svgDim.w} height={svgDim.h} style={{ display: 'block' }}>
           <defs>
             <radialGradient id="sf-halo-w">
               <stop offset="0%" stopColor="#fff" stopOpacity={1} />
