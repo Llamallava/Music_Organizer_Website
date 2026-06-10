@@ -2182,6 +2182,79 @@ input[type='text']:focus {
   }
 }
 
+/* Mobile overlay backdrop */
+.vco-mob-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 150;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+/* Mobile sidebar trigger buttons (hidden on desktop) */
+.vco-mob-sidebar-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 9px;
+  border: 1px solid #2a2548;
+  border-radius: 3px;
+  background: #100d22;
+  color: #7c6fad;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  transition: all 0.15s;
+  line-height: 1.4;
+}
+
+.vco-mob-sidebar-btn:hover {
+  border-color: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.5);
+  color: #ede9fe;
+}
+
+/* Mobile score strip (hidden on desktop) */
+.vco-mobile-score {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 16px;
+  border-bottom: 1px solid #1e1a3a;
+  flex-shrink: 0;
+}
+
+.vco-mobile-score .lab {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #7c6fad;
+}
+
+.vco-mobile-score .val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 600;
+  color: hsl(var(--accent-h) var(--accent-s) var(--accent-l));
+  line-height: 1;
+}
+
+.vco-mobile-score .val span {
+  font-size: 10px;
+  color: #7c6fad;
+}
+
+.vco-mobile-score .vco-score-input {
+  margin-top: 0;
+  margin-left: auto;
+}
+
 /* ---- Responsive: below 1200px ---- */
 @media (max-width: 1199px) {
   .vco-body {
@@ -2207,97 +2280,110 @@ input[type='text']:focus {
   }
 }
 
-/* ---- Mobile: ≤640px — scrollable stacked layout ---- */
+/* ---- Mobile: ≤640px — sidebar-driven layout ---- */
 @media (max-width: 640px) {
-  /* Remove the fixed-height viewport lock; let the page scroll naturally */
+  /* Restore fixed-height viewport (same behaviour as desktop) */
   .vco-page {
-    height: auto;
-    min-height: calc(100vh - var(--nav-h));
-    overflow: visible;
+    height: calc(100vh - var(--nav-h));
+    overflow: hidden;
     padding: 6px 8px;
   }
 
-  .vco-case {
-    overflow: visible;
-    height: auto;
+  /* Single-column body — left/right panels become fixed sidebars */
+  .vco-body {
+    grid-template-columns: 1fr;
+    overflow: hidden;
   }
 
-  /* Stack the three columns vertically */
-  .vco-body {
+  /* ---- Left sidebar: slides in from the left ---- */
+  .vco-left {
+    position: fixed;
+    top: var(--nav-h);
+    left: 0;
+    width: 82%;
+    max-width: 300px;
+    height: calc(100vh - var(--nav-h));
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 200;
+    background: linear-gradient(180deg, #141028 0%, #0e0c1c 100%);
+    border-right: 1px solid #2a2548;
+    border-bottom: none;
     display: flex;
     flex-direction: column;
-    overflow: visible;
-    height: auto;
-  }
-
-  /* Override the 600px rule: show the left panel again */
-  .vco-left {
-    display: grid;
-    grid-template-columns: 72px 1fr;
-    grid-template-rows: auto auto;
-    column-gap: 12px;
-    row-gap: 0;
-    padding: 10px 12px 0;
-    border-right: none;
-    border-bottom: 1px solid #1e1a3a;
-    overflow: visible;
-    gap: 0;
-  }
-
-  /* Cover sits in the top-left grid cell */
-  .vco-cover-wrap {
-    grid-column: 1;
-    grid-row: 1;
-    width: 72px;
-    height: 72px;
-  }
-
-  /* Album meta sits next to the cover */
-  .vco-album-meta {
-    grid-column: 2;
-    grid-row: 1;
-    align-self: center;
-    padding: 0;
-  }
-
-  /* Timeline bar is too small to be useful; hide it */
-  .vco-timeline {
-    display: none;
-  }
-
-  /* Tracklist spans the full width below the cover+meta row */
-  .vco-tracklist {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    flex: none;
-    min-height: 0;
-    max-height: 140px;
+    padding: 14px 12px 16px;
+    gap: 10px;
     overflow-y: auto;
-    padding: 4px 0 8px;
-    margin-top: 8px;
   }
 
-  /* Center panel: natural height instead of filling the remaining viewport */
+  .vco-left.mob-open {
+    transform: translateX(0);
+    box-shadow: 4px 0 32px rgba(0, 0, 0, 0.6);
+  }
+
+  /* ---- Right sidebar: slides in from the right ---- */
+  .vco-right {
+    position: fixed;
+    top: var(--nav-h);
+    right: 0;
+    width: 85%;
+    max-width: 340px;
+    height: calc(100vh - var(--nav-h));
+    transform: translateX(100%);
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 200;
+    background: linear-gradient(180deg, #141028 0%, #0e0c1c 100%);
+    border-left: 1px solid #2a2548;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .vco-right.mob-open {
+    transform: translateX(0);
+    box-shadow: -4px 0 32px rgba(0, 0, 0, 0.6);
+  }
+
+  /* Center panel fills the full column */
   .vco-center {
-    overflow: visible;
-    height: auto;
+    overflow: hidden;
   }
 
-  /* Text area wrapper: no longer a flex-grow filler */
+  /* Track bar: tighter on mobile, smaller title */
+  .vco-track-bar {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .vco-track-info .tt {
+    font-size: 15px;
+  }
+
+  /* Text area wrapper: flex-grow filler */
   .vco-text-wrap {
-    flex: none;
-    height: auto;
+    flex: 1;
+    min-height: 0;
     padding: 10px 12px;
   }
 
-  /* Give the textarea an explicit height instead of height:100% */
+  /* Text area fills its container */
   .vco-text-panel {
-    height: 220px;
-    min-height: 180px;
+    height: 100%;
+    min-height: unset;
   }
 
-  /* Transport bar: allow wrapping on narrow screens */
+  /* Transport bar */
   .vco-transport {
-    padding: 8px 12px 14px;
+    padding: 8px 12px 10px;
+    gap: 5px;
+  }
+
+  /* Show mobile-only elements */
+  .vco-mobile-score {
+    display: flex;
+  }
+
+  .vco-mob-sidebar-btn {
+    display: inline-flex;
   }
 }

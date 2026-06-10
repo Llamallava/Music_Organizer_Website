@@ -134,22 +134,14 @@ function AlbumReviewPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [infoMessage, setInfoMessage] = useState<string | null>(null)
   const [quoteModeEnabled, setQuoteModeEnabled] = useState(false)
+  const [isMobileTracklistOpen, setIsMobileTracklistOpen] = useState(false)
+  const [isMobileLyricsOpen, setIsMobileLyricsOpen] = useState(false)
 
   const accentColor = useAlbumAccent(workspace?.album.coverUrl)
 
   useEffect(() => {
-    // Lock scroll on desktop where the console is a fixed-height viewport.
-    // On mobile the layout stacks vertically and needs normal scrolling.
-    const mq = window.matchMedia('(max-width: 640px)')
-    const apply = () => {
-      document.body.style.overflow = mq.matches ? '' : 'hidden'
-    }
-    apply()
-    mq.addEventListener('change', apply)
-    return () => {
-      document.body.style.overflow = ''
-      mq.removeEventListener('change', apply)
-    }
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
   }, [])
 
   useEffect(() => {
@@ -651,6 +643,7 @@ function AlbumReviewPage() {
     setActiveSectionKey(key)
     setInfoMessage(null)
     setErrorMessage(null)
+    setIsMobileTracklistOpen(false)
   }
   const goFirst = () => { if (trackList[0]) navigate(toTrackKey(trackList[0].trackNumber)) }
   const goPrev = () => {
@@ -674,10 +667,16 @@ function AlbumReviewPage() {
     <main className="vco-page" style={accentStyle}>
       {/* Console case */}
       <div className="vco-case">
+        {(isMobileTracklistOpen || isMobileLyricsOpen) && (
+          <div
+            className="vco-mob-overlay"
+            onClick={() => { setIsMobileTracklistOpen(false); setIsMobileLyricsOpen(false) }}
+          />
+        )}
         <div className="vco-body">
 
           {/* LEFT: Album info + tracklist */}
-          <aside className="vco-left">
+          <aside className={`vco-left${isMobileTracklistOpen ? ' mob-open' : ''}`}>
             <div className="vco-cover-wrap cover-halo">
               <AlbumCover
                 src={workspace.album.coverUrl}
@@ -755,6 +754,13 @@ function AlbumReviewPage() {
           {/* CENTER: Writing section */}
           <section className="vco-center">
             <header className="vco-track-bar">
+              <button
+                type="button"
+                className="vco-mob-sidebar-btn"
+                onClick={() => setIsMobileTracklistOpen(true)}
+              >
+                Tracks
+              </button>
               <div className="vco-track-info">
                 <span className="tn">
                   {activeTrack ? `${activeChNum}.` : '★'}
@@ -786,7 +792,29 @@ function AlbumReviewPage() {
                   </>
                 )}
               </div>
+              <button
+                type="button"
+                className="vco-mob-sidebar-btn"
+                onClick={() => setIsMobileLyricsOpen(true)}
+              >
+                Lyrics
+              </button>
             </header>
+
+            <div className="vco-mobile-score">
+              <span className="lab">Score</span>
+              <span className="val">{scoreDisplay}<span>/10</span></span>
+              <input
+                type="number"
+                min={0}
+                max={10}
+                step={0.1}
+                value={activeDraft.scoreInput}
+                onChange={(e) => handleScoreChange(e.target.value)}
+                placeholder="0.0"
+                className="vco-score-input"
+              />
+            </div>
 
             <div className="vco-text-wrap">
               {activeTrack ? (
@@ -934,7 +962,7 @@ function AlbumReviewPage() {
           </section>
 
           {/* RIGHT: Score dial + lyrics */}
-          <aside className="vco-right">
+          <aside className={`vco-right${isMobileLyricsOpen ? ' mob-open' : ''}`}>
             <div className="vco-dial-wrap">
               <div
                 className="vco-dial"

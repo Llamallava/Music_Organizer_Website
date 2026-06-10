@@ -24,7 +24,8 @@
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Matthew\\\\source\\\\repos\\\\Music_Organizer_Website\" -Force)",
       "Bash(Select-Object Name, PSIsContainer)",
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Matthew\\\\source\\\\repos\\\\Music_Organizer_Website\" -Recurse -Directory -Depth 2)",
-      "Bash(Select-Object -ExpandProperty FullName)"
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(xargs grep -l \"review\" -i)"
     ]
   }
 }
