@@ -2282,9 +2282,12 @@ input[type='text']:focus {
 
 /* ---- Mobile: ≤640px — sidebar-driven layout ---- */
 @media (max-width: 640px) {
-  /* Restore fixed-height viewport (same behaviour as desktop) */
+  /* Restore fixed-height viewport.
+     100dvh (dynamic viewport height) accounts for iOS Safari's bottom toolbar
+     which 100vh incorrectly includes, causing the transport to be clipped. */
   .vco-page {
     height: calc(100vh - var(--nav-h));
+    height: calc(100dvh - var(--nav-h));
     overflow: hidden;
     padding: 6px 8px;
   }
@@ -2372,10 +2375,25 @@ input[type='text']:focus {
     min-height: unset;
   }
 
-  /* Transport bar */
+  /* Transport bar: compact to fit all phones */
   .vco-transport {
-    padding: 8px 12px 10px;
-    gap: 5px;
+    padding: 5px 10px 7px;
+    gap: 4px;
+  }
+
+  /* Smaller buttons in transport on mobile */
+  .vco-transport .vco-tbtn {
+    padding: 3px 7px;
+  }
+
+  .vco-transport .vco-timecode {
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 0 2px;
+  }
+
+  .vco-transport .vco-interlude-label {
+    font-size: 8px;
   }
 
   /* Show mobile-only elements */

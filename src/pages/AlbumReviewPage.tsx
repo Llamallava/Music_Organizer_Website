@@ -145,6 +145,49 @@ function AlbumReviewPage() {
   }, [])
 
   useEffect(() => {
+    let startX = 0
+    let startY = 0
+
+    const onTouchStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX
+      startY = e.touches[0].clientY
+    }
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (window.innerWidth > 640) return
+      const dx = e.changedTouches[0].clientX - startX
+      const dy = e.changedTouches[0].clientY - startY
+      // Ignore gestures that are more vertical than horizontal, or too short
+      if (Math.abs(dy) > Math.abs(dx) || Math.abs(dx) < 50) return
+
+      if (dx > 0) {
+        if (startX < 40) {
+          // Right swipe from left edge: open tracklist sidebar
+          setIsMobileTracklistOpen(true)
+        } else {
+          // Right swipe from inside the right sidebar: close it
+          setIsMobileLyricsOpen((open) => (open && startX > window.innerWidth - 350 ? false : open))
+        }
+      } else {
+        if (startX > window.innerWidth - 40) {
+          // Left swipe from right edge: open lyrics sidebar
+          setIsMobileLyricsOpen(true)
+        } else {
+          // Left swipe from inside the left sidebar: close it
+          setIsMobileTracklistOpen((open) => (open && startX < 310 ? false : open))
+        }
+      }
+    }
+
+    document.addEventListener('touchstart', onTouchStart, { passive: true })
+    document.addEventListener('touchend', onTouchEnd, { passive: true })
+    return () => {
+      document.removeEventListener('touchstart', onTouchStart)
+      document.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [])
+
+  useEffect(() => {
     if (!userSavedAlbumId) {
       setErrorMessage('Missing album id.')
       setIsLoading(false)
