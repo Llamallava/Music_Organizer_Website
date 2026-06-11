@@ -6,7 +6,7 @@ import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename="/Music_Organizer_Website">
       <App />
     </BrowserRouter>
   </StrictMode>,
