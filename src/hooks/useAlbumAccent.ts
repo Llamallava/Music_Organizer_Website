@@ -30,37 +30,6 @@ function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: n
   return { h: h * 360, s, l }
 }
 
-function pickWinner(
-  counts: Int32Array,
-  hueSums: Float64Array,
-  satSums: Float64Array,
-  litSums: Float64Array,
-  weightSums: Float64Array,
-): AccentColor | null {
-  let bestWeight = 0
-  let best = -1
-  for (let i = 0; i < 36; i++) {
-    if (weightSums[i] > bestWeight) {
-      bestWeight = weightSums[i]
-      best = i
-    }
-  }
-  if (best === -1 || counts[best] === 0) return null
-
-  const n = counts[best]
-  const avgS = satSums[best] / n
-  const avgL = litSums[best] / n
-
-  // Use the actual color from the image.
-  // L is floored at 58% so gradients with negative offsets (e.g. L - 28%) stay
-  // visible even on dark/moody covers. Above 90% can wash out; cap it there.
-  // S below 20% reads as gray; nudge it up just enough to show a hue.
-  const s = Math.max(20, Math.round(avgS * 100))
-  const l = Math.max(58, Math.min(90, Math.round(avgL * 100)))
-
-  return { h: Math.round(hueSums[best] / n), s, l }
-}
-
 function extractAccentFromImage(img: HTMLImageElement): AccentColor | null {
   const size = 64
   const canvas = document.createElement('canvas')
@@ -78,57 +47,39 @@ function extractAccentFromImage(img: HTMLImageElement): AccentColor | null {
     return null
   }
 
-  // Phase 1 — vivid (s ≥ 0.4): bold accent colors like a red smoke trail.
-  // Phase 2 — ambient (s ≥ 0.1): fallback for muted/atmospheric covers
-  //   where the dominant color is desaturated (e.g. a soft teal background).
-  const vividCount  = new Int32Array(36)
-  const vividHue    = new Float64Array(36)
-  const vividSat    = new Float64Array(36)
-  const vividLit    = new Float64Array(36)
-  const vividW      = new Float64Array(36)
-
-  const ambCount    = new Int32Array(36)
-  const ambHue      = new Float64Array(36)
-  const ambSat      = new Float64Array(36)
-  const ambLit      = new Float64Array(36)
-  const ambW        = new Float64Array(36)
+  const counts  = new Int32Array(36)
+  const hueSums = new Float64Array(36)
+  const satSums = new Float64Array(36)
+  const litSums = new Float64Array(36)
 
   for (let i = 0; i < data.length; i += 4) {
     if (data[i + 3] < 128) continue
 
     const { h, s, l } = rgbToHsl(data[i], data[i + 1], data[i + 2])
-
-    if (l < 0.12) continue // skip near-black; light/pastel colors are welcome
-
     const bucket = Math.floor(h / 10) % 36
 
-    if (s >= 0.4) {
-      vividCount[bucket]++
-      vividHue[bucket] += h
-      vividSat[bucket] += s
-      vividLit[bucket] += l
-      vividW[bucket]   += s
-    }
-
-    if (s >= 0.1) {
-      ambCount[bucket]++
-      ambHue[bucket]  += h
-      ambSat[bucket]  += s
-      ambLit[bucket]  += l
-      ambW[bucket]    += s
-    }
+    counts[bucket]++
+    hueSums[bucket] += h
+    satSums[bucket] += s
+    litSums[bucket] += l
   }
 
-  // Only trust the vivid result if it has enough coverage — prevents tiny
-  // logos or text elements from hijacking the color.
-  const minVividPixels = size * size * 0.005
-  const vividResult = pickWinner(vividCount, vividHue, vividSat, vividLit, vividW)
-  if (vividResult !== null) {
-    const topBucket = vividCount.indexOf(Math.max(...vividCount))
-    if (vividCount[topBucket] >= minVividPixels) return vividResult
+  let bestCount = 0
+  let best = -1
+  for (let i = 0; i < 36; i++) {
+    if (counts[i] > bestCount) {
+      bestCount = counts[i]
+      best = i
+    }
   }
+  if (best === -1) return null
 
-  return pickWinner(ambCount, ambHue, ambSat, ambLit, ambW)
+  const n = counts[best]
+  return {
+    h: Math.round(hueSums[best] / n),
+    s: Math.round((satSums[best] / n) * 100),
+    l: Math.round((litSums[best] / n) * 100),
+  }
 }
 
 export function useAlbumAccent(coverUrl: string | null | undefined): AccentColor | null {
